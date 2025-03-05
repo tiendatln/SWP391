@@ -4,9 +4,10 @@
  */
 package Controllers;
 
+import DAOs.CategoryDAO;
 import DAOs.ProductDAO;
-import Model.OrderTotal;
 import DB.DBConnection;
+import Model.Category;
 import Model.Product;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -14,10 +15,11 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.Part;
+import java.io.File;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -45,7 +47,7 @@ public class ProductController extends HttpServlet {
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
-            out.println("<title>Servlet ProductController</title>");            
+            out.println("<title>Servlet ProductController</title>");
             out.println("</head>");
             out.println("<body>");
             out.println("<h1>Servlet ProductController at " + request.getContextPath() + "</h1>");
@@ -67,12 +69,28 @@ public class ProductController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String path = request.getRequestURI();
-        if(path.endsWith("/UpdateQuantity")){
+        if (path.endsWith("/UpdateQuantity")) {
 
             request.getRequestDispatcher("/web/Staff/updateQuantity.jsp").forward(request, response);
-        } else if(path.endsWith("/DetailProductCustomer")){
-            request.getRequestDispatcher("/web/GuessAndCustomer/DetailProduct.jsp").forward(request, response);
-        } else if (path.endsWith("/ProductManagement")){
+        } else if (path.contains("/ProductController/DetailProductCustomer/")) {
+            String idStr = path.substring(path.lastIndexOf("/") + 1);
+            try {
+                int id = Integer.parseInt(idStr);
+                ProductDAO productDAO = new ProductDAO();
+                Product product = productDAO.getProductById(id);
+
+                if (product != null) {
+                    request.setAttribute("product", product);
+                    request.getRequestDispatcher("/GuessAndCustomer/DetailProduct.jsp").forward(request, response);
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/index.jsp"); // Nếu không tìm thấy sản phẩm
+                }
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+                response.sendRedirect(request.getContextPath() + "/index.jsp");
+            }
+
+        } else if (path.endsWith("/ProductManagement")) {
             Connection conn;
             try {
                 conn = DBConnection.connect(); // Đảm bảo có class DatabaseConnection
@@ -81,12 +99,16 @@ public class ProductController extends HttpServlet {
             } catch (SQLException ex) {
                 Logger.getLogger(ProductController.class.getName()).log(Level.SEVERE, null, ex);
             }
-        ProductDAO productDAO = new ProductDAO();
-        List<Product> productList = productDAO.getAllProducts();
-        
-        request.setAttribute("productList", productList);
+            ProductDAO productDAO = new ProductDAO();
+            CategoryDAO categoryDAO = new CategoryDAO();
+
+            List<Product> productList = productDAO.getAllProducts();
+            List<Category> category = categoryDAO.getAllCategories(); // Lấy tất cả danh mục
+
+            request.setAttribute("category", category);
+            request.setAttribute("productList", productList);
             request.getRequestDispatcher("/web/Staff/productManagement.jsp").forward(request, response);
-        }else if (path.endsWith("/UpdateQuantity")){
+        } else if (path.endsWith("/UpdateQuantity")) {
             request.getRequestDispatcher("/web/Staff/updateQuantity.jsp").forward(request, response);
         }
     }
@@ -102,7 +124,57 @@ public class ProductController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
+
+        String action = request.getParameter("action");
+
+        if ("addProduct".equals(action)) {
+            addProduct(request, response);
+            request.getRequestDispatcher("/web/Staff/productManagement.jsp").forward(request, response);
+        }
+    }
+
+    private static final String IMAGE_UPLOAD_DIR = "uploads";
+
+    private void addProduct(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        try {
+            String name = request.getParameter("productName");
+            int quantity = Integer.parseInt(request.getParameter("proQuantity"));
+            double price = Double.parseDouble(request.getParameter("proPrice"));
+            boolean state = Integer.parseInt(request.getParameter("proState")) == 1;
+            String description = request.getParameter("proDescription");
+            int categoryID = Integer.parseInt(request.getParameter("proCategory"));
+
+            // Xử lý file ảnh
+            Part filePart = request.getPart("proImg");
+            String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+            String uploadPath = getServletContext().getRealPath("") + File.separator + IMAGE_UPLOAD_DIR;
+            File uploadDir = new File(uploadPath);
+            if (!uploadDir.exists()) {
+                uploadDir.mkdir();
+            }
+            String filePath = uploadPath + File.separator + fileName;
+            filePart.write(filePath);
+            String imagePath = IMAGE_UPLOAD_DIR + "/" + fileName;
+
+            // Gọi DAO để thêm sản phẩm
+            ProductDAO productDAO = new ProductDAO();
+            boolean success = productDAO.addProduct(name, quantity, price, state, imagePath, description, categoryID);
+
+            if (success) {
+                // response.sendRedirect(request.getContextPath() + "/ProductManagement?success=1");
+                request.getRequestDispatcher("/web/Staff/productManagement.jsp").forward(request, response);
+            } else {
+                request.setAttribute("errorMessage", "Thêm sản phẩm thất bại!");
+                request.getRequestDispatcher("/web/Staff/productManagement.jsp").forward(request, response);
+            }
+        } catch (IOException | NumberFormatException | ServletException e) {
+            e.printStackTrace();
+            //response.sendRedirect(request.getContextPath() + "/ProductManagement?error=1");
+
+        }
     }
 
     /**

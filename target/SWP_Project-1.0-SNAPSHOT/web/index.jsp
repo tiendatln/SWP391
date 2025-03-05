@@ -1,10 +1,17 @@
 
+<%@page import="Model.Product"%>
+<%@page import="DB.DBConnection"%>
+<%@page import="java.util.List"%>
+<%@page import="DAOs.ProductDAO"%>
+<%@page import="java.sql.Connection"%>
 <%-- 
     Document   : index
     Created on : Feb 12, 2025, 2:18:15 PM
     Author     : tiend
 --%>
 <%@ page contentType="text/html; charset=UTF-8" language="java" %>
+
+
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -53,63 +60,42 @@
         </div>
         <div class="container mt-4" style="min-height: 58.6vh;">
             <h2 class="text-center mb-4">Danh sách Laptop</h2>
-        <!-- FORM LỌC -->
-        <form method="GET" action="" class="row g-3 mb-4">
-            <div class="col-md-3">
-                <label for="brand" class="form-label">Chọn thương hiệu:</label>
-                <select name="brand" id="brand" class="form-select">
-                    <option value="">Tất cả</option>
-                    <option value="Asus">Asus</option>
-                    <option value="HP">HP</option>
-                    <option value="Dell">Dell</option>
-                    <option value="Acer">Acer</option>
-                    <option value="Lenovo">Lenovo</option>
-                    <option value="MacBook">MacBook</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="minPrice" class="form-label">Giá tối thiểu:</label>
-                <input type="number" name="minPrice" id="minPrice" class="form-control" placeholder="VNĐ">
-            </div>
-            <div class="col-md-3">
-                <label for="maxPrice" class="form-label">Giá tối đa:</label>
-                <input type="number" name="maxPrice" id="maxPrice" class="form-control" placeholder="VNĐ">
-            </div>
-            <div class="col-md-3 align-self-end">
-                <button type="submit" class="btn btn-primary w-100">Lọc</button>
-            </div>
-        </form>
+            <!-- FORM LỌC -->
+            <form method="GET" action="" class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label for="brand" class="form-label">Chọn thương hiệu:</label>
+                    <select name="brand" id="brand" class="form-select">
+                        <option value="">Tất cả</option>
+                        <option value="Asus">Asus</option>
+                        <option value="HP">HP</option>
+                        <option value="Dell">Dell</option>
+                        <option value="Acer">Acer</option>
+                        <option value="Lenovo">Lenovo</option>
+                        <option value="MacBook">MacBook</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="minPrice" class="form-label">Giá tối thiểu:</label>
+                    <input type="number" name="minPrice" id="minPrice" class="form-control" placeholder="VNĐ">
+                </div>
+                <div class="col-md-3">
+                    <label for="maxPrice" class="form-label">Giá tối đa:</label>
+                    <input type="number" name="maxPrice" id="maxPrice" class="form-control" placeholder="VNĐ">
+                </div>
+                <div class="col-md-3 align-self-end">
+                    <button type="submit" class="btn btn-primary w-100">Lọc</button>
+                </div>
+            </form>
             <div class="row">
                 <%-- Dữ liệu danh sách laptop --%>
-                <%
-                    String[][] laptops = {
-                        {"Asus Vivobook Go 15", "12.590.000₫", "/link/img/cat.jpg"},
-                        {"HP 15s i3", "13.690.000₫", "/link/img/cat.jpg"},
-                        {"Dell Inspiron 15", "16.490.000₫", "/link/img/cat.jpg"},
-                        {"Acer Aspire 3", "10.590.000₫", "/link/img/cat.jpg"},
-                        {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
-                        {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
-                        {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
-                        {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
-                        {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
-                        {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
-                        {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
-                        {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
-                        {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
-                        {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
-                        {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
-                        {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
-                        {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
-                        {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
-                        {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
-                        {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
-                        {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
-                        {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
-                        {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"}
-                    };
+                <%                    Connection conn = DBConnection.connect();
+
+                    ProductDAO productDAO = new ProductDAO();
+
+                    List<Product> productList = productDAO.getAllProducts();
 
                     int itemsPerPage = 20; // Số laptop hiển thị trên mỗi trang
-                    int totalItems = laptops.length;
+                    int totalItems = productList.size();
                     int totalPages = (int) Math.ceil((double) totalItems / itemsPerPage);
 
                     // Lấy trang hiện tại từ request (mặc định là 1)
@@ -122,26 +108,35 @@
                     int start = (currentPage - 1) * itemsPerPage;
                     int end = Math.min(start + itemsPerPage, totalItems);
 
-                    for (int i = start; i < end; i++) {
+                    for (Product product : productList) {
 
                 %>
 
                 <div class="col-md-3 mb-3">
-                    <a class="item no-underline" href="/ProductController/DetailProductCustomer">
+                    <a class="item no-underline" href="/ProductController/DetailProductCustomer/<%= product.getProductID()%>">                    
                         <div class="card">
                             <div class="img">
-                                <img src="<%= laptops[i][2]%>" class="card-img img" style=" border-radius: 20px;" alt="<%= laptops[i][0]%>">
+                                <img src="<%= product.getProImg()%>" class="card-img img" style="border-radius: 20px;" alt="<%= product.getProductName()%>">
                             </div>
                             <div class="card-body">
-                                <h5 class="card-title"><%= laptops[i][0]%></h5>
-                                <p class="card-text text-danger fw-bold"><%= laptops[i][1]%></p>
+                                <h5 class="card-title"><%= product.getProductName()%></h5>
+                                <p class="card-text text-danger fw-bold">
+                                    <%
+                                        Long price = product.getProPrice();
+                                        if (price != null) {
+                                            out.print(String.format("%,d VND", price));
+                                        } else {
+                                            out.print("Giá không có sẵn");
+                                        }
+                                    %>
+                                </p>
                             </div>
                         </div>
                     </a>
                 </div>
                 <% }%>
             </div>
-            
+
         </div>
         <div>
             <!-- PHÂN TRANG -->
@@ -166,7 +161,7 @@
                     <% }%>
                 </ul>
             </nav>
-                    <%@include file="../Footer.jsp" %>
+            <%@include file="../Footer.jsp" %>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     </body>

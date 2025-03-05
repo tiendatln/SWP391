@@ -110,4 +110,36 @@ public class ProductDAO {
         }
         return products;
     }
+    
+    public Product getProductById(int id) {
+    Product product = null;
+    CategoryDAO categoryDAO = new CategoryDAO();
+    String sql = "SELECT * FROM Products WHERE productID = ?";
+    
+    try (Connection conn = DBConnection.connect();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        
+        ps.setInt(1, id);
+        ResultSet rs = ps.executeQuery();
+        
+        if (rs.next()) {
+            Category category;
+                category = categoryDAO.getCategoryById(rs.getInt("categoryID"));
+            product = new Product(
+                rs.getInt("productID"),
+                rs.getString("productName"),
+                rs.getInt("proQuantity"),
+                rs.getLong("proPrice"),
+                rs.getByte("proState"),
+                rs.getString("proImg"),
+                rs.getString("proDescription"),
+                 category
+            );
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return product;
+}
+
 }

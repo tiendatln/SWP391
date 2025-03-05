@@ -13,6 +13,7 @@ Model\OrderTotal.class
 Controllers\LoginController.class
 DAOs\ProductDAO.class
 Controllers\OrderController.class
+DAOs\MainCategoryDAO.class
 Controllers\LoginAPIController.class
 DB\DBConnection.class
 Controllers\CartController.class

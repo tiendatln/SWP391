@@ -11,6 +11,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -56,6 +58,22 @@ public class CategoryDAO {
         }
         return null;
     }
+    
+    // Lấy danh sách tất cả danh mục con cùng với danh mục chính
+    public List<Category> getAllCategories() {
+        List<Category> categories = new ArrayList<>();
+        String sql = "SELECT c.categoryID, c.type, m.mainCategoryID, m.mainCateName FROM category c JOIN mainCategory m ON c.mainCategoryID = m.mainCategoryID";
 
+        try (PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                MainCategory mainCategory = new MainCategory(rs.getInt("mainCategoryID"), rs.getString("mainCateName"));
+                categories.add(new Category(rs.getInt("categoryID"), rs.getString("type"), mainCategory));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return categories;
+    }
 
 }

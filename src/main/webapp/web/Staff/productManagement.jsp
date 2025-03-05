@@ -4,6 +4,10 @@
     Author     : Nguyễn Trường Vinh _ vinhntca181278
 --%>
 
+<%@page import="Model.Category"%>
+<%@page import="Model.MainCategory"%>
+<%@page import="DAOs.CategoryDAO"%>
+<%@page import="DAOs.MainCategoryDAO"%>
 <%@page import="java.util.List"%>
 <%@page import="Model.Product"%>
 <%@page import="DAOs.ProductDAO"%>
@@ -14,8 +18,14 @@
         <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%
     Connection conn = DBConnection.connect();
+
     ProductDAO productDAO = new ProductDAO();
+    CategoryDAO categoryDAO = new CategoryDAO();
+
     List<Product> productList = productDAO.getAllProducts();
+    List<Category> category = categoryDAO.getAllCategories(); // Lấy tất cả danh mục
+
+    request.setAttribute("category", category);
     request.setAttribute("productList", productList);
 %>
 <!DOCTYPE html>
@@ -78,37 +88,37 @@
 
             <input type="text" class="form-control mb-3" placeholder="Tìm kiếm sản phẩm...">
             <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Hình ảnh</th>
-                    <th>Tên Sản Phẩm</th>
-                    <th>Giá</th>
-                    <th>Số Lượng</th>
-                    <th>Trạng Thái</th>
-                    <th>Hành Động</th>
-                </tr>
-            </thead>
-            <tbody>
-                <c:forEach var="product" items="${productList}">
+                <thead>
                     <tr>
-                        <td><img src="${product.proImg}" alt="${product.productName}" width="50"></td>
-                        <td>${product.productName}</td>
-                        <td class="price"><fmt:formatNumber value="${product.proPrice}" type="currency" currencySymbol="đ"/></td>
-                        <td>${product.proQuantity}</td>
-                        <td>
-                            <c:choose>
-                                <c:when test="${product.proState == 1}">Đang Bán</c:when>
-                                <c:otherwise>Ngừng Kinh Doanh</c:otherwise>
-                            </c:choose>
-                        </td>
-                        <td>
-                            <a href="editProduct.jsp?id=${product.productID}" class="btn btn-warning btn-sm">Sửa</a>
-                            <a href="deleteProduct?id=${product.productID}" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc chắn muốn xóa?')">Xóa</a>
-                        </td>
+                        <th>Hình ảnh</th>
+                        <th>Tên Sản Phẩm</th>
+                        <th>Giá</th>
+                        <th>Số Lượng</th>
+                        <th>Trạng Thái</th>
+                        <th>Hành Động</th>
                     </tr>
-                </c:forEach>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <c:forEach var="product" items="${productList}">
+                        <tr>
+                            <td><img src="${product.proImg}" alt="${product.productName}" width="50"></td>
+                            <td>${product.productName}</td>
+                            <td class="price"><fmt:formatNumber value="${product.proPrice}" type="currency" currencySymbol="đ"/></td>
+                            <td>${product.proQuantity}</td>
+                            <td>
+                                <c:choose>
+                                    <c:when test="${product.proState == 1}">Đang Bán</c:when>
+                                    <c:otherwise>Ngừng Kinh Doanh</c:otherwise>
+                                </c:choose>
+                            </td>
+                            <td>
+                                <a href="editProduct.jsp?id=${product.productID}" class="btn btn-warning btn-sm">Sửa</a>
+                                <a href="deleteProduct?id=${product.productID}" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc chắn muốn xóa?')">Xóa</a>
+                            </td>
+                        </tr>
+                    </c:forEach>
+                </tbody>
+            </table>
 
             <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
@@ -118,43 +128,56 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <form>
+                            <form action="/ProductController/ProductManagement" method="POST" enctype="multipart/form-data">
+                                <input type="hidden" name="action" value="addProduct">
+
                                 <div class="mb-3">
                                     <label class="form-label">Tên sản phẩm</label>
-                                    <input type="text" class="form-control" required>
+                                    <input type="text" class="form-control" name="productName" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Giá</label>
-                                    <input type="number" class="form-control" required>
+                                    <input type="number" class="form-control" name="proPrice" step="0.01" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Giá cũ</label>
-                                    <input type="number" class="form-control">
+                                    <label class="form-label">Mô tả</label>
+                                    <textarea class="form-control" name="proDescription" rows="3"></textarea>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Giảm giá (%)</label>
-                                    <input type="number" class="form-control">
+                                    <label class="form-label">Danh mục</label>
+                                    <select class="form-control" name="proCategory" id="categorySelect" required>
+                                        <option value="">-- Chọn danh mục --</option>
+                                        <c:forEach var="category" items="${category}">
+                                            <option value="${category.categoryID}">${category.type}</option>
+                                        </c:forEach>
+                                    </select>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Số lượng</label>
-                                    <input type="number" class="form-control" required>
+                                    <input type="number" class="form-control" name="proQuantity" min="0" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Trạng thái</label>
-                                    <select class="form-control">
-                                        <option>Đang Bán</option>
-                                        <option>Ngừng Kinh Doanh</option>
+                                    <select class="form-control" name="proState">
+                                        <option value="1">Đang Bán</option>
+                                        <option value="0">Ngừng Kinh Doanh</option>
                                     </select>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Hình ảnh</label>
-                                    <input type="file" class="form-control">
+                                    <input type="file" class="form-control" name="proImg" accept="image/*" required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                    <button type="submit" class="btn btn-primary">Lưu</button>
                                 </div>
                             </form>
+
                         </div>
                     </div>
                 </div>
             </div>
+
 
             <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
@@ -167,23 +190,20 @@
                             <form>
                                 <div class="mb-3">
                                     <label class="form-label">Tên sản phẩm</label>
-                                    <input type="text" class="form-control">
+                                    <input type="text" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Giá</label>
+                                    <input type="number" class="form-control" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Mô tả</label>
                                     <input type="number" class="form-control">
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Giá cũ</label>
-                                    <input type="number" class="form-control">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Giảm giá (%)</label>
-                                    <input type="number" class="form-control">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Số lượng</label>
-                                    <input type="number" class="form-control">
+                                    <label class="form-label">Danh mục</label>
+                                    <input type="number" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Trạng thái</label>
