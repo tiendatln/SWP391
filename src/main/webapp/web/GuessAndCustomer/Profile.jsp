@@ -29,6 +29,7 @@
             <div class="sidebar me-3">
                 <button class="btn btn-dark w-100 mb-2" onclick="showSection('profile')">&#128100; Profile</button>
                 <button class="btn btn-secondary w-100 mb-2" onclick="showSection('change-password')">&#128274; Change Password</button>
+                <a class="btn btn-secondary w-100 mb-2" href="/LoginController/Logout">Logout</a>
             </div>
             <div class="content w-100" id="profile-section">
                 <h2>User Profile</h2>

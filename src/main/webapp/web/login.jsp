@@ -68,14 +68,14 @@
 </head>
 <body>
     <div class="login-container">
-        <h2>Đăng nhập</h2>
+        <h2>Login</h2>
         <form action="/LoginController/Login" method="post" onsubmit="return validateForm()">
             <input type="text" id="username" name="username" placeholder="Tên đăng nhập" required>
             <input type="password" id="password" name="password" placeholder="Mật khẩu" required>
-            <button type="submit" class="btn">Đăng nhập</button>
+            <button type="submit" class="btn">Login</button>
         </form>
         <div class="links">
-            <a href="forgotPassword.jsp">Quên mật khẩu?</a> | <a href="register.jsp">Đăng ký</a>
+            <a href="forgotPassword.jsp">Forgot Password</a> | <a href="register.jsp">register </a>
         </div>
     </div>
 </body>

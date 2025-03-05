@@ -61,6 +61,29 @@ public class LoginController extends HttpServlet {
             throws ServletException, IOException {
         String path = request.getRequestURI();
         if (path.endsWith("/LoginController/Login")) {
+            Cookie[] cookies = request.getCookies();
+    String userName = null;
+    String userRole = null;
+   
+
+    if (cookies != null) {
+        for (Cookie cookie : cookies) {
+            if ("user".equals(cookie.getName())) {
+                String[] values = cookie.getValue().split("\\|");
+                if (values.length == 2) {  // Kiểm tra xem có đủ phần tử không
+                    userName = values[0];
+                    userRole = values[1];
+
+                    if (!userName.isEmpty() && "customer".equals(userRole)) {
+                      response.sendRedirect("/web/index.jsp");  
+                    } else if ("admin".equals(userRole)) {
+                        request.getRequestDispatcher("/OrderController/OrderManagement").forward(request, response);
+//                        response.sendRedirect("/OrderController/OrderManagement");
+                    }
+                }
+            }
+        }
+    }
             request.getRequestDispatcher("/web/login.jsp").forward(request, response);
         } else if (path.endsWith("/LoginController/ForgotPassword")) {
 

@@ -87,8 +87,8 @@
                         </a>
                     </div>
                     <div class="cart">
-                        <a id="cartLink" href="<%= (isLoggedIn && isCustomer) ? "/CartController/Cart" : "#"%>" 
-                           class="text-black btn font-medium flex items-center no-underline <%= (isLoggedIn && isCustomer) ? "" : "disabled"%>">
+                        <a id="cartLink" href="/CartController/Cart" 
+                           class="text-black btn font-medium flex items-center no-underline ">
                             <i class="fa-solid fa-cart-shopping" style="margin: 4px;"></i>Cart
                         </a>
                     </div>

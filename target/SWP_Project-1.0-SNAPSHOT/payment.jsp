@@ -66,7 +66,7 @@
         <p>Vui lòng quét mã QR bên dưới bằng ứng dụng Sacombank hoặc app hỗ trợ VietQR:</p>
         <img src="${qrPath}" alt="Sacombank QR Code">
         <br><br>
-        <a href="index.jsp" class="btn">Quay lại</a>
+        <a href="/OrderController/OrderManagement" class="btn">Quay lại</a>
         <a href="confirmPayment.jsp" class="btn success">Xác nhận thanh toán thành công</a>
     </div>
 </body>

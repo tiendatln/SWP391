@@ -93,35 +93,47 @@
             <h3>Manage Orders</h3>
         </div>
         <hr />
+        <table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Order ID</th>
+            <th>Image</th>
+            <th>Quantity</th>
+            <th>Total Price</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
         <c:choose>
             <c:when test="${empty sessionScope.orderList}">
-                <p class="text-center">No orders found</p>
+                <tr>
+                    <td colspan="7" class="text-center">No orders found</td>
+                </tr>
             </c:when>
             <c:otherwise>
-                <div class="order-container">
-                    <c:forEach var="order" items="${sessionScope.orderList}" varStatus="status">
-                        <form action="/generateQR" method="post" class="order-item">
+                <c:forEach var="order" items="${sessionScope.orderList}">
+                    <tr>
+                        <form action="/OrderController/UpdateOrder" method="post">
                             <input type="hidden" name="orderID" value="${order.orderTotal.orderID}" />
-                            <div class="mb-2"><strong>Order ID:</strong> ${order.orderTotal.orderID}</div>
-                            <div class="mb-2">
-                                <strong>Image:</strong>
+                            <td>${order.orderTotal.orderID}</td>
+                            <td>
                                 <img src="/link/img/${order.product.proImg}" width="50" height="50" class="rounded" />
-                            </div>
-                            <div class="mb-2"><strong>Quantity:</strong> ${order.quantity}</div>
-                            <div class="mb-2"><strong>Total Price:</strong> ${order.orderTotal.totalPrice} đ</div>
-                            <div class="mb-2"><strong>Date:</strong> ${order.orderTotal.date}</div>
-                            <div class="mb-2">
-                                <strong>Status:</strong>
+                            </td>
+                            <td>${order.quantity}</td>
+                            <td>${order.orderTotal.totalPrice} đ</td>
+                            <td>${order.orderTotal.date}</td>
+                            <td>
                                 <c:choose>
                                     <c:when test="${order.orderTotal.orderState == 0}">
                                         <span class="badge bg-warning">Pending</span>
                                         <div>
                                             <input type="radio" id="statusCancelled_${order.orderTotal.orderID}" name="status" value="2">
-                                            <label for="statusCancelled_${order.orderTotal.orderID}">Cancelled</label>
+                                            <label for="statusCancelled_${order.orderTotal.orderID}">Cancel</label>
                                             <input type="radio" id="statusCompleted_${order.orderTotal.orderID}" name="status" value="1">
-                                            <label for="statusCompleted_${order.orderTotal.orderID}">Completed</label>
+                                            <label for="statusCompleted_${order.orderTotal.orderID}">Complete</label>
                                         </div>
-                                        <button type="submit" class="btn btn-primary mt-3">Update Order</button>
                                     </c:when>
                                     <c:when test="${order.orderTotal.orderState == 1}">
                                         <span class="badge bg-success">Completed</span>
@@ -133,16 +145,19 @@
                                         <span class="badge bg-secondary">Unknown</span>
                                     </c:otherwise>
                                 </c:choose>
-                            </div>
-                            <div>
-                                <a href="/OrderController/OrderDetail/${order.orderTotal.orderID}" class="btn btn-success">View</a>
-                            </div>
-                            
+                            </td>
+                            <td>
+                                <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                                <a href="/OrderController/OrderDetail/${order.orderTotal.orderID}" class="btn btn-success btn-sm">View</a>
+                            </td>
                         </form>
-                    </c:forEach>
-                </div>
+                    </tr>
+                </c:forEach>
             </c:otherwise>
         </c:choose>
+    </tbody>
+</table>
+
     </div>
 </div>
 

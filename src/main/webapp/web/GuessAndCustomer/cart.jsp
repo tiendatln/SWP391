@@ -20,7 +20,7 @@
 
 </head>
 <body>
-    <jsp:include page="../Header.jsp" />
+    <jsp:include page="../../Header.jsp" />
     <div class="container mt-4">
         <h2>Giỏ hàng của bạn</h2>
         
@@ -80,7 +80,7 @@
             </c:otherwise>
         </c:choose>
     </div>
-    <div ><jsp:include page="../Footer.jsp" />
+    <div ><jsp:include page="../../Footer.jsp" />
 </div>
 </body>
 </html>
