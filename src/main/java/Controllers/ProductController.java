@@ -4,7 +4,10 @@
  */
 package Controllers;
 
+import DAOs.ProductDAO;
 import Model.OrderTotal;
+import DB.DBConnection;
+import Model.Product;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
@@ -12,8 +15,12 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -66,7 +73,21 @@ public class ProductController extends HttpServlet {
         } else if(path.endsWith("/DetailProductCustomer")){
             request.getRequestDispatcher("/web/GuessAndCustomer/DetailProduct.jsp").forward(request, response);
         } else if (path.endsWith("/ProductManagement")){
+            Connection conn;
+            try {
+                conn = DBConnection.connect(); // Đảm bảo có class DatabaseConnection
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(ProductController.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (SQLException ex) {
+                Logger.getLogger(ProductController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        ProductDAO productDAO = new ProductDAO();
+        List<Product> productList = productDAO.getAllProducts();
+        
+        request.setAttribute("productList", productList);
             request.getRequestDispatcher("/web/Staff/productManagement.jsp").forward(request, response);
+        }else if (path.endsWith("/UpdateQuantity")){
+            request.getRequestDispatcher("/web/Staff/updateQuantity.jsp").forward(request, response);
         }
     }
 

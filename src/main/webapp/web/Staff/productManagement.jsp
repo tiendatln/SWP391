@@ -4,10 +4,20 @@
     Author     : Nguyễn Trường Vinh _ vinhntca181278
 --%>
 
+<%@page import="java.util.List"%>
+<%@page import="Model.Product"%>
+<%@page import="DAOs.ProductDAO"%>
+<%@page import="DB.DBConnection"%>
+<%@page import="java.sql.Connection"%>
 <%@page contentType="text/html" pageEncoding="UTF-8" %>
     <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
         <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-
+<%
+    Connection conn = DBConnection.connect();
+    ProductDAO productDAO = new ProductDAO();
+    List<Product> productList = productDAO.getAllProducts();
+    request.setAttribute("productList", productList);
+%>
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -64,51 +74,87 @@
         <%@include file="../../AdminLayout.jsp" %>
         <div class="content container-fluid px-4">
             <h2>Quản Lý Sản Phẩm</h2>
-            <a href="/ProductController/UpdateQuantity" class="btn btn-success mb-3" >Thêm Sản Phẩm</a>
+            <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addProductModal">Thêm Sản Phẩm</button>
+
             <input type="text" class="form-control mb-3" placeholder="Tìm kiếm sản phẩm...">
             <table class="table table-bordered">
-                <thead>
+            <thead>
+                <tr>
+                    <th>Hình ảnh</th>
+                    <th>Tên Sản Phẩm</th>
+                    <th>Giá</th>
+                    <th>Số Lượng</th>
+                    <th>Trạng Thái</th>
+                    <th>Hành Động</th>
+                </tr>
+            </thead>
+            <tbody>
+                <c:forEach var="product" items="${productList}">
                     <tr>
-                        <th>Hình ảnh</th>
-                        <th>Tên Sản Phẩm</th>
-                        <th>Giá</th>
-                        <th>Giá Cũ</th>
-                        <th>Giảm Giá</th>
-                        <th>Số Lượng</th>
-                        <th>Trạng Thái</th>
-                        <th>Hành Động</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><img src="samsung-s25.jpg" alt="Samsung Galaxy S25 5G" width="50"></td>
-                        <td>Samsung Galaxy S25 5G</td>
-                        <td class="price">18.990.000đ</td>
-                        <td class="old-price">22.990.000đ</td>
-                        <td class="discount">-17%</td>
-                        <td>25</td>
-                        <td>Đang Bán</td>
+                        <td><img src="${product.proImg}" alt="${product.productName}" width="50"></td>
+                        <td>${product.productName}</td>
+                        <td class="price"><fmt:formatNumber value="${product.proPrice}" type="currency" currencySymbol="đ"/></td>
+                        <td>${product.proQuantity}</td>
                         <td>
-                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editProductModal">Sửa</button>
-                            <button class="btn btn-danger btn-sm">Xóa</button>
+                            <c:choose>
+                                <c:when test="${product.proState == 1}">Đang Bán</c:when>
+                                <c:otherwise>Ngừng Kinh Doanh</c:otherwise>
+                            </c:choose>
+                        </td>
+                        <td>
+                            <a href="editProduct.jsp?id=${product.productID}" class="btn btn-warning btn-sm">Sửa</a>
+                            <a href="deleteProduct?id=${product.productID}" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc chắn muốn xóa?')">Xóa</a>
+                        </td>
+                    </tr>
+                </c:forEach>
+            </tbody>
+        </table>
 
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><img src="iphone-16-pro-max.jpg" alt="iPhone 16 Pro Max" width="50"></td>
-                        <td>iPhone 16 Pro Max</td>
-                        <td class="price">32.890.000đ</td>
-                        <td class="old-price">34.990.000đ</td>
-                        <td class="discount">-6%</td>
-                        <td>15</td>
-                        <td>Ngừng Kinh Doanh</td>
-                        <td>
-                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editProductModal">Sửa</button>
-                            <button class="btn btn-danger btn-sm">Xóa</button>                        
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addProductModalLabel">Thêm Sản Phẩm</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form>
+                                <div class="mb-3">
+                                    <label class="form-label">Tên sản phẩm</label>
+                                    <input type="text" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Giá</label>
+                                    <input type="number" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Giá cũ</label>
+                                    <input type="number" class="form-control">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Giảm giá (%)</label>
+                                    <input type="number" class="form-control">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Số lượng</label>
+                                    <input type="number" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Trạng thái</label>
+                                    <select class="form-control">
+                                        <option>Đang Bán</option>
+                                        <option>Ngừng Kinh Doanh</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Hình ảnh</label>
+                                    <input type="file" class="form-control">
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
                 <div class="modal-dialog">

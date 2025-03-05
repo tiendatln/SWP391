@@ -83,10 +83,10 @@
                 <%-- Dữ liệu danh sách laptop --%>
                 <%
                     String[][] laptops = {
-                        {"Asus Vivobook Go 15", "12.590.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
-                        {"HP 15s i3", "13.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
-                        {"Dell Inspiron 15", "16.490.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
-                        {"Acer Aspire 3", "10.590.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
+                        {"Asus Vivobook Go 15", "12.590.000₫", "/link/img/cat.jpg"},
+                        {"HP 15s i3", "13.690.000₫", "/link/img/cat.jpg"},
+                        {"Dell Inspiron 15", "16.490.000₫", "/link/img/cat.jpg"},
+                        {"Acer Aspire 3", "10.590.000₫", "/link/img/cat.jpg"},
                         {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
                         {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},
                         {"Lenovo Gaming LQO", "17.690.000₫", "/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg"},

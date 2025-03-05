@@ -71,18 +71,18 @@ public class LoginController extends HttpServlet {
             request.getRequestDispatcher("/web/register.jsp").forward(request, response);
 
         } else if (path.endsWith("/LoginController/Logout")) {
-Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("user")) {
-                    cookie.setMaxAge(0); // Đặt thời gian sống của cookie về 0
-                    cookie.setValue(""); // Xóa giá trị của cookie
-                    cookie.setPath("/"); // Đảm bảo nó áp dụng cho toàn bộ ứng dụng
-                    response.addCookie(cookie); // Cập nhật cookie trong response
-                    break;
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if (cookie.getName().equals("user")) {
+                        cookie.setMaxAge(0); // Đặt thời gian sống của cookie về 0
+                        cookie.setValue(""); // Xóa giá trị của cookie
+                        cookie.setPath("/"); // Đảm bảo nó áp dụng cho toàn bộ ứng dụng
+                        response.addCookie(cookie); // Cập nhật cookie trong response
+                        break;
+                    }
                 }
             }
-        }
             request.getRequestDispatcher("/web/index.jsp").forward(request, response);
         }
     }
@@ -107,7 +107,7 @@ Cookie[] cookies = request.getCookies();
             AccountDAO userDAO = new AccountDAO();
             Account user = userDAO.validateUser(username, password);
 
-            Cookie userCookie = new Cookie("user", user.getUsername()+"|"+user.getRole());
+            Cookie userCookie = new Cookie("user", user.getUsername() + "|" + user.getRole());
             userCookie.setMaxAge(60 * 60 * 24); // Cookie lưu trong 1 ngày
             userCookie.setSecure(false);   // Không yêu cầu HTTPS (chạy trên localhost)
             userCookie.setHttpOnly(false); // Cho phép JavaScript đọc cookie
