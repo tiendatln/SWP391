@@ -27,5 +27,4 @@ public class DBConnection {
         Connection conn = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName=SWP391;user=sa;password=123;encrypt=true;trustServerCertificate=true;");
         return conn;
     }
-  
 }

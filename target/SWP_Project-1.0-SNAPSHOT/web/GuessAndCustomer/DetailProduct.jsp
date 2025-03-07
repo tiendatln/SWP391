@@ -14,7 +14,7 @@
             .main{
                 margin-top: 30px;
             }
-            
+
             .card {
                 margin-bottom: 30px;
                 background-color: #fff;
@@ -47,50 +47,50 @@
                 width: 100%;
             }
             .user-info {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        .user-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: 2px solid #007BFF;
-        }
-        .user-name {
-            margin-left: 10px;
-            font-size: 18px;
-            font-weight: bold;
-        }
-        .rating {
-            display: flex;
-        }
-        .star {
-            font-size: 20px;
-            color: #ccc;
-            cursor: pointer;
-        }
-        .star.selected {
-            color: gold;
-        }
-        .comment-box {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-        }
-        .reply-box {
-            margin-left: 40px;
-        }
-        .border-comment{
-            margin-top: 30px;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
-            width: 80%;
-            max-width: 800px;
-        }
+                display: flex;
+                align-items: center;
+                margin-bottom: 15px;
+            }
+            .user-avatar {
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                border: 2px solid #007BFF;
+            }
+            .user-name {
+                margin-left: 10px;
+                font-size: 18px;
+                font-weight: bold;
+            }
+            .rating {
+                display: flex;
+            }
+            .star {
+                font-size: 20px;
+                color: #ccc;
+                cursor: pointer;
+            }
+            .star.selected {
+                color: gold;
+            }
+            .comment-box {
+                background: #f8f9fa;
+                padding: 10px;
+                border-radius: 5px;
+                margin-bottom: 10px;
+            }
+            .reply-box {
+                margin-left: 40px;
+            }
+            .border-comment{
+                margin-top: 30px;
+                background: white;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+                width: 80%;
+                max-width: 800px;
+            }
         </style>
     </head>
     <body>
@@ -111,9 +111,50 @@
                             <h2 class="mt-5">
                                 $153<small class="text-success">(36%off)</small>
                             </h2>
-                            <button class="btn btn-dark btn-rounded mr-1" data-toggle="tooltip" title="" data-original-title="Add to cart">
-                                <i class="fa fa-shopping-cart"></i>
-                            </button>
+                            
+                            <!--Thêm san phẩm vào giỏ hàng-->
+                            <form id="addToCartForm">
+                                <input type="hidden" name="action" value="add">
+                                <input type="hidden" name="productId" value="${product.productID}">
+
+                                <div class="mb-3">
+                                    <label for="quantity" class="form-label">Số lượng:</label>
+                                    <input type="number" id="quantity" name="quantity" value="1" min="1" class="form-control w-25">
+                                </div>
+
+                                <button type="submit" class="btn btn-success"><i class="fa fa-shopping-cart"></i> Thêm vào giỏ hàng</button>
+                            </form>
+
+                            <div id="cartMessage" class="alert alert-success mt-3 d-none"></div>
+
+                            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+                            <script>
+                                $(document).ready(function () {
+                                    $("#addToCartForm").submit(function (event) {
+                                        event.preventDefault(); // Ngăn reload trang
+
+                                        $.ajax({
+                                            type: "POST",
+                                            url: "CartController",
+                                            data: $(this).serialize(),
+                                            dataType: "json",
+                                            success: function (response) {
+                                                if (response.status === "success") {
+                                                    $("#cartMessage").removeClass("d-none").text(response.message);
+                                                    setTimeout(function () {
+                                                        $("#cartMessage").addClass("d-none"); // Ẩn sau 3 giây
+                                                    }, 3000);
+                                                }
+                                            },
+                                            error: function () {
+                                                alert("Có lỗi xảy ra, vui lòng thử lại!");
+                                            }
+                                        });
+                                    });
+                                });
+                            </script>
+
+
                             <button class="btn btn-primary btn-rounded">Buy Now</button>
                             <h3 class="box-title mt-5">Key Highlights</h3>
                             <ul class="list-unstyled">

@@ -3,7 +3,30 @@
     Created on : Feb 17, 2025, 12:39:58 AM
     Author     : tiend
 --%>
+<%
+    Cookie[] cookies = request.getCookies();
+    String userName = null;
+    String userRole = null;
+   
 
+    if (cookies != null) {
+        for (Cookie cookie : cookies) {
+            if ("user".equals(cookie.getName())) {
+                String[] values = cookie.getValue().split("\\|");
+                if (values.length == 2) {  // Kiểm tra xem có đủ phần tử không
+                    userName = values[0];
+                    userRole = values[1];
+
+                    if (!userName.isEmpty() && "customer".equals(userRole)) {
+                      response.sendRedirect("/web/index.jsp");  
+                    } else if ("admin".equals(userRole)) {
+                        
+                    }
+                }
+            }
+        }
+    }
+%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html>
@@ -59,6 +82,7 @@
         <div class="sidebar">
             <div class="dashboard">Dashboard</div>
             <ul>
+                <li><a href="/AccountController/AccountList" class="btn">Account</a></li>
                 <li><a href="/OrderController/OrderManagement" class="btn">Order</a></li>
                 <li><a href="/ProductController/ProductManagement" class="btn">Products</a></li>
                 <li><a href="/VoucherController/Voucher" class="btn">Voucher</a></li>

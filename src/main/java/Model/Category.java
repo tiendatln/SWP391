@@ -21,6 +21,8 @@ public class Category {
 
     public Category() {
     }
+    public Category(int aInt, String string) {
+        }
 
     public int getCategoryID() {
         return categoryID;

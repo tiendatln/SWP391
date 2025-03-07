@@ -3,11 +3,11 @@
 <%@taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
 
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Chi tiết đơn hàng</title>
+        <title>Order Details</title>
 
         <!-- Bootstrap CSS -->
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -87,56 +87,48 @@
         <div class="container">
             <c:forEach var="order" items="${orderDetails}">
                 <h4 class="text-center">
-                    Chi tiết đơn hàng #${order.product.productName}
+                    Order Details #${order.product.productName}
                     <span class="order-status
                           <c:choose>
-                              <c:when test="${order.orderTotal.orderState == 1}"> status-pending">Đang xử lý</c:when>
-                              <c:when test="${order.orderTotal.orderState == 2}"> status-completed">Đã nhận hàng</c:when>
-                              <c:otherwise> status-cancelled">Đã hủy</c:otherwise>
+                              <c:when test="${order.orderTotal.orderState == 1}"> status-pending">Processing</c:when>
+                              <c:when test="${order.orderTotal.orderState == 2}"> status-completed">Delivered</c:when>
+                              <c:otherwise> status-cancelled">Cancelled</c:otherwise>
                           </c:choose>
                     </span>
                 </h4>
 
-                <p class="text-muted">Đặt lúc: <fmt:formatDate value="${order.orderTotal.date}" pattern="HH:mm dd/MM/yyyy"/></p>
+                <p class="text-muted">Order Time: <fmt:formatDate value="${order.orderTotal.date}" pattern="HH:mm dd/MM/yyyy"/></p>
 
-                <!-- Thông tin nhận hàng -->
+                <!-- Shipping Information -->
                 <div class="info-box">
-                    <h6>📦 THÔNG TIN NHẬN HÀNG</h6>
-                    <p><strong>Người nhận:</strong> ${order.orderTotal.account.username} - ${order.orderTotal.phoneNumber}</p>
-                    <p><strong>Nhận tại:</strong> ${order.orderTotal.address}</p>
-                    <p><strong>Nhận lúc:</strong> Trước <fmt:formatDate value="${order.orderTotal.date}" pattern="HH:mm"/> - <fmt:formatDate value="${order.orderTotal.date}" pattern="EEEE (dd/MM)"/></p>
+                    <h6>📦 SHIPPING INFORMATION</h6>
+                    <p><strong>Recipient:</strong> ${order.orderTotal.account.username} - ${order.orderTotal.phoneNumber}</p>
+                    <p><strong>Address:</strong> ${order.orderTotal.address}</p>
                 </div>
 
-                <!-- Hình thức thanh toán -->
+                <!-- Product Information -->
                 <div class="info-box">
-                    <h6>💳 HÌNH THỨC THANH TOÁN</h6>
-                    <p>Thanh toán khi nhận hàng</p>
-                </div>
-
-                <!-- Thông tin sản phẩm -->
-                <div class="info-box">
-                    <h6>🛒 THÔNG TIN SẢN PHẨM</h6>
+                    <h6>🛒 PRODUCT INFORMATION</h6>
                     <div class="d-flex">
-                        <img src="images/${order.product.proImg}" alt="Sản phẩm" class="product-img me-3">
+                        <img src="images/${order.product.proImg}" alt="Product" class="product-img me-3">
                         <div>
                             <p><strong>${order.product.productName}</strong></p>
-                            <p class="text-success">📅 Bảo hành: Còn BH đến <fmt:formatDate value="${order.orderTotal.date}" pattern="dd/MM/yyyy"/></p>
-                            <p>Số lượng: ${order.quantity}</p>
+                            <p>Quantity: ${order.quantity}</p>
                             <p><del class="text-muted"><fmt:formatNumber value="${order.orderPrice}" type="currency" currencySymbol="đ"/></del> 
                                 <span class="text-danger"><fmt:formatNumber value="${order.orderPrice}" type="currency" currencySymbol="đ"/></span></p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Tổng tiền -->
+                <!-- Total Price -->
                 <div class="info-box">
-                    <h6>💰 TỔNG TIỀN</h6>
-                    <p>Tạm tính: <fmt:formatNumber value="${order.orderTotal.totalPrice}" type="currency" currencySymbol="đ"/></p>
-                    <p><strong class="price">Số tiền đã thanh toán: <fmt:formatNumber value="${order.orderTotal.totalPrice}" type="currency" currencySymbol="đ"/></strong></p>
+                    <h6>💰 TOTAL PRICE</h6>
+                    <p>Subtotal: <fmt:formatNumber value="${order.orderTotal.totalPrice}" type="currency" currencySymbol="đ"/></p>
+                    <p><strong class="price">Amount Paid: <fmt:formatNumber value="${order.orderTotal.totalPrice}" type="currency" currencySymbol="đ"/></strong></p>
                 </div>
             </c:forEach>
-            <!-- Nút trở về -->
-            <a href="orderList.jsp" class="btn btn-custom">VỀ TRANG DANH SÁCH ĐƠN HÀNG</a>
+            <!-- Back Button -->
+            <a href="orderList.jsp" class="btn btn-custom">BACK TO ORDER LIST</a>
 
         </div>
 
