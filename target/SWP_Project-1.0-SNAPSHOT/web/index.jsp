@@ -92,7 +92,7 @@
 
                     ProductDAO productDAO = new ProductDAO();
 
-                    List<Product> productList = productDAO.getAllProducts();
+                    List<Product> productList = productDAO.getAllActiveProducts();
 
                     int itemsPerPage = 20; // Số laptop hiển thị trên mỗi trang
                     int totalItems = productList.size();
@@ -113,11 +113,14 @@
                 %>
 
                 <div class="col-md-3 mb-3">
-                    <a class="item no-underline" href="/ProductController/DetailProductCustomer/<%= product.getProductID()%>">                    
+                    <a class="item no-underline" href="/ProductController/DetailProductCustomer?id=<%= product.getProductID()%>">                    
                         <div class="card">
                             <div class="img">
-                                <img src="<%= product.getProImg()%>" class="card-img img" style="border-radius: 20px;" alt="<%= product.getProductName()%>">
+                                <img src="/link/img/<%= product.getProImg()%>" class="card-img img" 
+                                     style="width: 250px; height: 200px; object-fit: cover;" 
+                                     alt="<%= product.getProductName()%>">
                             </div>
+
                             <div class="card-body">
                                 <h5 class="card-title"><%= product.getProductName()%></h5>
                                 <p class="card-text text-danger fw-bold">

@@ -1,3 +1,12 @@
+<%@page import="Model.Product"%>
+<%@page import="Model.Category"%>
+<%@page import="java.util.List"%>
+<%@page import="DAOs.CategoryDAO"%>
+<%@page import="DAOs.ProductDAO"%>
+<%@page import="DB.DBConnection"%>
+<%@page import="java.sql.Connection"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
 <%@ page contentType="text/html; charset=UTF-8" language="java" %>
 <html lang="en">
@@ -6,6 +15,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Product Page</title>
         <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+        <!-- CSS JS bootstrap 5.0-->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
         <style>
             body{
                 background-color: #edf1f5;
@@ -14,7 +27,7 @@
             .main{
                 margin-top: 30px;
             }
-            
+
             .card {
                 margin-bottom: 30px;
                 background-color: #fff;
@@ -47,70 +60,72 @@
                 width: 100%;
             }
             .user-info {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        .user-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: 2px solid #007BFF;
-        }
-        .user-name {
-            margin-left: 10px;
-            font-size: 18px;
-            font-weight: bold;
-        }
-        .rating {
-            display: flex;
-        }
-        .star {
-            font-size: 20px;
-            color: #ccc;
-            cursor: pointer;
-        }
-        .star.selected {
-            color: gold;
-        }
-        .comment-box {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-        }
-        .reply-box {
-            margin-left: 40px;
-        }
-        .border-comment{
-            margin-top: 30px;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
-            width: 80%;
-            max-width: 800px;
-        }
+                display: flex;
+                align-items: center;
+                margin-bottom: 15px;
+            }
+            .user-avatar {
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                border: 2px solid #007BFF;
+            }
+            .user-name {
+                margin-left: 10px;
+                font-size: 18px;
+                font-weight: bold;
+            }
+            .rating {
+                display: flex;
+            }
+            .star {
+                font-size: 20px;
+                color: #ccc;
+                cursor: pointer;
+            }
+            .star.selected {
+                color: gold;
+            }
+            .comment-box {
+                background: #f8f9fa;
+                padding: 10px;
+                border-radius: 5px;
+                margin-bottom: 10px;
+            }
+            .reply-box {
+                margin-left: 40px;
+            }
+            .border-comment{
+                margin-top: 30px;
+                background: white;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+                width: 80%;
+                max-width: 800px;
+            }
         </style>
     </head>
     <body>
         <%@include file="../../Header.jsp" %>
 
+
         <div class="container main">
             <div class="card">
                 <div class="card-body">
-                    <h3 class="card-title">Rounded Chair</h3>
-                    <h6 class="card-subtitle">globe type chair for rest</h6>
+                    <h3 class="card-title">${product.productName}</h3>
+
                     <div class="row">
                         <div class="col-lg-5 col-md-5 col-sm-6 product-img">
-                            <div class="white-box text-center"><img src="/link/img/918316ff74d2ab3a59bc3ec31dae287e.jpg" class="img-responsive"></div>
+                            <div class="white-box text-center"><img src="/link/img/${product.proImg}" alt="${product.productName}" class="img-responsive"></div>
                         </div>
                         <div class="col-lg-7 col-md-7 col-sm-6">
                             <h4 class="box-title mt-5">Product description</h4>
-                            <p>Lorem Ipsum available,but the majority have suffered alteration in some form,by injected humour,or randomised words which don't look even slightly believable.but the majority have suffered alteration in some form,by injected humour</p>
-                            <h2 class="mt-5">
-                                $153<small class="text-success">(36%off)</small>
+                            <p>${product.proDes}</p>
+                            <h2 class="mt-5 price">
+                                <fmt:formatNumber value="${product.proPrice}" type="currency" currencySymbol="đ"/>
                             </h2>
+
                             <button class="btn btn-dark btn-rounded mr-1" data-toggle="tooltip" title="" data-original-title="Add to cart">
                                 <i class="fa fa-shopping-cart"></i>
                             </button>

@@ -16,25 +16,18 @@
 <%@page contentType="text/html" pageEncoding="UTF-8" %>
     <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
         <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<%
-    Connection conn = DBConnection.connect();
 
-    ProductDAO productDAO = new ProductDAO();
-    CategoryDAO categoryDAO = new CategoryDAO();
-
-    List<Product> productList = productDAO.getAllProducts();
-    List<Category> category = categoryDAO.getAllCategories(); // Lấy tất cả danh mục
-
-    request.setAttribute("category", category);
-    request.setAttribute("productList", productList);
-%>
 <!DOCTYPE html>
 <html lang="vi">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Quản Lý Sản Phẩm</title>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+        <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">       
+        <!-- CSS JS bootstrap 5.0-->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
         <style>
             .container{
                 min-height: 100vh;
@@ -99,9 +92,10 @@
                     </tr>
                 </thead>
                 <tbody>
+                    
                     <c:forEach var="product" items="${productList}">
                         <tr>
-                            <td><img src="${product.proImg}" alt="${product.productName}" width="50"></td>
+                            <td><img src="/link/img/${product.proImg}" alt="${product.productName}" width="50"></td>
                             <td>${product.productName}</td>
                             <td class="price"><fmt:formatNumber value="${product.proPrice}" type="currency" currencySymbol="đ"/></td>
                             <td>${product.proQuantity}</td>
@@ -112,119 +106,219 @@
                                 </c:choose>
                             </td>
                             <td>
-                                <a href="editProduct.jsp?id=${product.productID}" class="btn btn-warning btn-sm">Sửa</a>
-                                <a href="deleteProduct?id=${product.productID}" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc chắn muốn xóa?')">Xóa</a>
+                                <button class="btn btn-warning btn-sm"type="button" data-bs-toggle="modal" data-bs-target="#editProductModal${product.productID}" style="color: black;" >Edit</button>
+                                <button class="btn btn-outline-danger btn-sm"" type="button" style="color: black" onclick="confirmDelete('${product.productID}')"><i class="fa fa-trash"></i>
+                                </button>
                             </td>
                         </tr>
                     </c:forEach>
                 </tbody>
             </table>
-
-            <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
+            <!--             add new product-->
+            <div class="modal fade" role="dialog" tabindex="-1" id="addProductModal" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+                <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="addProductModalLabel">Thêm Sản Phẩm</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <h5 class="modal-title">Add Product</h5>
                         </div>
                         <div class="modal-body">
-                            <form action="/ProductController/ProductManagement" method="POST" enctype="multipart/form-data">
-                                <input type="hidden" name="action" value="addProduct">
+                            <div class="py-1">
+                                <form class="form" action="/ProductController?action=addProduct" method="post" enctype="multipart/form-data">
 
-                                <div class="mb-3">
-                                    <label class="form-label">Tên sản phẩm</label>
-                                    <input type="text" class="form-control" name="productName" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Giá</label>
-                                    <input type="number" class="form-control" name="proPrice" step="0.01" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Mô tả</label>
-                                    <textarea class="form-control" name="proDescription" rows="3"></textarea>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Danh mục</label>
-                                    <select class="form-control" name="proCategory" id="categorySelect" required>
-                                        <option value="">-- Chọn danh mục --</option>
-                                        <c:forEach var="category" items="${category}">
-                                            <option value="${category.categoryID}">${category.type}</option>
-                                        </c:forEach>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Số lượng</label>
-                                    <input type="number" class="form-control" name="proQuantity" min="0" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Trạng thái</label>
-                                    <select class="form-control" name="proState">
-                                        <option value="1">Đang Bán</option>
-                                        <option value="0">Ngừng Kinh Doanh</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Hình ảnh</label>
-                                    <input type="file" class="form-control" name="proImg" accept="image/*" required>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                    <button type="submit" class="btn btn-primary">Lưu</button>
-                                </div>
-                            </form>
 
+
+                                    <div class="row">
+                                        <div class="col">
+                                            <div class="row">
+                                                <div class="form-group">
+                                                    <label>Product Name</label>
+                                                    <input class="form-control" type="text" name="productName" placeholder="Enter product name" required>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="form-group">
+                                                    <label>Quantity</label>
+                                                    <input class="form-control" type="number" name="proQuantity" min="0" placeholder="Enter quantity" required>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="form-group">
+                                                    <label>Price</label>
+                                                    <input class="form-control" type="number" step="0.01" name="proPrice" min="0" placeholder="Enter price" required>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col mb-3">
+                                                    <div class="form-group">
+                                                        <label>Description</label>
+                                                        <textarea class="form-control" rows="4" name="proDescription" placeholder="Enter product description"></textarea>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="form-group">
+                                                    <label>Category</label>
+                                                    <select class="form-control" name="proCategory" required>
+                                                        <option value="">Select category</option>
+                                                        <c:forEach var="category" items="${category}">
+                                                            <option value="${category.categoryID}">${category.type}</option>
+                                                        </c:forEach>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="form-group">
+                                                    <label>State</label>
+                                                    <select class="form-control" name="proState" required>
+                                                        <option value="1">Active</option>
+                                                        <option value="0">Inactive</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-12 col-sm-6 mb-3">
+                                                    <div class="mb-2"><b>Upload Product Image</b></div>
+                                                    <div id="myfileupload">
+                                                        <input type="file" id="proImg" name="proImg" accept="image/*" onchange="previewImage(event)">
+                                                        <img id="imagePreview" src="#" alt="Image Preview" style="display: none; width: 200px; margin-top: 10px;">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col d-flex justify-content-end">
+                                                    <button class="btn btn-primary" type="submit">Add Product</button>
+                                                    <a class="btn btn-danger" data-bs-dismiss="modal" href="#" style="margin-left: 15px;">Cancel</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>    
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+            <!-- jQuery and Bootstrap JS -->
+            <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+            <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+            <!-- Edit product -->
+            <c:forEach items="${productList}" var="product">
+                <div class="modal fade" role="dialog" tabindex="-1" id="editProductModal${product.productID}" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+                    <div class="modal-dialog modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Edit Product</h5>
+                            </div>
+                            <div class="modal-body">
+                                <div class="py-1">
+                                    <form class="form" action="/ProductController?action=editProduct" method="post" enctype="multipart/form-data">
 
 
-            <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="editProductModalLabel">Chỉnh Sửa Sản Phẩm</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form>
-                                <div class="mb-3">
-                                    <label class="form-label">Tên sản phẩm</label>
-                                    <input type="text" class="form-control" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Giá</label>
-                                    <input type="number" class="form-control" required>
-                                </div>
 
-                                <div class="mb-3">
-                                    <label class="form-label">Mô tả</label>
-                                    <input type="number" class="form-control">
+                                        <div class="row">
+                                            <div class="col">
+                                                <div class="row">
+
+                                                    <div class="form-group">
+                                                        <label>Hotel ID</label>
+                                                        <input class="form-control" type="text" name="productID" value="${product.productID}" readonly style="background: #f1f1f1">
+                                                    </div>
+
+                                                </div>
+                                                <div class="row">
+                                                    <div class="form-group">
+                                                        <label>Product Name</label>
+                                                        <input class="form-control" type="text" name="productName" placeholder="Enter product name" value="${product.productName}" required>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="form-group">
+                                                        <label>Quantity</label>
+                                                        <input class="form-control" type="number" name="proQuantity" min="0" placeholder="Enter quantity" value="${product.proQuantity}" required>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="form-group">
+                                                        <label>Price</label>
+                                                        <input class="form-control" type="number" step="0.01" name="proPrice" min="0" placeholder="Enter price" value="${product.proPrice}" required>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="col mb-3">
+                                                        <div class="form-group">
+                                                            <label>Description</label>
+                                                            <textarea class="form-control" rows="4" name="proDescription" placeholder="Enter product description" >${product.proDes}</textarea>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="form-group">
+                                                        <label>Category</label>
+                                                        <select class="form-control" name="proCategory" required>
+                                                            <option value="">Select category</option>
+                                                            <c:forEach var="category" items="${category}">
+                                                                <option value="${category.categoryID}">${category.type}</option>
+                                                            </c:forEach>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="form-group">
+                                                        <label>State</label>
+                                                        <select class="form-control" name="proState" value="${product.proState}" required>
+                                                            <option value="1">Active</option>
+                                                            <option value="0">Inactive</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="col-12 col-sm-6 mb-3">
+                                                        <div class="mb-2"><b>Upload Product Image</b></div>
+                                                        <div id="myfileupload">
+                                                            <input type="file" id="proImg" name="proImg" accept="image/*" onchange="previewImage(event)">
+                                                            <img id="imagePreview" src="#" alt="Image Preview" style="display: none; width: 200px; margin-top: 10px;">
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="col d-flex justify-content-end">
+                                                        <button class="btn btn-primary" type="submit">Save Change</button>
+                                                        <a class="btn btn-danger" data-bs-dismiss="modal" href="#" style="margin-left: 15px;">Cancel</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>    
+                                    </form>
                                 </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Danh mục</label>
-                                    <input type="number" class="form-control" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Trạng thái</label>
-                                    <select class="form-control">
-                                        <option>Đang Bán</option>
-                                        <option>Ngừng Kinh Doanh</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Hình ảnh</label>
-                                    <input type="file" class="form-control">
-                                </div>
-                            </form>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                            <button type="button" class="btn btn-primary">Lưu Thay Đổi</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </c:forEach>
+            <script>
+    function confirmDelete(productID) {
+        if (confirm("Bạn có chắc chắn xóa vĩnh viễn sản phẩm này?")) {
+            window.location.href = "/ProductController?action=deleteProduct&productID=" + productID;
+        }
+    }
+</script>
+
         </div>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

@@ -97,7 +97,35 @@ public class ProductDAO {
                     rs.getInt("productID"),
                     rs.getString("productName"),
                     rs.getInt("proQuantity"),
-                    rs.getInt("proPrice"),
+                    rs.getLong("proPrice"),
+                    rs.getByte("proState"),
+                    rs.getString("proImg"),
+                    rs.getString("proDes"),
+                    category
+                );
+                products.add(product);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return products;
+    }
+    
+     public List<Product> getAllActiveProducts() {
+        List<Product> products = new ArrayList<>();
+        CategoryDAO categoryDAO = new CategoryDAO();
+      
+
+        String sql = "SELECT * FROM product where proState=1";
+        try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                Category category;
+                category = categoryDAO.getCategoryById(rs.getInt("categoryID"));
+                Product product = new Product(
+                    rs.getInt("productID"),
+                    rs.getString("productName"),
+                    rs.getInt("proQuantity"),
+                    rs.getLong("proPrice"),
                     rs.getByte("proState"),
                     rs.getString("proImg"),
                     rs.getString("proDes"),
@@ -113,28 +141,26 @@ public class ProductDAO {
     
     public Product getProductById(int id) {
     Product product = null;
-    CategoryDAO categoryDAO = new CategoryDAO();
-    String sql = "SELECT * FROM Products WHERE productID = ?";
+    String sql = "SELECT * FROM product WHERE productID = ?";
     
-    try (Connection conn = DBConnection.connect();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
         ps.setInt(1, id);
-        ResultSet rs = ps.executeQuery();
         
-        if (rs.next()) {
-            Category category;
-                category = categoryDAO.getCategoryById(rs.getInt("categoryID"));
-            product = new Product(
-                rs.getInt("productID"),
-                rs.getString("productName"),
-                rs.getInt("proQuantity"),
-                rs.getLong("proPrice"),
-                rs.getByte("proState"),
-                rs.getString("proImg"),
-                rs.getString("proDescription"),
-                 category
-            );
+        try (ResultSet rs = ps.executeQuery()) { 
+            if (rs.next()) {
+                Category category = new CategoryDAO().getCategoryById(rs.getInt("categoryID"));
+                
+                product = new Product(
+                    rs.getInt("productID"),
+                    rs.getString("productName"),
+                    rs.getInt("proQuantity"),
+                    rs.getLong("proPrice"), 
+                    rs.getByte("proState"),
+                    rs.getString("proImg"),
+                    rs.getString("proDes"), 
+                    category
+                );
+            }
         }
     } catch (Exception e) {
         e.printStackTrace();

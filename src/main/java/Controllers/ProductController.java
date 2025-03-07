@@ -6,28 +6,25 @@ package Controllers;
 
 import DAOs.CategoryDAO;
 import DAOs.ProductDAO;
-import DB.DBConnection;
 import Model.Category;
 import Model.Product;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 import java.io.File;
 import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
  * @author tiend
  */
+@MultipartConfig
 public class ProductController extends HttpServlet {
 
     /**
@@ -69,47 +66,44 @@ public class ProductController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String path = request.getRequestURI();
+        String action = request.getParameter("action");
+
+        ProductDAO productDAO = new ProductDAO();
+        CategoryDAO categoryDAO = new CategoryDAO();
+
+        List<Product> productList = productDAO.getAllProducts();
+        List<Category> category = categoryDAO.getAllCategories(); // Lấy tất cả danh mục
+
         if (path.endsWith("/UpdateQuantity")) {
 
             request.getRequestDispatcher("/web/Staff/updateQuantity.jsp").forward(request, response);
-        } else if (path.contains("/ProductController/DetailProductCustomer/")) {
-            String idStr = path.substring(path.lastIndexOf("/") + 1);
-            try {
-                int id = Integer.parseInt(idStr);
-                ProductDAO productDAO = new ProductDAO();
-                Product product = productDAO.getProductById(id);
-
-                if (product != null) {
-                    request.setAttribute("product", product);
-                    request.getRequestDispatcher("/GuessAndCustomer/DetailProduct.jsp").forward(request, response);
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/index.jsp"); // Nếu không tìm thấy sản phẩm
-                }
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
-                response.sendRedirect(request.getContextPath() + "/index.jsp");
-            }
+        } else if (path.startsWith("/ProductController/DetailProductCustomer")) {
+            int id = Integer.parseInt(request.getParameter("id"));
+            Product product = productDAO.getProductById(id);
+            request.setAttribute("category", category);
+            request.setAttribute("product", product);
+            request.getRequestDispatcher("/web/GuessAndCustomer/DetailProduct.jsp").forward(request, response);
 
         } else if (path.endsWith("/ProductManagement")) {
-            Connection conn;
-            try {
-                conn = DBConnection.connect(); // Đảm bảo có class DatabaseConnection
-            } catch (ClassNotFoundException ex) {
-                Logger.getLogger(ProductController.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (SQLException ex) {
-                Logger.getLogger(ProductController.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            ProductDAO productDAO = new ProductDAO();
-            CategoryDAO categoryDAO = new CategoryDAO();
-
-            List<Product> productList = productDAO.getAllProducts();
-            List<Category> category = categoryDAO.getAllCategories(); // Lấy tất cả danh mục
-
             request.setAttribute("category", category);
             request.setAttribute("productList", productList);
             request.getRequestDispatcher("/web/Staff/productManagement.jsp").forward(request, response);
         } else if (path.endsWith("/UpdateQuantity")) {
             request.getRequestDispatcher("/web/Staff/updateQuantity.jsp").forward(request, response);
+        }
+
+        if ("deleteProduct".equalsIgnoreCase(action)) {
+            try {
+                int id = Integer.parseInt(request.getParameter("productID"));
+
+                productDAO.deleteProduct(id);
+                response.sendRedirect("/ProductController/ProductManagement");
+            } catch (Exception e) {
+                e.printStackTrace();
+                request.setAttribute("errorMessage", "Lỗi khi xóa sản phẩm: " + e.getMessage());
+                response.sendRedirect("/ProductController/ProductManagement");
+            }
+
         }
     }
 
@@ -129,51 +123,113 @@ public class ProductController extends HttpServlet {
 
         String action = request.getParameter("action");
 
-        if ("addProduct".equals(action)) {
-            addProduct(request, response);
-            request.getRequestDispatcher("/web/Staff/productManagement.jsp").forward(request, response);
+        if ("addProduct".equalsIgnoreCase(action)) {
+            try {
+                // Lấy dữ liệu từ form
+                String name = request.getParameter("productName");
+                int quantity = Integer.parseInt(request.getParameter("proQuantity"));
+                double price = Double.parseDouble(request.getParameter("proPrice"));
+                boolean state = Integer.parseInt(request.getParameter("proState")) == 1;
+                String description = request.getParameter("proDescription");
+                int categoryID = Integer.parseInt(request.getParameter("proCategory"));
+
+//                Part filePart = request.getPart("proImg");
+//                String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+//                String uploadPath = getServletContext().getRealPath("") + File.separator + "uploads";
+//
+//                File uploadDir = new File(uploadPath);
+//                if (!uploadDir.exists()) {
+//                    uploadDir.mkdir();
+//                }
+//                filePart.write(uploadPath + File.separator + fileName);
+                Part filePart = request.getPart("proImg"); // Lấy file từ form
+                String originalFileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString(); // Lấy tên file gốc
+
+                // **Lấy phần mở rộng của file**
+                String extension = "";
+                int dotIndex = originalFileName.lastIndexOf(".");
+                if (dotIndex > 0) {
+                    extension = originalFileName.substring(dotIndex); // VD: ".png", ".jpg"
+                }
+
+                // **Xác định thư mục lưu ảnh**
+                String uploadPath = getServletContext().getRealPath("") + File.separator + "link" + File.separator + "img";
+                File uploadDir = new File(uploadPath);
+                if (!uploadDir.exists()) {
+                    uploadDir.mkdirs(); // **Tạo thư mục nếu chưa tồn tại**
+                }
+
+                // **Kiểm tra xem ảnh đã tồn tại chưa**
+                File file = new File(uploadPath + File.separator + originalFileName);
+                if (!file.exists()) {
+                    // **Chỉ lưu file nếu nó chưa tồn tại**
+                    filePart.write(uploadPath + File.separator + originalFileName);
+                }
+
+                // **Gửi tên file để lưu vào database (dùng tên cũ nếu ảnh đã tồn tại)**
+                request.setAttribute("uploadedFileName", originalFileName);
+
+                ProductDAO productDAO = new ProductDAO();
+                productDAO.addProduct(name, quantity, price, state, uploadPath, description, categoryID);
+
+                response.sendRedirect("/ProductController/ProductManagement");
+            } catch (Exception e) {
+                e.printStackTrace();
+                request.setAttribute("errorMessage", "Lỗi khi thêm sản phẩm: " + e.getMessage());
+                response.sendRedirect("/ProductController/ProductManagement");
+            }
         }
-    }
 
-    private static final String IMAGE_UPLOAD_DIR = "uploads";
+        if ("editProduct".equalsIgnoreCase(action)) {
+            try {
+                int id = Integer.parseInt(request.getParameter("productID"));
+                String name = request.getParameter("productName");
+                int quantity = Integer.parseInt(request.getParameter("proQuantity"));
+                double price = Double.parseDouble(request.getParameter("proPrice"));
+                boolean state = Integer.parseInt(request.getParameter("proState")) == 1;
+                String description = request.getParameter("proDescription");
+                int categoryID = Integer.parseInt(request.getParameter("proCategory"));
 
-    private void addProduct(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        try {
-            String name = request.getParameter("productName");
-            int quantity = Integer.parseInt(request.getParameter("proQuantity"));
-            double price = Double.parseDouble(request.getParameter("proPrice"));
-            boolean state = Integer.parseInt(request.getParameter("proState")) == 1;
-            String description = request.getParameter("proDescription");
-            int categoryID = Integer.parseInt(request.getParameter("proCategory"));
+                Part filePart = request.getPart("proImg"); // Lấy file từ form
+                String originalFileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString(); // Lấy tên file gốc
 
-            // Xử lý file ảnh
-            Part filePart = request.getPart("proImg");
-            String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
-            String uploadPath = getServletContext().getRealPath("") + File.separator + IMAGE_UPLOAD_DIR;
-            File uploadDir = new File(uploadPath);
-            if (!uploadDir.exists()) {
-                uploadDir.mkdir();
+                // **Lấy phần mở rộng của file**
+                String extension = "";
+                int dotIndex = originalFileName.lastIndexOf(".");
+                if (dotIndex > 0) {
+                    extension = originalFileName.substring(dotIndex); // VD: ".png", ".jpg"
+                }
+
+                // **Xác định thư mục lưu ảnh**
+                // Xác định thư mục lưu ảnh trong src/main/webapp/link/img
+                String uploadPath = System.getProperty("user.dir") + File.separator
+                        + "src" + File.separator + "main" + File.separator
+                        + "webapp" + File.separator + "link" + File.separator + "img";
+
+                File uploadDir = new File(uploadPath);
+                if (!uploadDir.exists()) {
+                    uploadDir.mkdirs(); // **Tạo thư mục nếu chưa tồn tại**
+                }
+
+                // **Kiểm tra xem ảnh đã tồn tại chưa**
+                File file = new File(uploadPath + File.separator + originalFileName);
+                if (!file.exists()) {
+                    // **Chỉ lưu file nếu nó chưa tồn tại**
+                    filePart.write(uploadPath + File.separator + originalFileName);
+                }
+
+                // **Gửi tên file để lưu vào database (dùng tên cũ nếu ảnh đã tồn tại)**
+                request.setAttribute("uploadedFileName", originalFileName);
+
+                ProductDAO productDAO = new ProductDAO();
+                productDAO.updateProduct(id, name, quantity, price, state, uploadPath, description, categoryID);
+
+                response.sendRedirect("/ProductController/ProductManagement");
+            } catch (Exception e) {
+                e.printStackTrace();
+                request.setAttribute("errorMessage", "Lỗi khi cập nhật sản phẩm: " + e.getMessage());
+                response.sendRedirect("/ProductController/ProductManagement");
             }
-            String filePath = uploadPath + File.separator + fileName;
-            filePart.write(filePath);
-            String imagePath = IMAGE_UPLOAD_DIR + "/" + fileName;
-
-            // Gọi DAO để thêm sản phẩm
-            ProductDAO productDAO = new ProductDAO();
-            boolean success = productDAO.addProduct(name, quantity, price, state, imagePath, description, categoryID);
-
-            if (success) {
-                // response.sendRedirect(request.getContextPath() + "/ProductManagement?success=1");
-                request.getRequestDispatcher("/web/Staff/productManagement.jsp").forward(request, response);
-            } else {
-                request.setAttribute("errorMessage", "Thêm sản phẩm thất bại!");
-                request.getRequestDispatcher("/web/Staff/productManagement.jsp").forward(request, response);
-            }
-        } catch (IOException | NumberFormatException | ServletException e) {
-            e.printStackTrace();
-            //response.sendRedirect(request.getContextPath() + "/ProductManagement?error=1");
-
         }
     }
 
