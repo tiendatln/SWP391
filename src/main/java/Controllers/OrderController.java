@@ -68,7 +68,7 @@ public class OrderController extends HttpServlet {
             // Giả lập danh sách đơn hàng (có thể lấy từ database)
             List<Order> order = new ArrayList<>();
             OrderDAO oDAO = new OrderDAO();
-            order = oDAO.GetAllOrderTotal();
+            order = oDAO.getAllOrderTotal();
 
             // Gửi danh sách đơn hàng đến JSP
             HttpSession session = request.getSession();
@@ -76,11 +76,13 @@ public class OrderController extends HttpServlet {
             request.getRequestDispatcher("/web/Staff/DisplayOrder.jsp").forward(request, response);
         } else if (path.endsWith("/CustomerOrder")) {
 
-            List<OrderTotal> orderList = new ArrayList<>();
+            List<Order> order = new ArrayList<>();
+            OrderDAO oDAO = new OrderDAO();
+            order = oDAO.getAllOrderTotal();
 
             // Gửi danh sách đơn hàng đến JSP
             HttpSession session = request.getSession();
-            session.setAttribute("orderList", orderList);
+            session.setAttribute("orderList", order);
             request.getRequestDispatcher("/web/GuessAndCustomer/show.jsp").forward(request, response);
         } else if (path.startsWith("/OrderController/OrderDetail")) {
             try {
@@ -94,6 +96,8 @@ public class OrderController extends HttpServlet {
             } catch (NumberFormatException e) {
                 response.sendRedirect("/OrderController/OrderManagement");
             }
+        }else if (path.startsWith("/OrderController/orderProduct")){
+            request.getRequestDispatcher("/web/orderProduct.jsp").forward(request, response);
         }
     }
 
@@ -110,7 +114,8 @@ public class OrderController extends HttpServlet {
             throws ServletException, IOException {
         String path = request.getRequestURI();
         if (path.endsWith("/UpdateOrder")) {
-            int status = Integer.parseInt(request.getParameter("status"));
+            try {
+                int status = Integer.parseInt(request.getParameter("status"));
             int id = Integer.parseInt(request.getParameter("orderID"));
 
             List<Order> order = new ArrayList<>();
@@ -121,6 +126,9 @@ public class OrderController extends HttpServlet {
             HttpSession session = request.getSession();
             session.setAttribute("orderList", order);
             request.getRequestDispatcher("/web/Staff/DisplayOrder.jsp").forward(request, response);
+            } catch (Exception e) {
+                response.sendRedirect("/OrderController/OrderManagement");
+            }
         }
     }
 

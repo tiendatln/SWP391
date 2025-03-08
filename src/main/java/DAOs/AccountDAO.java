@@ -13,6 +13,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,25 +23,26 @@ import java.util.logging.Logger;
  * @author tiend
  */
 public class AccountDAO {
-    
-     Connection conn;
+
+    Connection conn;
 
     public AccountDAO() {
         try {
             conn = DBConnection.connect();
+            System.out.println("Database connected successfully.");
         } catch (ClassNotFoundException | SQLException ex) {
-            Logger.getLogger(AccountDAO.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(AccountDAO.class.getName()).log(Level.SEVERE, "Database connection failed.", ex);
         }
     }
-    
+
     public Account validateUser(String username, String password) {
         String hashedPassword = hashMD5(password);
-        
-        try (PreparedStatement stmt = conn.prepareStatement("SELECT * FROM account WHERE username = ? AND password = ?")) {
+
+        try ( PreparedStatement stmt = conn.prepareStatement("SELECT * FROM account WHERE username = ? AND password = ?")) {
             stmt.setString(1, username);
             stmt.setString(2, hashedPassword);
             ResultSet rs = stmt.executeQuery();
-            
+
             if (rs.next()) {
                 Account user = new Account();
                 user.setId(rs.getInt("id"));
@@ -56,9 +59,9 @@ public class AccountDAO {
         }
         return null;
     }
-    
+
     private String hashMD5(String input) {
-       try {
+        try {
 
             // Static getInstance method is called with hashing MD5
             MessageDigest md = MessageDigest.getInstance("MD5");
@@ -81,4 +84,67 @@ public class AccountDAO {
             throw new RuntimeException(e);
         }
     }
+
+    public List<Account> getAllAccounts() {
+        List<Account> accounts = new ArrayList<>();
+        String sql = "SELECT * FROM [dbo].[account]";
+
+        try ( PreparedStatement stmt = conn.prepareStatement(sql);  ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                Account account = new Account(
+                        rs.getInt("id"),
+                        rs.getString("username"),
+                        rs.getString("email"),
+                        rs.getString("password"),
+                        rs.getString("phone_number"),
+                        rs.getString("address"),
+                        rs.getString("role")
+                );
+                accounts.add(account);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return accounts;
+    }
+
+    public void updateRole(int accountId, String newRole) {
+        String sql = "UPDATE account SET role = ? WHERE id = ?";
+        try ( PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, newRole);
+            stmt.setInt(2, accountId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<Account> searchAccounts(String keyword) {
+    List<Account> accounts = new ArrayList<>();
+    String query = "SELECT * FROM account WHERE username LIKE ? OR email LIKE ?";
+    
+    try (
+         PreparedStatement ps = conn.prepareStatement(query)) {
+        
+        ps.setString(1, "%" + keyword + "%");
+        ps.setString(2, "%" + keyword + "%");
+        ResultSet rs = ps.executeQuery();
+        
+        while (rs.next()) {
+            Account account = new Account();
+            account.setId(rs.getInt("id"));
+            account.setUsername(rs.getString("username"));
+            account.setEmail(rs.getString("email"));
+            account.setPhoneNumber(rs.getString("phone_number"));
+            account.setRole(rs.getString("role"));
+            account.setAddress(rs.getString("address"));
+            accounts.add(account);
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    
+    return accounts;
+}
 }

@@ -5,6 +5,14 @@
         <servlet-class>Controllers.ProfileController</servlet-class>
     </servlet>
     <servlet>
+        <servlet-name>PaymentServlet</servlet-name>
+        <servlet-class>PaymentServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>PaymentServlet</servlet-name>
+        <url-pattern>/generateQR</url-pattern>
+    </servlet-mapping>
+    <servlet>
         <servlet-name>OrderController</servlet-name>
         <servlet-class>Controllers.OrderController</servlet-class>
     </servlet>

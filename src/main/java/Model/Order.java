@@ -1,5 +1,7 @@
 package Model;
 
+import java.util.List;
+
 public class Order {
     private Product product;
     private OrderTotal orderTotal;
@@ -15,6 +17,7 @@ public class Order {
 
     public Order() {
     }
+
 
     public Product getProduct() {
         return product;

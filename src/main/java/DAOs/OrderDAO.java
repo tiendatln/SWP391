@@ -5,6 +5,7 @@
 package DAOs;
 
 import DB.DBConnection;
+import Model.Account;
 import Model.Category;
 import Model.Order;
 import Model.OrderTotal;
@@ -34,43 +35,22 @@ public class OrderDAO {
         }
     }
 
-    public List<Order> GetAllOrderTotal() {
+    public List<Order> getAllOrderTotal() {
         List<Order> orderList = new ArrayList<>();
-        ResultSet rs = null;
-        try {
-            PreparedStatement ps = conn.prepareStatement("SELECT \n"
-                    + "    ot.orderID,\n"
-                    + "    ot.phoneNumber,\n"
-                    + "    ot.[address],\n"
-                    + "    ot.note,\n"
-                    + "    ot.totalPrice,\n"
-                    + "    ot.[date],\n"
-                    + "    ot.orderState,\n"
-                    + "    ot.voucherCode,\n"
-                    + "    a.username,\n"
-                    + "    pFirst.proImg, \n"
-                    + "    STRING_AGG(p.productName, ', ') AS productNames,\n"
-                    + "    MIN(p.productID) AS productID, \n"
-                    + "    MIN(o.oderQuantity) AS oderQuantity, \n"
-                    + "    MIN(o.oderPrice) AS oderPrice \n"
-                    + "FROM \n"
-                    + "    orderTotal ot\n"
-                    + "LEFT JOIN \n"
-                    + "    account a ON ot.id = a.id\n"
-                    + "LEFT JOIN \n"
-                    + "    [order] o ON ot.orderID = o.orderID\n"
-                    + "LEFT JOIN \n"
-                    + "    [product] p ON o.productID = p.productID\n"
-                    + "OUTER APPLY \n"
-                    + "    (SELECT TOP 1 p2.proImg \n"
-                    + "     FROM [order] o2 \n"
-                    + "     JOIN [product] p2 ON o2.productID = p2.productID \n"
-                    + "     WHERE o2.orderID = ot.orderID \n"
-                    + "     ORDER BY o2.productID) AS pFirst\n"
-                    + "GROUP BY \n"
-                    + "    ot.orderID, ot.phoneNumber, ot.[address], ot.note, \n"
-                    + "    ot.totalPrice, ot.[date], ot.orderState, ot.voucherCode, a.username, pFirst.proImg;"); // Đặt SQL đã sửa vào đây
-            rs = ps.executeQuery();
+        String query = "SELECT "
+                + "    ot.orderID, ot.phoneNumber, ot.address, ot.note, "
+                + "    ot.totalPrice, ot.date, ot.orderState, ot.voucherID, "
+                + "    v.voucherCode, v.startDate, v.endDate, v.percentDiscount, v.quantity, v.usedTime, "
+                + "    a.id AS accountID, a.username, a.email, a.password, a.phone_number AS accPhone, a.address AS accAddress, a.role, "
+                + "    p.productID, p.productName, o.orderQuantity, o.orderPrice, "
+                + "    p.proState, p.proImg, p.proDes, p.categoryID "
+                + "FROM orderTotal ot "
+                + "LEFT JOIN account a ON ot.id = a.id "
+                + "LEFT JOIN voucher v ON ot.voucherID = v.voucherID "
+                + "LEFT JOIN [order] o ON ot.orderID = o.orderID "
+                + "LEFT JOIN product p ON o.productID = p.productID";
+
+        try ( PreparedStatement ps = conn.prepareStatement(query);  ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 OrderTotal ot = new OrderTotal(
                         rs.getInt("orderID"),
@@ -80,72 +60,103 @@ public class OrderDAO {
                         rs.getLong("totalPrice"),
                         rs.getDate("date"),
                         rs.getInt("orderState"),
-                        rs.getString("voucherCode")
+                        rs.getInt("voucherID"),
+                        new Account(
+                                rs.getInt("accountID"),
+                                rs.getString("username"),
+                                rs.getString("email"),
+                                rs.getString("password"),
+                                rs.getString("accPhone"),
+                                rs.getString("accAddress"),
+                                rs.getString("role")
+                        )
                 );
 
-                Product p = new Product(
+                Product product = new Product(
                         rs.getInt("productID"),
-                        rs.getString("productNames"), // Vì đã gộp sản phẩm lại
-                        0, // proQuantity (không có trong SQL)
-                        0L, // proPrice (không có trong SQL)
-                        (byte) 0, // proState (không có trong SQL)
+                        rs.getString("productName"),
+                        rs.getInt("orderQuantity"),
+                        rs.getLong("orderPrice"),
+                        rs.getByte("proState"),
                         rs.getString("proImg"),
-                        "", // proDes (không có trong SQL)
-                        null
+                        rs.getString("proDes"),
+                        new Category(rs.getInt("categoryID")) // Cần điều chỉnh nếu Category có nhiều hơn 1 tham số
                 );
 
-                orderList.add(new Order(p, ot, rs.getInt("oderQuantity"), rs.getLong("oderPrice")));
-            }
-        } catch (SQLException e) {
-            System.out.println(e);
-        }
-        return orderList;
+                Order order = new Order(
+                        product,
+                        ot,
+                        rs.getInt("orderQuantity"),
+                        rs.getLong("orderPrice")
+                );
 
-    }
-
-    public List<Order> getOrderDetails(int orderID) {
-        List<Order> orderDetails = new ArrayList<>();
-        String sql = "SELECT *"
-                + "FROM orderTotal ot\n"
-                + "JOIN account a ON ot.id = a.id\n"
-                + "JOIN [order] o ON ot.orderID = o.orderID\n"
-                + "JOIN [product] p ON o.productID = p.productID\n"
-                + "WHERE ot.orderID = ?;";
-
-        try ( PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, orderID); // Sửa lỗi setInt(0, orderID) thành setInt(1, orderID)
-            try ( ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    OrderTotal ot = new OrderTotal(
-                            rs.getInt("orderID"), // Không có "o." vì orderID lấy từ orderTotal
-                            rs.getString("phoneNumber"), // Không có "ot."
-                            rs.getString("address"),
-                            rs.getString("note"),
-                            rs.getLong("totalPrice"),
-                            rs.getDate("date"), // Không có "ot."
-                            rs.getInt("orderState"),
-                            rs.getString("voucherCode") != null ? rs.getString("voucherCode") : ""
-                    );
-
-                    Product p = new Product(
-                            rs.getInt("productID"),
-                            rs.getString("productName"),
-                            rs.getInt("proQuantity"),
-                            rs.getLong("proPrice"),
-                            rs.getByte("proState"),
-                            rs.getString("proImg"),
-                            rs.getString("proDes"),
-                            null // Chưa lấy category
-                    );
-
-                    orderDetails.add(new Order(p, ot, rs.getInt("oderQuantity"), rs.getLong("oderPrice")));
-                }
+                orderList.add(order);
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return orderDetails;
+        return orderList;
     }
+
+    public List<Order> getOrderDetails(int orderID) {
+    List<Order> orderDetails = new ArrayList<>();
+    String sql = "SELECT "
+            + "    ot.orderID, ot.phoneNumber, ot.address, ot.note, "
+            + "    ot.totalPrice, ot.date, ot.orderState, ot.voucherID, "
+            + "    v.voucherCode, v.startDate, v.endDate, v.percentDiscount, v.quantity, v.usedTime, "
+            + "    a.id AS accountID, a.username, a.email, a.password, a.phone_number AS accPhone, a.address AS accAddress, a.role, "
+            + "    p.productID, p.productName, o.orderQuantity, o.orderPrice, "
+            + "    p.proState, p.proImg, p.proDes, p.categoryID "
+            + "FROM orderTotal ot "
+            + "LEFT JOIN account a ON ot.id = a.id "
+            + "LEFT JOIN voucher v ON ot.voucherID = v.voucherID "
+            + "LEFT JOIN [order] o ON ot.orderID = o.orderID "
+            + "LEFT JOIN product p ON o.productID = p.productID "
+            + "WHERE ot.orderID = ?;";
+
+    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+        stmt.setInt(1, orderID);
+        try (ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                OrderTotal ot = new OrderTotal(
+                        rs.getInt("orderID"),
+                        rs.getString("phoneNumber"),
+                        rs.getString("address"),
+                        rs.getString("note"),
+                        rs.getLong("totalPrice"),
+                        rs.getDate("date"),
+                        rs.getInt("orderState"),
+                        rs.getInt("voucherID"),
+                        new Account(
+                                rs.getInt("accountID"),
+                                rs.getString("username"),
+                                rs.getString("email"),
+                                rs.getString("password"),
+                                rs.getString("accPhone"),
+                                rs.getString("accAddress"),
+                                rs.getString("role")
+                        )
+                );
+
+                Product p = new Product(
+                        rs.getInt("productID"),
+                        rs.getString("productName"),
+                        rs.getInt("orderQuantity"),
+                        rs.getLong("orderPrice"),
+                        rs.getByte("proState"),
+                        rs.getString("proImg"),
+                        rs.getString("proDes"),
+                        new Category(rs.getInt("categoryID"))
+                );
+
+                orderDetails.add(new Order(p, ot, rs.getInt("orderQuantity"), rs.getLong("orderPrice")));
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return orderDetails;
+}
 
     public List<Order> UpdateStatusAndGetAllOrder(int id, int newStatus) {
 
@@ -158,7 +169,7 @@ public class OrderDAO {
             stmt.setInt(2, id);
 
             rowsUpdated = stmt.executeUpdate();
-            newOrder = rowsUpdated > 0 ? GetAllOrderTotal() : null;
+            newOrder = rowsUpdated > 0 ? getAllOrderTotal() : null;
         } catch (SQLException e) {
             e.printStackTrace();
         }

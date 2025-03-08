@@ -21,7 +21,14 @@ public class Category {
 
     public Category() {
     }
+    public Category(int aInt, String string) {
+        }
 
+    public Category(int categoryID) {
+        this.categoryID = categoryID;
+    }
+
+ 
     public int getCategoryID() {
         return categoryID;
     }
