@@ -85,6 +85,7 @@
                 <li><a href="/AccountController/AccountList" class="btn">Account</a></li>
                 <li><a href="/OrderController/OrderManagement" class="btn">Order</a></li>
                 <li><a href="/ProductController/ProductManagement" class="btn">Products</a></li>
+                <li><a href="/ProductController/UpdateQuantity" class="btn">Update Quantity</a></li>
                 <li><a href="/VoucherController/Voucher" class="btn">Voucher</a></li>
                 <li><a href="/LoginController/Logout" class="btn">Logout</a></li>
             </ul>
