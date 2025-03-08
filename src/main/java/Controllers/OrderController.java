@@ -68,7 +68,7 @@ public class OrderController extends HttpServlet {
             // Giả lập danh sách đơn hàng (có thể lấy từ database)
             List<Order> order = new ArrayList<>();
             OrderDAO oDAO = new OrderDAO();
-            order = oDAO.GetAllOrderTotal();
+            order = oDAO.getAllOrderTotal();
 
             // Gửi danh sách đơn hàng đến JSP
             HttpSession session = request.getSession();
@@ -78,7 +78,7 @@ public class OrderController extends HttpServlet {
 
             List<Order> order = new ArrayList<>();
             OrderDAO oDAO = new OrderDAO();
-            order = oDAO.GetAllOrderTotal();
+            order = oDAO.getAllOrderTotal();
 
             // Gửi danh sách đơn hàng đến JSP
             HttpSession session = request.getSession();

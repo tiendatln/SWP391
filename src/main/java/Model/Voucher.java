@@ -11,6 +11,7 @@ import java.time.LocalDate;
  * @author Kim Chi Khang _ CE180324
  */
 public class Voucher {
+    private int voucherID;
     private String voucherCode;
     private LocalDate startDate;
     private LocalDate endDate;
@@ -22,6 +23,17 @@ public class Voucher {
     public Voucher() {
     }
 
+    public Voucher(int voucherID, String voucherCode, LocalDate startDate, LocalDate endDate, int percentDiscount, int quantity, int usedTime, int Id) {
+        this.voucherID = voucherID;
+        this.voucherCode = voucherCode;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.percentDiscount = percentDiscount;
+        this.quantity = quantity;
+        this.usedTime = usedTime;
+        this.Id = Id;
+    }
+
     public Voucher(String voucherCode, LocalDate startDate, LocalDate endDate, int percentDiscount, int quantity, int usedTime, int Id) {
         this.voucherCode = voucherCode;
         this.startDate = startDate;
@@ -30,6 +42,14 @@ public class Voucher {
         this.quantity = quantity;
         this.usedTime = usedTime;
         this.Id = Id;
+    }
+
+    public int getVoucherID() {
+        return voucherID;
+    }
+
+    public void setVoucherID(int voucherID) {
+        this.voucherID = voucherID;
     }
 
     public String getVoucherCode() {

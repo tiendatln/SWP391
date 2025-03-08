@@ -18,7 +18,7 @@ public class OrderTotal {
     private long totalPrice;
     private Date date;
     private int orderState;
-    private String voucherCode;
+    private int voucherID;
     private Account account;
 
     public int getOrderID() {
@@ -77,12 +77,12 @@ public class OrderTotal {
         this.orderState = orderState;
     }
 
-    public String getVoucherCode() {
-        return voucherCode;
+    public int getVoucherCode() {
+        return voucherID;
     }
 
-    public void setVoucherCode(String voucherCode) {
-        this.voucherCode = voucherCode;
+    public void setVoucherCode(int voucherID) {
+        this.voucherID = voucherID;
     }
 
     public Account getAccount() {
@@ -96,7 +96,7 @@ public class OrderTotal {
     public OrderTotal() {
     }
 
-    public OrderTotal(int orderID, String phoneNumber, String address, String note, long totalPrice, Date date, int orderState, String voucherCode, Account account) {
+    public OrderTotal(int orderID, String phoneNumber, String address, String note, long totalPrice, Date date, int orderState, int voucherID, Account account) {
         this.orderID = orderID;
         this.phoneNumber = phoneNumber;
         this.address = address;
@@ -104,11 +104,11 @@ public class OrderTotal {
         this.totalPrice = totalPrice;
         this.date = date;
         this.orderState = orderState;
-        this.voucherCode = voucherCode;
+        this.voucherID = voucherID;
         this.account = account;
     }
 
-    public OrderTotal(int orderID, String phoneNumber, String address, String note, long totalPrice, Date date, int orderState, String voucherCode) {
+    public OrderTotal(int orderID, String phoneNumber, String address, String note, long totalPrice, Date date, int orderState, int voucherID) {
         this.orderID = orderID;
         this.phoneNumber = phoneNumber;
         this.address = address;
@@ -116,7 +116,7 @@ public class OrderTotal {
         this.totalPrice = totalPrice;
         this.date = date;
         this.orderState = orderState;
-        this.voucherCode = voucherCode;
+        this.voucherID = voucherID;
     }
 
    
