@@ -18,7 +18,6 @@
         <title>Giỏ hàng</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
         <style>
-            /* Giữ nguyên phần CSS của bạn */
             body {
                 background-color: #f5f5f5;
                 font-family: 'Arial', sans-serif;
@@ -54,10 +53,10 @@
             }
             .table th:nth-child(3) {
                 width: 250px;
-            } /* Thu nhỏ cột hình ảnh */
+            }
             .table th:nth-child(2) {
                 width: 150px;
-            } /* Điều chỉnh tên sản phẩm */
+            }
             .table tbody tr {
                 transition: background-color 0.3s;
             }
@@ -189,7 +188,6 @@
                 display: block;
             }
 
-            /* Điều chỉnh khoảng cách giữa checkbox và văn bản */
             .table td:first-child,
             .table th:first-child {
                 text-align: center;
@@ -259,7 +257,7 @@
                 </c:otherwise>
             </c:choose>
         </div>
-        
+
 
         <!-- JavaScript xử lý cập nhật số lượng, xóa sản phẩm và tính tổng tiền -->
         <script>
@@ -371,6 +369,6 @@
         </script>
     </body>
     <div style="background-color: rgb(31, 41, 55)">
-    <jsp:include page="../../Footer.jsp" />
+        <jsp:include page="../../Footer.jsp" />
     </div>
 </html>
