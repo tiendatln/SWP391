@@ -63,8 +63,18 @@ public class CartController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String path = request.getRequestURI();
+       String path = request.getRequestURI();
         if (path.endsWith("/CartController/Cart")) {
+            HttpSession session = request.getSession();
+            Integer userId = (Integer) session.getAttribute("userId");
+            if (userId != null) {
+                CartDAO dao = new CartDAO();
+                try {
+                    Cart cart = dao.loadCartFromDB(userId);
+                    session.setAttribute("cart", cart);
+                } catch (SQLException | ClassNotFoundException ex) {
+               }
+            }
             request.getRequestDispatcher("/web/GuessAndCustomer/cart.jsp").forward(request, response);
         }
     }
@@ -80,53 +90,95 @@ public class CartController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-         HttpSession session = request.getSession();
-        Cart cart = (Cart) session.getAttribute("cart");
-        if (cart == null) {
-            cart = new Cart();
-            session.setAttribute("cart", cart);
-        }
+       HttpSession session = request.getSession();
+        Integer userId = (Integer) session.getAttribute("userId");
+       Cart cart = (Cart) session.getAttribute("cart");
+
+        response.setContentType("application/json;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+        JSONObject jsonResponse = new JSONObject();
 
         String action = request.getParameter("action");
-        int productId = Integer.parseInt(request.getParameter("productId"));
-        CartDAO dao = new CartDAO();
+        if (action == null) {
+            jsonResponse.put("status", "error");
+            jsonResponse.put("message", "Thiếu tham số action!");
+            out.print(jsonResponse.toString());
+            out.flush();
+            return;
+        }
 
         try {
-            switch (action) {
-                case "add": {
-                    int quantity = request.getParameter("quantity") != null
-                            ? Integer.parseInt(request.getParameter("quantity"))
-                            : 1;
-                    Product product = dao.getProductById(productId);
-                    if (product != null) {
-                        cart.addItem(product, quantity);
+            int productId = Integer.parseInt(request.getParameter("productId"));
+            CartDAO dao = new CartDAO();
+
+            if ("add".equals(action)) {
+                if (userId == null) {
+                    jsonResponse.put("status", "error");
+                    jsonResponse.put("message", "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!");
+                    out.print(jsonResponse.toString());
+                    out.flush();
+                    return;
+                }
+                if (cart == null) {
+                    cart = new Cart(userId);
+                    session.setAttribute("cart", cart);
+                }
+                int quantity = request.getParameter("quantity") != null
+                        ? Integer.parseInt(request.getParameter("quantity"))
+                        : 1;
+                Product product = dao.getProductById(productId);
+                if (product != null && product.getProState() == 1 && product.getProQuantity() >= quantity) {
+                    cart.addItem(product, quantity);
+                    dao.addToCart(userId, productId, quantity);
+                    session.setAttribute("cart", cart);
+                    jsonResponse.put("status", "success");
+                    jsonResponse.put("message", "Sản phẩm đã được thêm vào giỏ hàng.");
+                } else {
+                    jsonResponse.put("status", "error");
+                    jsonResponse.put("message", "Sản phẩm không tồn tại hoặc không đủ số lượng!");
+                }
+            } else if (userId != null && cart != null) {
+                switch (action) {
+                    case "update": {
+                        int quantity = Integer.parseInt(request.getParameter("quantity"));
+                        cart.updateQuantity(productId, quantity);
+                        dao.updateCart(userId, productId, quantity);
                         session.setAttribute("cart", cart);
-                        
-                        response.setContentType("application/json;charset=UTF-8");
-                        JSONObject jsonResponse = new JSONObject();
                         jsonResponse.put("status", "success");
-                        jsonResponse.put("message", "Sản phẩm đã được thêm vào giỏ hàng.");
-                        try (PrintWriter out = response.getWriter()) {
-                            out.print(jsonResponse.toString());
-                            out.flush();
-                        }
+                        jsonResponse.put("message", "Đã cập nhật số lượng.");
+                        break;
                     }
-                    break;
+                    case "delete": {
+                        cart.removeItem(productId);
+                        dao.removeFromCart(userId, productId);
+                        session.setAttribute("cart", cart);
+                        jsonResponse.put("status", "success");
+                        jsonResponse.put("message", "Đã xóa sản phẩm.");
+                        break;
+                    }
+                    default: {
+                        jsonResponse.put("status", "error");
+                        jsonResponse.put("message", "Hành động không hợp lệ!");
+                        break;
+                    }
                 }
-                case "update": {
-                    int quantity = Integer.parseInt(request.getParameter("quantity"));
-                    cart.updateQuantity(productId, quantity);
-                    session.setAttribute("cart", cart);
-                    break;
-                }
-                case "delete": {
-                    cart.removeItem(productId);
-                    session.setAttribute("cart", cart);
-                    break;
-                }
+            } else {
+                jsonResponse.put("status", "error");
+                jsonResponse.put("message", "Vui lòng đăng nhập để thực hiện hành động này!");
             }
+
+            out.print(jsonResponse.toString());
+            out.flush();
+        } catch (NumberFormatException e) {
+            jsonResponse.put("status", "error");
+            jsonResponse.put("message", "Dữ liệu không hợp lệ!");
+            out.print(jsonResponse.toString());
+            out.flush();
         } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(CartController.class.getName()).log(Level.SEVERE, null, ex);
+            jsonResponse.put("status", "error");
+            jsonResponse.put("message", "Lỗi cơ sở dữ liệu!");
+            out.print(jsonResponse.toString());
+            out.flush();
         }
     }
 

@@ -5,6 +5,7 @@
 package DAOs;
 
 import DB.DBConnection;
+import Model.Cart;
 import Model.Category;
 import Model.Product;
 import java.sql.Connection;
@@ -18,22 +19,16 @@ import java.sql.SQLException;
  */
 public class CartDAO {
 
-    public Product getProductById(int productId) throws SQLException, ClassNotFoundException {
-        String sql = "SELECT p.*, c.categoryID, c.categoryName "
+   public Product getProductById(int productId) throws SQLException, ClassNotFoundException {
+        String sql = "SELECT p.*, c.categoryID, c.[type] "
                 + "FROM product p "
                 + "JOIN category c ON p.categoryID = c.categoryID "
                 + "WHERE p.productID = ?";
-
-        try ( Connection conn = DBConnection.connect();  PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBConnection.connect(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, productId);
-
-            try ( ResultSet rs = ps.executeQuery()) {
+            try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    Category category = new Category(
-                            rs.getInt("categoryID"),
-                            rs.getString("categoryName")
-                    );
-
+                    Category category = new Category(rs.getInt("categoryID"), rs.getString("type"));
                     return new Product(
                             rs.getInt("productID"),
                             rs.getString("productName"),
@@ -57,7 +52,7 @@ public class CartDAO {
                 + "WHEN MATCHED THEN UPDATE SET target.quantity = target.quantity + source.quantity "
                 + "WHEN NOT MATCHED THEN INSERT (id, productID, quantity) VALUES (source.id, source.productID, source.quantity);";
 
-        try ( Connection conn = DBConnection.connect();  PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBConnection.connect(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setInt(2, productId);
             ps.setInt(3, quantity);
@@ -68,7 +63,7 @@ public class CartDAO {
     public void removeFromCart(int userId, int productId) throws SQLException, ClassNotFoundException {
         String sql = "DELETE FROM cart WHERE id = ? AND productID = ?";
 
-        try ( Connection conn = DBConnection.connect();  PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBConnection.connect(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setInt(2, productId);
             ps.executeUpdate();
@@ -78,7 +73,7 @@ public class CartDAO {
     public void updateCart(int userId, int productId, int quantity) throws SQLException, ClassNotFoundException {
         if (quantity > 0) {
             String sql = "UPDATE cart SET quantity = ? WHERE id = ? AND productID = ?";
-            try ( Connection conn = DBConnection.connect();  PreparedStatement ps = conn.prepareStatement(sql)) {
+            try (Connection conn = DBConnection.connect(); PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setInt(1, quantity);
                 ps.setInt(2, userId);
                 ps.setInt(3, productId);
@@ -87,5 +82,34 @@ public class CartDAO {
         } else {
             removeFromCart(userId, productId);
         }
+    }
+
+    public Cart loadCartFromDB(int userId) throws SQLException, ClassNotFoundException {
+        Cart cart = new Cart(userId);
+        String sql = "SELECT c.productID, c.quantity, p.productName, p.proQuantity, p.proPrice, p.proState, p.proImg, p.proDes, cat.categoryID, cat.type "
+                + "FROM cart c "
+                + "JOIN product p ON c.productID = p.productID "
+                + "JOIN category cat ON p.categoryID = cat.categoryID "
+                + "WHERE c.id = ?";
+        try (Connection conn = DBConnection.connect(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Category category = new Category(rs.getInt("categoryID"), rs.getString("type"));
+                    Product product = new Product(
+                            rs.getInt("productID"),
+                            rs.getString("productName"),
+                            rs.getInt("proQuantity"),
+                            rs.getLong("proPrice"),
+                            rs.getByte("proState"),
+                            rs.getString("proImg"),
+                            rs.getString("proDes"),
+                            category
+                    );
+                    cart.addItem(product, rs.getInt("quantity"));
+                }
+            }
+        }
+        return cart;
     }
 }
