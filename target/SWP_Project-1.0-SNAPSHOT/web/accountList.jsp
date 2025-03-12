@@ -47,7 +47,7 @@
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     </head>
     <body>
-<jsp:include page="/AdminLayout.jsp" />
+        <jsp:include page="/AdminLayout.jsp" />
 
 
         <div class="container">
@@ -87,11 +87,12 @@
                                         <td>${account.phoneNumber}</td>
                                         <td>${account.address}</td>
                                         <td>
-                                            <select class="form-select roleSelect" data-account-id="${account.id}">
+                                            <select class="form-select roleSelect" data-account-id="${account.id}" ${account.role == 'admin' ? 'disabled' : ''}>
                                                 <option value="user" ${account.role == 'user' ? 'selected' : ''}>User</option>
                                                 <option value="admin" ${account.role == 'admin' ? 'selected' : ''}>Admin</option>
                                                 <option value="staff" ${account.role == 'staff' ? 'selected' : ''}>Staff</option>
                                             </select>
+                                        
                                         </td>
                                     </tr>
                                 </c:forEach>
