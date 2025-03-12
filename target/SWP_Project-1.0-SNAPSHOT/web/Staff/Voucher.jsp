@@ -194,7 +194,10 @@
                             <td><%= voucher.getUsedTime()%></td>
                             <td>
                                 <button class="btn-edit" onclick="openEditModal('<%= voucher.getId()%>', '<%= voucher.getVoucherCode()%>', '<%= voucher.getPercentDiscount()%>', '<%= voucher.getStartDate()%>', '<%= voucher.getEndDate()%>', '<%= voucher.getQuantity()%>', '<%= voucher.getUsedTime()%>')">Sửa</button>
-                                <a href="VoucherController?action=delete&id=<%= voucher.getId()%>" class="btn-delete">Xóa</a>
+                                <form action="VoucherController" method="POST" style="display:inline;">
+                                    <input type="hidden" name="deleteVoucherCode" value="<%= voucher.getVoucherCode()%>">
+                                    <button type="submit" class="btn-delete" onclick="return confirm('Bạn có chắc chắn muốn xóa voucher này không?')">Xóa</button>
+                                </form>
                             </td>
                         </tr>
                         <%
