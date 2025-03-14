@@ -147,4 +147,29 @@ public class AccountDAO {
     
     return accounts;
 }
+    public Account getAccountById(int id) {
+    Account account = null;
+    String sql = "SELECT * FROM [dbo].[account] WHERE id = ?";
+
+    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+        stmt.setInt(1, id);
+        try (ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                account = new Account(
+                    rs.getInt("id"),
+                    rs.getString("username"),
+                    rs.getString("email"),
+                    rs.getString("password"),
+                    rs.getString("phone_number"),
+                    rs.getString("address"),
+                    rs.getString("role")
+                );
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return account;
+}
+
 }

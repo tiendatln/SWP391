@@ -23,5 +23,6 @@ Controllers\OrderController.class
 DAOs\MainCategoryDAO.class
 Controllers\LoginAPIController.class
 DB\DBConnection.class
+Model\ProductDetail.class
 Controllers\CartController.class
 Model\MainCategory.class
