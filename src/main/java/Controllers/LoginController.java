@@ -59,59 +59,52 @@ public class LoginController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String path = request.getRequestURI();
+       String path = request.getRequestURI();
         if (path.endsWith("/LoginController/Login")) {
             Cookie[] cookies = request.getCookies();
-    String userName = null;
-    String userRole = null;
-   
+            String userName = null;
+            String userRole = null;
 
-    if (cookies != null) {
-        for (Cookie cookie : cookies) {
-            if ("user".equals(cookie.getName())) {
-                String[] values = cookie.getValue().split("\\|");
-                if (values.length == 2) {  // Kiểm tra xem có đủ phần tử không
-                    userName = values[0];
-                    userRole = values[1];
-
-                    if (!userName.isEmpty() && "customer".equals(userRole)) {
-                      response.sendRedirect("/web/index.jsp");  
-                    } else if ("admin".equals(userRole)) {
-                        request.getRequestDispatcher("/OrderController/OrderManagement").forward(request, response);
-//                        response.sendRedirect("/OrderController/OrderManagement");
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if ("user".equals(cookie.getName())) {
+                        String[] values = cookie.getValue().split("\\|");
+                        if (values.length == 2) {
+                            userName = values[0];
+                            userRole = values[1];
+                            if (!userName.isEmpty() && "customer".equals(userRole)) {
+                                response.sendRedirect("/web/index.jsp");
+                            } else if ("admin".equals(userRole)) {
+                                request.getRequestDispatcher("/OrderController/OrderManagement").forward(request, response);
+                            }
+                        }
                     }
                 }
             }
-        }
-    }
             request.getRequestDispatcher("/web/login.jsp").forward(request, response);
         } else if (path.endsWith("/LoginController/ForgotPassword")) {
-
             request.getRequestDispatcher("/web/forget-password.jsp").forward(request, response);
-
         } else if (path.endsWith("/LoginController/CreateAccount")) {
-
             request.getRequestDispatcher("/web/register.jsp").forward(request, response);
-
         } else if (path.endsWith("/LoginController/SendLink")) {
-
             request.getRequestDispatcher("/web/reset_password.jsp").forward(request, response);
         } else if (path.endsWith("/LoginController/Logout")) {
             Cookie[] cookies = request.getCookies();
             if (cookies != null) {
                 for (Cookie cookie : cookies) {
                     if (cookie.getName().equals("user")) {
-                        cookie.setMaxAge(0); // Đặt thời gian sống của cookie về 0
-                        cookie.setValue(""); // Xóa giá trị của cookie
-                        cookie.setPath("/"); // Đảm bảo nó áp dụng cho toàn bộ ứng dụng
-                        response.addCookie(cookie); // Cập nhật cookie trong response
+                        cookie.setMaxAge(0);
+                        cookie.setValue("");
+                        cookie.setPath("/");
+                        response.addCookie(cookie);
                         break;
                     }
                 }
             }
+            HttpSession session = request.getSession();
+            session.invalidate();
             request.getRequestDispatcher("/web/index.jsp").forward(request, response);
         }
-
     }
 
     /**
@@ -127,22 +120,23 @@ public class LoginController extends HttpServlet {
             throws ServletException, IOException {
         String path = request.getRequestURI();
         if (path.endsWith("/LoginController/Login")) {
-
             String username = request.getParameter("username");
             String password = request.getParameter("password");
 
             AccountDAO userDAO = new AccountDAO();
             Account user = userDAO.validateUser(username, password);
 
-            Cookie userCookie = new Cookie("user", user.getUsername() + "|" + user.getRole());
-            userCookie.setMaxAge(60 * 60 * 24); // Cookie lưu trong 1 ngày
-            userCookie.setSecure(false);   // Không yêu cầu HTTPS (chạy trên localhost)
-            userCookie.setHttpOnly(false); // Cho phép JavaScript đọc cookie
-            userCookie.setPath("/");
-            response.addCookie(userCookie);
             if (user != null) {
                 HttpSession session = request.getSession();
                 session.setAttribute("user", user);
+                session.setAttribute("userId", user.getId()); // Lưu userId vào session
+                
+                Cookie userCookie = new Cookie("user", user.getUsername() + "|" + user.getRole());
+                userCookie.setMaxAge(60 * 60 * 24);
+                userCookie.setSecure(false);
+                userCookie.setHttpOnly(false);
+                userCookie.setPath("/");
+                response.addCookie(userCookie);
 
                 if ("admin".equals(user.getRole())) {
                     response.sendRedirect("/OrderController/OrderManagement");
@@ -150,7 +144,7 @@ public class LoginController extends HttpServlet {
                     response.sendRedirect("/web/index.jsp");
                 }
             } else {
-                response.sendRedirect("login.jsp?error=invalid");
+                response.sendRedirect("/web/login.jsp?error=invalid");
             }
         }
     }
