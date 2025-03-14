@@ -183,11 +183,7 @@
                             </ul>
                         </div>
                         <div class="col-lg-12 col-md-12 col-sm-12">
-                            <h3 class="box-title mt-5">General Info</h3>
-                            <div class="table-responsive">
-
-                            </div>
-                            
+                                                      
                             <c:if test="${product.proState == 0 || product.proQuantity == 0}">
                                 <button class="btn btn-secondary btn-custom mt-3" disabled>Hết hàng</button>
                             </c:if>

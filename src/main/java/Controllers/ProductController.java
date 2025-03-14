@@ -103,8 +103,8 @@ public class ProductController extends HttpServlet {
         if ("deleteProduct".equalsIgnoreCase(action)) {
             try {
                 int id = Integer.parseInt(request.getParameter("productID"));
-
-                productDAO.deleteProduct(id);
+                productDAO.deleteProductDetail(id);
+                productDAO.deleteProduct(id);                
                 response.sendRedirect("/ProductController/ProductManagement");
             } catch (Exception e) {
                 e.printStackTrace();

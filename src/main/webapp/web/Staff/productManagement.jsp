@@ -269,20 +269,20 @@
                                                     </div>
                                                 </div>
 
-                                               <div class="row">
-    <div class="form-group">
-        <label>Category</label>
-        <select class="form-control" name="proCategory" required>
-            <option value="">Select category</option>
-            <c:forEach var="category" items="${category}">
-                <option value="${category.categoryID}" 
-                    ${category.categoryID == product.category.categoryID ? "selected" : ""}>
-                    ${category.type}
-                </option>
-            </c:forEach>
-        </select>
-    </div>
-</div>
+                                                <div class="row">
+                                                    <div class="form-group">
+                                                        <label>Category</label>
+                                                        <select class="form-control" name="proCategory" required>
+                                                            <option value="">Select category</option>
+                                                            <c:forEach var="category" items="${category}">
+                                                                <option value="${category.categoryID}" 
+                                                                        ${category.categoryID == product.category.categoryID ? "selected" : ""}>
+                                                                    ${category.type}
+                                                                </option>
+                                                            </c:forEach>
+                                                        </select>
+                                                    </div>
+                                                </div>
 
 
                                                 <div class="row">
@@ -480,6 +480,7 @@
 
 
             </script>
+
 
         </div>
 
