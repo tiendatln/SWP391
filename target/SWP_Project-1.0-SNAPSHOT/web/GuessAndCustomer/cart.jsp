@@ -10,199 +10,182 @@
 <%@ page import="Model.Cart" %>
 <%@ page import="Model.CartItem" %>
 
-<jsp:useBean id="cart" class="Model.Cart" scope="session"/>
 <!DOCTYPE html>
 <html lang="vi">
-    <head>
-        <meta charset="UTF-8">
-        <title>Giỏ hàng</title>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-        <style>
-            body {
-                background-color: #f5f5f5;
-                font-family: 'Arial', sans-serif;
-            }
+<head>
+    <meta charset="UTF-8">
+    <title>Giỏ hàng</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        /* Giữ nguyên phần CSS của bạn */
+        body {
+            background-color: #f5f5f5;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
 
-            .container {
-                max-width: 1200px;
-                margin-top: 40px;
-                padding: 30px;
-                border-radius: 10px;
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            }
+        .cart-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 30px;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
 
-            h2 {
-                color: #333;
-                font-weight: 700;
-                margin-bottom: 30px;
-                text-align: center;
-            }
+        .cart-title {
+            color: #333;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-align: center;
+        }
 
-            .table {
-                border-radius: 8px;
-                overflow: hidden;
-            }
+        .cart-table {
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            border-collapse: collapse;
+        }
 
-            .table thead th {
-                background-color: #007bff;
-                color: white;
-                border: none;
-                padding: 15px;
-                text-align: center;
-                white-space: nowrap;
-            }
-            .table th:nth-child(3) {
-                width: 250px;
-            }
-            .table th:nth-child(2) {
-                width: 150px;
-            }
-            .table tbody tr {
-                transition: background-color 0.3s;
-            }
+        .cart-table thead th {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 15px;
+            text-align: center;
+            white-space: nowrap;
+        }
 
-            .table tbody tr:hover {
-                background-color: #f8f9fa;
-            }
+        .cart-table th:nth-child(2) {
+            width: 150px;
+        }
 
-            .table td {
-                vertical-align: middle;
-                padding: 15px;
-                text-align: center;
-            }
+        .cart-table th:nth-child(3) {
+            width: 250px;
+        }
 
-            .quantity-input {
-                width: 80px !important;
-                margin: 0 auto;
-                border-radius: 5px;
-                border: 1px solid #ced4da;
-                padding: 5px;
-                text-align: center;
-            }
+        .cart-table tbody tr {
+            transition: background-color 0.3s ease;
+        }
 
-            .item-price, .item-total {
-                color: #e74c3c;
-                font-weight: 600;
-            }
+        .cart-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
 
-            .delete-btn {
-                padding: 6px 20px;
-                border-radius: 20px;
-                font-size: 14px;
-                transition: all 0.3s;
-            }
+        .cart-table td {
+            vertical-align: middle;
+            padding: 15px;
+            text-align: center;
+        }
 
-            .delete-btn:hover {
-                background-color: #dc3545;
-                transform: scale(1.05);
-            }
+        .cart-quantity-input {
+            width: 80px;
+            margin: 0 auto;
+            border-radius: 5px;
+            border: 1px solid #ced4da;
+            padding: 5px;
+            text-align: center;
+            box-sizing: border-box;
+        }
 
-            .text-end {
-                margin-top: 30px;
-                padding: 20px;
-                background-color: #f8f9fa;
-                border-radius: 8px;
-            }
+        .cart-item-price,
+        .cart-item-total {
+            color: #e74c3c;
+            font-weight: 600;
+        }
 
-            #cartTotal {
-                color: #28a745;
-                font-size: 1.5rem;
-            }
+        .cart-delete-btn {
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
 
-            .btn-success {
-                padding: 12px 30px;
-                font-size: 16px;
-                border-radius: 25px;
-                transition: all 0.3s;
-            }
+        .cart-delete-btn:hover {
+            background-color: #c82333;
+            transform: scale(1.05);
+        }
 
-            .btn-success:hover {
-                background-color: #218838;
-                transform: translateY(-2px);
-                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            }
+        .cart-text-end {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-            .alert-warning {
-                margin-top: 20px;
-                padding: 20px;
-                border-radius: 8px;
-                font-size: 1.1rem;
-                text-align: center;
-                background-color: #fff3cd;
-                color: #856404;
+        #cartTotal {
+            color: #28a745;
+            font-size: 1.5rem;
+            margin: 0;
+        }
 
-            }
+        .cart-btn-success {
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 25px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
 
-            img {
-                border-radius: 5px;
-                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-                transition: transform 0.3s;
-            }
-            /* Responsive adjustments */
-            @media (max-width: 768px) {
-                .table td, .table th {
-                    font-size: 14px;
-                    padding: 10px;
-                }
+        .cart-btn-success:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
 
-                .quantity-input {
-                    width: 60px !important;
-                }
+        .cart-alert-warning {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            text-align: center;
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
 
-                .btn-success {
-                    width: 100%;
-                    padding: 10px;
-                }
-            }
-            /* Tùy chỉnh checkbox */
-            .custom-checkbox {
-                display: none; /* Ẩn checkbox mặc định */
-            }
+        .cart-custom-checkbox {
+            margin-right: 5px;
+        }
 
-            .custom-checkbox-label {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                width: 24px;
-                height: 24px;
-                border: 2px solid #007bff;
-                border-radius: 6px;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                background-color: white;
-            }
+        .cart-text-start {
+            display: flex;
+            align-items: center;
+        }
 
-            .custom-checkbox:checked + .custom-checkbox-label {
-                background-color: #007bff;
-                border-color: #0056b3;
-            }
+        .user-id-display {
+            font-size: 1.2rem;
+            color: #007bff;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <jsp:include page="../../Header.jsp" />
+    <div class="cart-container" id="cartContainer">
+        <h2 class="cart-title">
+            Giỏ hàng của bạn 
+            
+        </h2>
 
-            .custom-checkbox-label::after {
-                content: "✔";
-                color: white;
-                font-size: 16px;
-                display: none;
-            }
-
-            .custom-checkbox:checked + .custom-checkbox-label::after {
-                display: block;
-            }
-
-            .table td:first-child,
-            .table th:first-child {
-                text-align: center;
-            }
-        </style>
-    </head>
-    <body>
-        <jsp:include page="../../Header.jsp" />
-        <div class="container mt-4" id="cartContainer">
-            <h2>Giỏ hàng của bạn</h2>
-
-            <c:choose>
-                <c:when test="${not empty cart.cartItems}">
-                    <table class="table table-striped">
-                        <thead class="table-dark">
+        <c:set var="cart" value="${sessionScope.cart}" />
+        <c:choose>
+            <c:when test="${not empty cart and not empty cart.cartItems}">
+                <form id="checkoutForm" method="post" action="/OrderController/PrepareOrder">
+                    <input type="text" name="userID" value="${sessionScope.userId}" hidden="true" >
+                    <table class="cart-table">
+                        <thead>
                             <tr>
                                 <th>Select</th>
                                 <th>Tên sản phẩm</th>
@@ -214,161 +197,161 @@
                             </tr>
                         </thead>
                         <tbody id="cartItems">
-
                             <c:forEach var="item" items="${cart.cartItems}">
                                 <tr data-product-id="${item.product.productID}">
-
                                     <td>
-                                        <input type="checkbox" class="custom-checkbox select-item" id="select-${item.product.productID}" data-product-id="${item.product.productID}">
-                                        <label for="select-${item.product.productID}" class="custom-checkbox-label"></label>
+                                        <input type="checkbox" class="cart-custom-checkbox cart-select-item" 
+                                               id="select-${item.product.productID}" 
+                                               name="productId/Quantity" value="${item.product.productID}/${item.quantity}"
+                                               data-product-id="${item.product.productID}">
+                                        <label for="select-${item.product.productID}" class="cart-custom-checkbox-label"></label>
                                     </td>
                                     <td>${item.product.productName}</td>
-                                    <td><img src="/link/img/${item.product.proImg}" alt="${item.product.productName}" width="100px" height="100px"></td>
+                                    <td><img src="${pageContext.request.contextPath}/link/img/${item.product.proImg}" alt="${item.product.productName}" width="100px" height="100px"></td>
                                     <td>
-                                        <input type="number" class="form-control quantity-input" 
-                                               name="quantity" value="${item.quantity}" min="1" 
+                                        <input type="number" class="cart-quantity-input" 
+                                               name="quantityShow" value="${item.quantity}" min="1" 
                                                data-product-id="${item.product.productID}">
                                     </td>
-                                    <td class="item-price"><fmt:formatNumber value="${item.product.proPrice}" type="number" groupingUsed="true"/> đ</td>
-                                    <td class="item-total"><fmt:formatNumber value="${item.totalPrice}" type="number" groupingUsed="true"/> đ</td>
+                                    <td class="cart-item-price"><fmt:formatNumber value="${item.product.proPrice}" type="number" groupingUsed="true"/> đ</td>
+                                    <td class="cart-item-total"><fmt:formatNumber value="${item.totalPrice}" type="number" groupingUsed="true"/> đ</td>
                                     <td>
-                                        <button class="btn btn-danger delete-btn" 
+                                        <button type="button" class="cart-delete-btn" 
                                                 data-product-id="${item.product.productID}">Xóa</button>
                                     </td>
                                 </tr>
                             </c:forEach>
                         </tbody>
                     </table>
-                    <div >
-
-                        <div class="text-end ">
-                            <div class="text-start"><input type="checkbox" id="selectAll" class="custom-checkbox">
-                                <label for="selectAll" class="custom-checkbox-label"></label>  Chọn tất cả
-                            </div>
-                            <h4>Tổng tiền: 
-                                <strong id="cartTotal"><fmt:formatNumber value="0" type="number" groupingUsed="true"/> đ</strong>
-                            </h4>
-                            <a href="checkout.jsp" class="btn btn-success" id="checkoutBtn">Thanh toán</a>
+                    <div class="cart-text-end">
+                        <div class="cart-text-start">
+                            <input type="checkbox" id="selectAll" class="cart-custom-checkbox">
+                            <label for="selectAll" class="cart-custom-checkbox-label"></label> Chọn tất cả
                         </div>
+                        <h4>Tổng tiền: 
+                            <strong id="cartTotal"><fmt:formatNumber value="0" type="number" groupingUsed="true"/> đ</strong>
+                        </h4>
+                        <button type="submit" class="cart-btn-success" id="checkoutBtn">Thanh toán</button>
                     </div>
-                </c:when>
-                <c:otherwise>
-                    <p class="alert alert-warning">Giỏ hàng của bạn đang trống!</p>
-                </c:otherwise>
-            </c:choose>
-        </div>
-
-
-        <!-- JavaScript xử lý cập nhật số lượng, xóa sản phẩm và tính tổng tiền -->
-        <script>
-            // Hàm định dạng số với dấu phân cách
-            function formatNumber(number) {
-                return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " đ";
-            }
-
-            // Cập nhật số lượng
-            document.querySelectorAll('.quantity-input').forEach(input => {
-                input.addEventListener('change', function () {
-                    const productId = this.getAttribute('data-product-id');
-                    const quantity = this.value;
-
-                    fetch('${pageContext.request.contextPath}/CartController', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: 'action=update&productId=' + encodeURIComponent(productId) + '&quantity=' + encodeURIComponent(quantity)
-                    })
-                            .then(response => response.json())
-                            .then(result => {
-                                if (result.status === 'success') {
-                                    const row = this.closest('tr');
-                                    const priceText = row.querySelector('.item-price').textContent.replace(/[^0-9]/g, '');
-                                    const price = parseFloat(priceText);
-                                    const newTotal = price * quantity;
-                                    row.querySelector('.item-total').textContent = formatNumber(newTotal);
-                                    updateCartTotal();
-                                }
-                            })
-                            .catch(error => console.error('Lỗi:', error));
-                });
-            });
-
-            // Xóa sản phẩm
-            document.querySelectorAll('.delete-btn').forEach(button => {
-                button.addEventListener('click', function () {
-                    const productId = this.getAttribute('data-product-id');
-
-                    fetch('${pageContext.request.contextPath}/CartController', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: 'action=delete&productId=' + encodeURIComponent(productId)
-                    })
-                            .then(response => response.json())
-                            .then(result => {
-                                if (result.status === 'success') {
-                                    const row = this.closest('tr');
-                                    row.remove();
-                                    const remainingItems = document.querySelectorAll('#cartItems tr');
-                                    if (remainingItems.length === 0) {
-                                        document.getElementById('cartContainer').innerHTML = `
-                                    <h2>Giỏ hàng của bạn</h2>
-                                    <p class="alert alert-warning">Giỏ hàng của bạn đang trống!</p>
-                                `;
-                                    } else {
-                                        updateCartTotal();
-                                    }
-                                }
-                            })
-                            .catch(error => console.error('Lỗi:', error));
-                });
-            });
-
-            // Hàm cập nhật tổng tiền dựa trên các sản phẩm được chọn
-            function updateCartTotal() {
-                let total = 0;
-                document.querySelectorAll('#cartItems tr').forEach(row => {
-                    const checkbox = row.querySelector('.select-item');
-                    if (checkbox.checked) {
-                        const itemTotal = parseFloat(row.querySelector('.item-total').textContent.replace(/[^0-9]/g, ''));
-                        total += itemTotal;
-                    }
-                });
-                document.getElementById('cartTotal').textContent = formatNumber(total);
-            }
-
-            // Xử lý checkbox "Chọn tất cả"
-            document.getElementById('selectAll').addEventListener('change', function () {
-                const isChecked = this.checked;
-                document.querySelectorAll('.select-item').forEach(checkbox => {
-                    checkbox.checked = isChecked;
-                });
-                updateCartTotal();
-            });
-
-            // Xử lý checkbox từng sản phẩm
-            document.querySelectorAll('.select-item').forEach(checkbox => {
-                checkbox.addEventListener('change', function () {
-                    updateCartTotal();
-                    // Kiểm tra nếu tất cả checkbox đều được chọn
-                    const allChecked = Array.from(document.querySelectorAll('.select-item')).every(cb => cb.checked);
-                    document.getElementById('selectAll').checked = allChecked;
-                });
-            });
-
-            // Xử lý nút thanh toán
-            document.getElementById('checkoutBtn').addEventListener('click', function (e) {
-                const selectedItems = document.querySelectorAll('.select-item:checked');
-                if (selectedItems.length === 0) {
-                    e.preventDefault();
-                    alert('Vui lòng chọn ít nhất một sản phẩm để thanh toán!');
-                }
-            });
-        </script>
-    </body>
+                </form>
+            </c:when>
+            <c:otherwise>
+                <p class="cart-alert-warning">Giỏ hàng của bạn đang trống!</p>
+            </c:otherwise>
+        </c:choose>
+    </div>
     <div style="background-color: rgb(31, 41, 55)">
         <jsp:include page="../../Footer.jsp" />
     </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Hàm định dạng số với dấu phân cách
+        function formatNumber(number) {
+            return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " đ";
+        }
+
+        // Cập nhật số lượng
+        document.querySelectorAll('.cart-quantity-input').forEach(input => {
+            input.addEventListener('change', function () {
+                const productId = this.getAttribute('data-product-id');
+                const quantity = this.value;
+
+                fetch('${pageContext.request.contextPath}/CartController', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: 'action=update&productId=' + encodeURIComponent(productId) + '&quantity=' + encodeURIComponent(quantity)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        const row = this.closest('tr');
+                        const priceText = row.querySelector('.cart-item-price').textContent.replace(/[^0-9]/g, '');
+                        const price = parseFloat(priceText);
+                        const newTotal = price * quantity;
+                        row.querySelector('.cart-item-total').textContent = formatNumber(newTotal);
+                        updateCartTotal();
+                    }
+                })
+                .catch(error => console.error('Lỗi:', error));
+            });
+        });
+
+        // Xóa sản phẩm
+        document.querySelectorAll('.cart-delete-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const productId = this.getAttribute('data-product-id');
+
+                fetch('${pageContext.request.contextPath}/CartController', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: 'action=delete&productId=' + encodeURIComponent(productId)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        const row = this.closest('tr');
+                        row.remove();
+                        const remainingItems = document.querySelectorAll('#cartItems tr');
+                        if (remainingItems.length === 0) {
+                            document.getElementById('cartContainer').innerHTML = `
+                                <h2 class="cart-title">Giỏ hàng của bạn <span class="user-id-display">(User ID: ${sessionScope.userId})</span></h2>
+                                <p class="cart-alert-warning">Giỏ hàng của bạn đang trống!</p>
+                            `;
+                        } else {
+                            updateCartTotal();
+                        }
+                    }
+                })
+                .catch(error => console.error('Lỗi:', error));
+            });
+        });
+
+        // Hàm cập nhật tổng tiền dựa trên các sản phẩm được chọn
+        function updateCartTotal() {
+            let total = 0;
+            document.querySelectorAll('#cartItems tr').forEach(row => {
+                const checkbox = row.querySelector('.cart-select-item');
+                if (checkbox && checkbox.checked) {
+                    const itemTotal = parseFloat(row.querySelector('.cart-item-total').textContent.replace(/[^0-9]/g, ''));
+                    total += itemTotal;
+                }
+            });
+            document.getElementById('cartTotal').textContent = formatNumber(total);
+        }
+
+        // Xử lý checkbox "Chọn tất cả"
+        document.getElementById('selectAll')?.addEventListener('change', function () {
+            const isChecked = this.checked;
+            document.querySelectorAll('.cart-select-item').forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+            updateCartTotal();
+        });
+
+        // Xử lý checkbox từng sản phẩm
+        document.querySelectorAll('.cart-select-item').forEach(checkbox => {
+            checkbox.addEventListener('change', function () {
+                updateCartTotal();
+                const allChecked = Array.from(document.querySelectorAll('.cart-select-item')).every(cb => cb.checked);
+                document.getElementById('selectAll').checked = allChecked;
+            });
+        });
+
+        // Xử lý nút thanh toán
+        document.getElementById('checkoutBtn')?.addEventListener('click', function (e) {
+            const selectedItems = document.querySelectorAll('.cart-select-item:checked');
+            if (selectedItems.length === 0) {
+                e.preventDefault();
+                alert('Vui lòng chọn ít nhất một sản phẩm để thanh toán!');
+            } else {
+                document.getElementById('checkoutForm').submit();
+            }
+        });
+    </script>
+</body>
 </html>

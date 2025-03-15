@@ -4,12 +4,15 @@
  */
 package Controllers;
 
+import DAOs.AccountDAO;
 import DAOs.CartDAO;
+import Model.Account;
 import Model.Cart;
 import Model.Product;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -63,20 +66,63 @@ public class CartController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-       String path = request.getRequestURI();
-        if (path.endsWith("/CartController/Cart")) {
-            HttpSession session = request.getSession();
-            Integer userId = (Integer) session.getAttribute("userId");
-            if (userId != null) {
-                CartDAO dao = new CartDAO();
-                try {
-                    Cart cart = dao.loadCartFromDB(userId);
-                    session.setAttribute("cart", cart);
-                } catch (SQLException | ClassNotFoundException ex) {
-               }
+   String path = request.getRequestURI();
+    if (path.endsWith("/CartController/Cart")) {
+        HttpSession session = request.getSession();
+        Integer userId = (Integer) session.getAttribute("userId");
+
+        // Nếu userId không có trong session, kiểm tra cookie
+        if (userId == null) {
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if ("user".equals(cookie.getName())) {
+                        String[] values = cookie.getValue().split("\\|");
+                        if (values.length == 2) {
+                            String username = values[0];
+                            String role = values[1];
+                            CartDAO userDAO = new CartDAO();
+                            Account user = null;
+                            try {
+                                user = userDAO.getAccountByUsername(username); // Giả sử có phương thức này
+                            } catch (SQLException ex) {
+                                Logger.getLogger(CartController.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (ClassNotFoundException ex) {
+                                Logger.getLogger(CartController.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            if (user != null && user.getRole().equals(role)) {
+                                userId = user.getId();
+                                session.setAttribute("userId", userId);
+                                session.setAttribute("user", user);
+                            }
+                            break;
+                        }
+                    }
+                }
             }
-            request.getRequestDispatcher("/web/GuessAndCustomer/cart.jsp").forward(request, response);
         }
+
+        // Nếu vẫn không có userId, chuyển hướng đến login
+        if (userId == null) {
+            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            return;
+        }
+
+        CartDAO dao = new CartDAO();
+        Cart cart = (Cart) session.getAttribute("cart");
+        try {
+            cart = dao.loadCartFromDB(userId);
+            if (cart == null) {
+                cart = new Cart(userId);
+            }
+            session.setAttribute("cart", cart);
+        } catch (SQLException | ClassNotFoundException ex) {
+            Logger.getLogger(CartController.class.getName()).log(Level.SEVERE, "Lỗi khi tải giỏ hàng từ DB", ex);
+            cart = new Cart(userId);
+            session.setAttribute("cart", cart);
+        }
+        request.getRequestDispatcher("/web/GuessAndCustomer/cart.jsp").forward(request, response);
+    }
     }
 
     /**

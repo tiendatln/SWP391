@@ -13,6 +13,7 @@ Model\Cart.class
 Model\Product.class
 PaymentServlet.class
 Model\CartItem.class
+DAOs\ProfileDAO.class
 Model\Account.class
 DAOs\AccountDAO.class
 Controllers\AccountController.class
