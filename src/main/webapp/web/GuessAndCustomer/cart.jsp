@@ -176,13 +176,14 @@
     <div class="cart-container" id="cartContainer">
         <h2 class="cart-title">
             Giỏ hàng của bạn 
-            <span class="user-id-display">(User ID: ${sessionScope.userId})</span>
+            
         </h2>
 
         <c:set var="cart" value="${sessionScope.cart}" />
         <c:choose>
             <c:when test="${not empty cart and not empty cart.cartItems}">
                 <form id="checkoutForm" method="post" action="/OrderController/PrepareOrder">
+                    <input type="text" name="userID" value="${sessionScope.userId}" hidden="true" >
                     <table class="cart-table">
                         <thead>
                             <tr>
@@ -201,7 +202,7 @@
                                     <td>
                                         <input type="checkbox" class="cart-custom-checkbox cart-select-item" 
                                                id="select-${item.product.productID}" 
-                                               name="productId" value="${item.product.productID}"
+                                               name="productId/Quantity" value="${item.product.productID}/${item.quantity}"
                                                data-product-id="${item.product.productID}">
                                         <label for="select-${item.product.productID}" class="cart-custom-checkbox-label"></label>
                                     </td>
@@ -209,7 +210,7 @@
                                     <td><img src="${pageContext.request.contextPath}/link/img/${item.product.proImg}" alt="${item.product.productName}" width="100px" height="100px"></td>
                                     <td>
                                         <input type="number" class="cart-quantity-input" 
-                                               name="quantity_${item.product.productID}" value="${item.quantity}" min="1" 
+                                               name="quantityShow" value="${item.quantity}" min="1" 
                                                data-product-id="${item.product.productID}">
                                     </td>
                                     <td class="cart-item-price"><fmt:formatNumber value="${item.product.proPrice}" type="number" groupingUsed="true"/> đ</td>
