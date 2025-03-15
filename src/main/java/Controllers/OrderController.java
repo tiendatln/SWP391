@@ -4,9 +4,14 @@
  */
 package Controllers;
 
+import DAOs.AccountDAO;
 import DAOs.OrderDAO;
+import DAOs.ProductDAO;
+import Model.CartForOrder;
 import Model.Order;
 import Model.OrderTotal;
+import Model.Product;
+import Model.Voucher;
 import jakarta.servlet.RequestDispatcher;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -96,8 +101,6 @@ public class OrderController extends HttpServlet {
             } catch (NumberFormatException e) {
                 response.sendRedirect("/OrderController/OrderManagement");
             }
-        }else if (path.startsWith("/OrderController/orderProduct")){
-            request.getRequestDispatcher("/web/orderProduct.jsp").forward(request, response);
         }
     }
 
@@ -129,8 +132,62 @@ public class OrderController extends HttpServlet {
             } catch (Exception e) {
                 response.sendRedirect("/OrderController/OrderManagement");
             }
+        }else if (path.startsWith("/OrderController/PrepareOrder")){
+            List<CartForOrder> proList = new ArrayList<>();
+            ProductDAO proDAO = new ProductDAO();
+            OrderDAO oDAO = new OrderDAO();
+            CartForOrder cartFO = new CartForOrder();
+            Voucher voucher = new Voucher();
+            voucher = oDAO.getVOucherID();
+            String[] _productID = request.getParameterValues("productId/Quantity");
+            String _userID = request.getParameter("userID");
+            for(int i = 0; i < _productID.length; i++){
+                String[] parts = _productID[i].split("/");
+                String[] _quantity = new String[_productID.length];
+                _productID[i] = parts[0];
+                _quantity[i] = parts[1];
+                cartFO.setProduct(proDAO.getProductById(Integer.parseInt(_productID[i])));
+                cartFO.setQuantity(Integer.parseInt(_quantity[i]));
+                cartFO.setAccount(oDAO.getAccountByID(Integer.parseInt(_userID)));
+                proList.add(cartFO);
+            }
+            HttpSession session = request.getSession();
+            session.setAttribute("cartOrder", proList);
+            session.setAttribute("voucher", voucher);
+            request.getRequestDispatcher("/web/orderProduct.jsp").forward(request, response);
         }
-    }
+        else if (path.startsWith("/OrderController/ConfirmOrder")){
+            List<CartForOrder> proList = new ArrayList<>();
+            HttpSession session = request.getSession();
+            proList = (List<CartForOrder>) session.getAttribute("cartOrder");
+            OrderDAO oDAO = new OrderDAO();
+            ProductDAO proDAO = new ProductDAO();
+            List<Order> List = new ArrayList<>();
+            OrderTotal ot = new OrderTotal();
+            Order o = new Order();
+            
+            
+            
+            for (int i = 0; i < proList.size(); i++) {
+                o = new Order(proList.get(i).getProduct(), ot, i, i);
+                   
+                }
+            
+            
+            if(oDAO.addNewOrder(ot, List)){
+                for (int i = 0; i < proList.size(); i++) {
+                    if(!oDAO.deleteCart(proList.get(i).getAccount().getId(), proList.get(i).getProduct().getProductID())){
+                        
+                    }
+                }
+            }
+            
+            request.getRequestDispatcher("/web/GuessAndCustomer/orderConfirmation.jsp").forward(request, response);
+           }
+            
+            
+            
+        }
 
     /**
      * Returns a short description of the servlet.

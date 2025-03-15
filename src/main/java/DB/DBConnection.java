@@ -24,7 +24,7 @@ public class DBConnection {
         //Khai bao driver
         Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
         //Tao doi tuong Connection
-        Connection conn = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName=SWP391;user=sa;password=1234;encrypt=true;trustServerCertificate=true;");
+        Connection conn = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName=SWP391;user=sa;password=123;encrypt=true;trustServerCertificate=true;");
         return conn;
     }
 }
