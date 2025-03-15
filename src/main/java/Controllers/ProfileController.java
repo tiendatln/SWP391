@@ -4,6 +4,8 @@
  */
 package Controllers;
 
+import DAOs.ProfileDAO;
+import Model.Account;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
@@ -42,7 +44,12 @@ public class ProfileController extends HttpServlet {
             out.println("</html>");
         }
     }
-
+private ProfileDAO profileDAO; // Khai báo instance variable
+    
+    @Override
+    public void init() throws ServletException {
+        profileDAO = new ProfileDAO(); // Khởi tạo instance trong init()
+    }
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
     /**
      * Handles the HTTP <code>GET</code> method.
@@ -55,10 +62,22 @@ public class ProfileController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String path = request.getRequestURI();
-        if(path.endsWith("/ProfileController/Profile")){
-            request.getRequestDispatcher("/web/GuessAndCustomer/Profile.jsp").forward(request, response);
+       String path = request.getRequestURI();
+    if (path.endsWith("/ProfileController/Profile")) {
+        int userId = 1; // Thay bằng cách lấy ID thực tế
+        try {
+            Account account = ProfileDAO.getAccountById(userId); // Gọi trực tiếp qua tên class
+            if (account != null) {
+                request.setAttribute("account", account);
+                request.getRequestDispatcher("/web/GuessAndCustomer/Profile.jsp").forward(request, response);
+            } else {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "User not found");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error retrieving profile");
         }
+    }
     }
 
     /**
@@ -72,7 +91,85 @@ public class ProfileController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+        request.setCharacterEncoding("UTF-8");
+        String path = request.getRequestURI();
+        
+        if (path.endsWith("/ProfileController/Profile")) {
+            int userId = 1; // Thay bằng cách lấy ID thực tế từ session hoặc request
+            try {
+                Account account = profileDAO.getAccountById(userId);
+                if (account == null) {
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "User not found");
+                    return;
+                }
+
+                // Kiểm tra hành động: cập nhật profile hay đổi mật khẩu
+                String action = request.getParameter("action");
+                
+                if ("changePassword".equals(action)) {
+                    // Xử lý thay đổi mật khẩu
+                    String oldPassword = request.getParameter("oldPassword");
+                    String newPassword = request.getParameter("newPassword");
+                    String confirmPassword = request.getParameter("confirmPassword");
+
+                    // Kiểm tra mật khẩu cũ
+                    if (!profileDAO.checkOldPassword(userId, oldPassword)) {
+                        request.setAttribute("errorMessage", "Old password is incorrect.");
+                        request.setAttribute("account", account);
+                        request.getRequestDispatcher("/web/GuessAndCustomer/Profile.jsp").forward(request, response);
+                        return;
+                    }
+
+                    // Kiểm tra mật khẩu mới và xác nhận mật khẩu
+                    if (!newPassword.equals(confirmPassword)) {
+                        request.setAttribute("errorMessage", "New password and confirmation do not match.");
+                        request.setAttribute("account", account);
+                        request.getRequestDispatcher("/web/GuessAndCustomer/Profile.jsp").forward(request, response);
+                        return;
+                    }
+
+                    // Kiểm tra độ dài mật khẩu (tùy chọn)
+                    if (newPassword.length() < 1) {
+                        request.setAttribute("errorMessage", "New password must be at least 1 characters long.");
+                        request.setAttribute("account", account);
+                        request.getRequestDispatcher("/web/GuessAndCustomer/Profile.jsp").forward(request, response);
+                        return;
+                    }
+
+                    // Cập nhật mật khẩu mới
+                    boolean isUpdated = profileDAO.updatePassword(userId, newPassword);
+                    if (isUpdated) {
+                        request.setAttribute("successMessage", "Password changed successfully!");
+                    } else {
+                        request.setAttribute("errorMessage", "Failed to change password.");
+                    }
+                } else {
+                    // Xử lý cập nhật thông tin profile (logic hiện tại)
+                    String username = request.getParameter("username");
+                    String email = request.getParameter("email");
+                    String phoneNumber = request.getParameter("phoneNumber");
+                    String address = request.getParameter("address");
+
+                    account.setUsername(username);
+                    account.setEmail(email);
+                    account.setPhoneNumber(phoneNumber);
+                    account.setAddress(address);
+
+                    boolean isUpdated = profileDAO.updateAccount(account);
+                    if (isUpdated) {
+                        request.setAttribute("successMessage", "Profile updated successfully!");
+                    } else {
+                        request.setAttribute("errorMessage", "Failed to update profile.");
+                    }
+                }
+
+                request.setAttribute("account", account);
+                request.getRequestDispatcher("/web/GuessAndCustomer/Profile.jsp").forward(request, response);
+            } catch (Exception e) {
+                e.printStackTrace();
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error processing request");
+            }
+        }
     }
 
     /**
