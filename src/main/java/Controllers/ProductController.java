@@ -8,6 +8,7 @@ import DAOs.CategoryDAO;
 import DAOs.ProductDAO;
 import Model.Category;
 import Model.Product;
+import Model.ProductDetail;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
@@ -17,8 +18,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -71,22 +77,24 @@ public class ProductController extends HttpServlet {
         ProductDAO productDAO = new ProductDAO();
         CategoryDAO categoryDAO = new CategoryDAO();
 
-        List<Product> productList = productDAO.getAllProducts();
-        List<Category> category = categoryDAO.getAllCategories(); // Lấy tất cả danh mục
-
-        if (path.endsWith("/UpdateQuantity")) {
-
-            request.getRequestDispatcher("/web/Staff/updateQuantity.jsp").forward(request, response);
-        } else if (path.startsWith("/ProductController/DetailProductCustomer")) {
+//        if (path.endsWith("/UpdateQuantity")) {
+//
+//            request.getRequestDispatcher("/web/Staff/updateQuantity.jsp").forward(request, response);
+//        } else 
+            if (path.startsWith("/ProductController/DetailProductCustomer")) {
             int id = Integer.parseInt(request.getParameter("id"));
+            
             Product product = productDAO.getProductById(id);
-            request.setAttribute("category", category);
+            ProductDetail productDetail = productDAO.getProductDetailById(id);
             request.setAttribute("product", product);
+            request.setAttribute("productDetail", productDetail);
             request.getRequestDispatcher("/web/GuessAndCustomer/DetailProduct.jsp").forward(request, response);
 
         } else if (path.endsWith("/ProductManagement")) {
-            request.setAttribute("category", category);
+            List<Product> productList = productDAO.getAllProducts();
+            List<Category> category = categoryDAO.getAllCategories();
             request.setAttribute("productList", productList);
+            request.setAttribute("category", category);
             request.getRequestDispatcher("/web/Staff/productManagement.jsp").forward(request, response);
         } else if (path.endsWith("/UpdateQuantity")) {
             request.getRequestDispatcher("/web/Staff/updateQuantity.jsp").forward(request, response);
@@ -95,8 +103,8 @@ public class ProductController extends HttpServlet {
         if ("deleteProduct".equalsIgnoreCase(action)) {
             try {
                 int id = Integer.parseInt(request.getParameter("productID"));
-
-                productDAO.deleteProduct(id);
+                productDAO.deleteProductDetail(id);
+                productDAO.deleteProduct(id);                
                 response.sendRedirect("/ProductController/ProductManagement");
             } catch (Exception e) {
                 e.printStackTrace();
@@ -105,6 +113,7 @@ public class ProductController extends HttpServlet {
             }
 
         }
+
     }
 
     /**
@@ -121,6 +130,18 @@ public class ProductController extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
+        String file = request.getSession().getServletContext().getRealPath("/link/img");
+        String[] s = file.split("\\\\");
+        String fileImg = "";
+        for (int i = 0; i < s.length; i++) {
+            if (!s[i].equals("build")) {
+                fileImg += s[i];
+                if (i < s.length - 1) {
+                    fileImg += "\\";
+                }
+            }
+        }
+        fileImg.substring(0, fileImg.length() - 1);
         String action = request.getParameter("action");
 
         if ("addProduct".equalsIgnoreCase(action)) {
@@ -133,44 +154,17 @@ public class ProductController extends HttpServlet {
                 String description = request.getParameter("proDescription");
                 int categoryID = Integer.parseInt(request.getParameter("proCategory"));
 
-//                Part filePart = request.getPart("proImg");
-//                String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
-//                String uploadPath = getServletContext().getRealPath("") + File.separator + "uploads";
-//
-//                File uploadDir = new File(uploadPath);
-//                if (!uploadDir.exists()) {
-//                    uploadDir.mkdir();
-//                }
-//                filePart.write(uploadPath + File.separator + fileName);
-                Part filePart = request.getPart("proImg"); // Lấy file từ form
-                String originalFileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString(); // Lấy tên file gốc
-
-                // **Lấy phần mở rộng của file**
-                String extension = "";
-                int dotIndex = originalFileName.lastIndexOf(".");
-                if (dotIndex > 0) {
-                    extension = originalFileName.substring(dotIndex); // VD: ".png", ".jpg"
+                Part part = request.getPart("proImg");
+                Path fileName = Paths.get(part.getSubmittedFileName());
+                if (!Files.exists(Paths.get(fileImg))) {
+                    Files.createDirectories(Paths.get(fileImg));
                 }
+                String picture = fileName.getFileName().toString();
 
-                // **Xác định thư mục lưu ảnh**
-                String uploadPath = getServletContext().getRealPath("") + File.separator + "link" + File.separator + "img";
-                File uploadDir = new File(uploadPath);
-                if (!uploadDir.exists()) {
-                    uploadDir.mkdirs(); // **Tạo thư mục nếu chưa tồn tại**
-                }
-
-                // **Kiểm tra xem ảnh đã tồn tại chưa**
-                File file = new File(uploadPath + File.separator + originalFileName);
-                if (!file.exists()) {
-                    // **Chỉ lưu file nếu nó chưa tồn tại**
-                    filePart.write(uploadPath + File.separator + originalFileName);
-                }
-
-                // **Gửi tên file để lưu vào database (dùng tên cũ nếu ảnh đã tồn tại)**
-                request.setAttribute("uploadedFileName", originalFileName);
+                part.write(fileImg + "/" + fileName);
 
                 ProductDAO productDAO = new ProductDAO();
-                productDAO.addProduct(name, quantity, price, state, uploadPath, description, categoryID);
+                productDAO.addProduct(name, quantity, price, state, picture, description, categoryID);
 
                 response.sendRedirect("/ProductController/ProductManagement");
             } catch (Exception e) {
@@ -181,6 +175,7 @@ public class ProductController extends HttpServlet {
         }
 
         if ("editProduct".equalsIgnoreCase(action)) {
+            ProductDAO productDAO = new ProductDAO();
             try {
                 int id = Integer.parseInt(request.getParameter("productID"));
                 String name = request.getParameter("productName");
@@ -190,39 +185,24 @@ public class ProductController extends HttpServlet {
                 String description = request.getParameter("proDescription");
                 int categoryID = Integer.parseInt(request.getParameter("proCategory"));
 
-                Part filePart = request.getPart("proImg"); // Lấy file từ form
-                String originalFileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString(); // Lấy tên file gốc
+                // **Nhận file ảnh từ request**
+                Part filePart = request.getPart("proImg"); // Lấy ảnh từ input có id="proImg"
+                Path fileName = Paths.get(filePart.getSubmittedFileName()); // Lấy tên file gốc
+                if (!Files.exists(Paths.get(fileImg))) {
+                    Files.createDirectories(Paths.get(fileImg));
+                }
+                String picture = fileName.getFileName().toString();
+                if (!picture.isEmpty()) {
+                    filePart.write(fileImg + "/" + fileName);
 
-                // **Lấy phần mở rộng của file**
-                String extension = "";
-                int dotIndex = originalFileName.lastIndexOf(".");
-                if (dotIndex > 0) {
-                    extension = originalFileName.substring(dotIndex); // VD: ".png", ".jpg"
+                    File filePic = new File(fileImg + "/" + productDAO.getProductImgById(id));
+                    if (filePic.exists()) {
+                        filePic.delete();
+                    }
                 }
 
-                // **Xác định thư mục lưu ảnh**
-                // Xác định thư mục lưu ảnh trong src/main/webapp/link/img
-                String uploadPath = System.getProperty("user.dir") + File.separator
-                        + "src" + File.separator + "main" + File.separator
-                        + "webapp" + File.separator + "link" + File.separator + "img";
-
-                File uploadDir = new File(uploadPath);
-                if (!uploadDir.exists()) {
-                    uploadDir.mkdirs(); // **Tạo thư mục nếu chưa tồn tại**
-                }
-
-                // **Kiểm tra xem ảnh đã tồn tại chưa**
-                File file = new File(uploadPath + File.separator + originalFileName);
-                if (!file.exists()) {
-                    // **Chỉ lưu file nếu nó chưa tồn tại**
-                    filePart.write(uploadPath + File.separator + originalFileName);
-                }
-
-                // **Gửi tên file để lưu vào database (dùng tên cũ nếu ảnh đã tồn tại)**
-                request.setAttribute("uploadedFileName", originalFileName);
-
-                ProductDAO productDAO = new ProductDAO();
-                productDAO.updateProduct(id, name, quantity, price, state, uploadPath, description, categoryID);
+                
+                productDAO.updateProduct(id, name, quantity, price, state, picture, description, categoryID);
 
                 response.sendRedirect("/ProductController/ProductManagement");
             } catch (Exception e) {
@@ -231,6 +211,47 @@ public class ProductController extends HttpServlet {
                 response.sendRedirect("/ProductController/ProductManagement");
             }
         }
+
+        if ("updateProductDetail".equalsIgnoreCase(action)) {
+            try {
+                int productID = Integer.parseInt(request.getParameter("productID"));
+                String operatingSystem = request.getParameter("operatingSystem");
+                String cpuTechnology = request.getParameter("cpuTechnology");
+                int coreCount = Integer.parseInt(request.getParameter("coreCount"));
+                int threadCount = Integer.parseInt(request.getParameter("threadCount"));
+                String cpuSpeed = request.getParameter("cpuSpeed");
+                String gpu = request.getParameter("gpu");
+                int ram = Integer.parseInt(request.getParameter("ram"));
+                String ramType = request.getParameter("ramType");
+                String ramBusSpeed = request.getParameter("ramBusSpeed");
+                int maxRam = Integer.parseInt(request.getParameter("maxRam"));
+                String storage = request.getParameter("storage");
+                String memoryCard = request.getParameter("memoryCard");
+                String screen = request.getParameter("screen");
+                String resolution = request.getParameter("resolution");
+                String refreshRate = request.getParameter("refreshRate");
+                String batteryCapacity = request.getParameter("batteryCapacity");
+                String batteryType = request.getParameter("batteryType");
+                String maxChargingSupport = request.getParameter("maxChargingSupport");
+                String releaseDate = request.getParameter("releaseDate");
+                String origin = request.getParameter("origin");
+
+                ProductDAO productDAO = new ProductDAO();
+                Product product = productDAO.getProductById(productID);
+                ProductDetail productDetail = new ProductDetail(product, operatingSystem, cpuTechnology, coreCount,
+                        threadCount, cpuSpeed, gpu, ram, ramType, ramBusSpeed, maxRam, storage, memoryCard, screen,
+                        resolution, refreshRate, batteryCapacity, batteryType, maxChargingSupport, releaseDate, origin);
+
+                productDAO.updateProductDetail(productDetail);
+
+                response.sendRedirect("/ProductController/ProductManagement");
+            } catch (Exception e) {
+                e.printStackTrace();
+                request.setAttribute("errorMessage", "Lỗi khi cập nhật chi tiết sản phẩm: " + e.getMessage());
+                response.sendRedirect("/ProductController/ProductManagement");
+            }
+        }
+
     }
 
     /**

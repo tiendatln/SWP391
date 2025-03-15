@@ -94,7 +94,7 @@
     </head>
     <jsp:include page="/Header.jsp" />
     <body>
-        
+
 
         <div class="container">
             <h2 class="text-center mb-4" style="font-weight: 600; color: #2c3e50;">Chi tiết sản phẩm</h2>
@@ -126,25 +126,68 @@
 
                             <div id="alertBox" class="alert alert-success alert-box"></div>
 
-                            <c:if test="${product.proState == 1 && product.proQuantity > 0}">
-                                <form id="addToCartForm" class="align-items-center gap-3">
-                                    <input type="hidden" name="productID" id="productID" value="${product.productID}">
-                                    <div class="d-flex">
-                                        <label for="quantity" class="fw-bold">Số lượng:</label>
-                                        <input type="number" name="quantity" id="quantity" min="1" max="${product.proQuantity}" value="1" class="form-control w-25">
-                                    </div>
-                                    <div style="margin-top: 5px;">
-                                        <button type="button" id="addToCartBtn" class="btn btn-success ">
-                                            <i class="fas fa-cart-plus"></i> Thêm vào giỏ hàng
-                                        </button>
-                                        <button class="btn btn-primary btn-rounded">Buy Now</button>
-                                    </div>
-                                </form>
-                            </c:if>
+                            
 
+                            
+
+                            <!--Thêm san phẩm vào giỏ hàng-->
+                            <form id="addToCartForm">
+                                <input type="hidden" name="action" value="add">
+                                <input type="hidden" name="productId" value="${product.productID}">
+
+                                <div class="mb-3">
+                                    <label for="quantity" class="form-label">Số lượng:</label>
+                                    <input type="number" id="quantity" name="quantity" value="1" min="1" class="form-control w-25">
+                                </div>
+
+                                <button type="submit" class="btn btn-success"><i class="fa fa-shopping-cart"></i> Thêm vào giỏ hàng</button>
+                            </form>
+
+                            <div id="cartMessage" class="alert alert-success mt-3 d-none"></div>
+
+                            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+                            <script>
+                                $(document).ready(function () {
+                                    $("#addToCartForm").submit(function (event) {
+                                        event.preventDefault(); // Ngăn reload trang
+
+                                        $.ajax({
+                                            type: "POST",
+                                            url: "CartController",
+                                            data: $(this).serialize(),
+                                            dataType: "json",
+                                            success: function (response) {
+                                                if (response.status === "success") {
+                                                    $("#cartMessage").removeClass("d-none").text(response.message);
+                                                    setTimeout(function () {
+                                                        $("#cartMessage").addClass("d-none"); // Ẩn sau 3 giây
+                                                    }, 3000);
+                                                }
+                                            },
+                                            error: function () {
+                                                alert("Có lỗi xảy ra, vui lòng thử lại!");
+                                            }
+                                        });
+                                    });
+                                });
+                            </script>
+
+
+
+                            <button class="btn btn-primary btn-rounded">Buy Now</button>
+                            <h3 class="box-title mt-5">Key Highlights</h3>
+                            <ul class="list-unstyled">
+                                <li><i class="fa fa-check text-success"></i>Sturdy structure</li>
+                                <li><i class="fa fa-check text-success"></i>Designed to foster easy portability</li>
+                                <li><i class="fa fa-check text-success"></i>Perfect furniture to flaunt your wonderful collectibles</li>
+                            </ul>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                                                      
                             <c:if test="${product.proState == 0 || product.proQuantity == 0}">
                                 <button class="btn btn-secondary btn-custom mt-3" disabled>Hết hàng</button>
                             </c:if>
+                            
                         </div>
                     </div>
                 </c:when>
@@ -154,66 +197,66 @@
                 <div class="table-responsive">
                     <table class="table table-striped table-product">
                         <tbody>
-                            <tr>
-                                <td width="390">Brand</td>
-                                <td>Stellar</td>
-                            </tr>
-                            <tr>
-                                <td>Delivery Condition</td>
-                                <td>Knock Down</td>
-                            </tr>
-                            <tr>
-                                <td>Seat Lock Included</td>
-                                <td>Yes</td>
-                            </tr>
-                            <tr>
-                                <td>Type</td>
-                                <td>Office Chair</td>
-                            </tr>
-                            <tr>
-                                <td>Style</td>
-                                <td>Contemporary&amp;Modern</td>
-                            </tr>
-                            <tr>
-                                <td>Wheels Included</td>
-                                <td>Yes</td>
-                            </tr>
-                            <tr>
-                                <td>Upholstery Included</td>
-                                <td>Yes</td>
-                            </tr>
-                            <tr>
-                                <td>Upholstery Type</td>
-                                <td>Cushion</td>
-                            </tr>
-                            <tr>
-                                <td>Head Support</td>
-                                <td>No</td>
-                            </tr>
-                            <tr>
-                                <td>Suitable For</td>
-                                <td>Study&amp;Home Office</td>
-                            </tr>
-                            <tr>
-                                <td>Adjustable Height</td>
-                                <td>Yes</td>
-                            </tr>
-                            <tr>
-                                <td>Model Number</td>
-                                <td>F01020701-00HT744A06</td>
-                            </tr>
-                            <tr>
-                                <td>Armrest Included</td>
-                                <td>Yes</td>
-                            </tr>
-                            <tr>
-                                <td>Care Instructions</td>
-                                <td>Handle With Care,Keep In Dry Place,Do Not Apply Any Chemical For Cleaning.</td>
-                            </tr>
-                            <tr>
-                                <td>Finish Type</td>
-                                <td>Matte</td>
-                            </tr>
+                            <c:if test="${not empty productDetail.operatingSystem}">
+                                <tr><td width="390">Operating System</td><td>${productDetail.operatingSystem}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.cpuTechnology}">
+                                <tr><td>CPU Technology</td><td>${productDetail.cpuTechnology}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.coreCount}">
+                                <tr><td>Core Count</td><td>${productDetail.coreCount}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.threadCount}">
+                                <tr><td>Thread Count</td><td>${productDetail.threadCount}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.cpuSpeed}">
+                                <tr><td>CPU Speed</td><td>${productDetail.cpuSpeed}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.gpu}">
+                                <tr><td>GPU</td><td>${productDetail.gpu}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.ram}">
+                                <tr><td>RAM</td><td>${productDetail.ram} GB</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.ramType}">
+                                <tr><td>RAM Type</td><td>${productDetail.ramType}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.ramBusSpeed}">
+                                <tr><td>RAM Bus Speed</td><td>${productDetail.ramBusSpeed}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.maxRam}">
+                                <tr><td>Max RAM</td><td>${productDetail.maxRam} GB</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.storage}">
+                                <tr><td>Storage</td><td>${productDetail.storage}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.memoryCard}">
+                                <tr><td>Memory Card Support</td><td>${productDetail.memoryCard}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.screen}">
+                                <tr><td>Screen</td><td>${productDetail.screen}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.resolution}">
+                                <tr><td>Resolution</td><td>${productDetail.resolution}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.refreshRate}">
+                                <tr><td>Refresh Rate</td><td>${productDetail.refreshRate}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.batteryCapacity}">
+                                <tr><td>Battery Capacity</td><td>${productDetail.batteryCapacity}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.batteryType}">
+                                <tr><td>Battery Type</td><td>${productDetail.batteryType}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.maxChargingSupport}">
+                                <tr><td>Max Charging Support</td><td>${productDetail.maxChargingSupport}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.releaseDate}">
+                                <tr><td>Release Date</td><td>${productDetail.releaseDate}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.origin}">
+                                <tr><td>Origin</td><td>${productDetail.origin}</td></tr>
+                            </c:if>
                         </tbody>
                     </table>
                 </div>
@@ -277,54 +320,54 @@
         <!-- JavaScript -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
-            // Xử lý AJAX thêm vào giỏ hàng
-            document.getElementById("addToCartBtn")?.addEventListener("click", function () {
-                let productID = document.getElementById("productID").value;
-                let quantity = document.getElementById("quantity").value;
+                                // Xử lý AJAX thêm vào giỏ hàng
+                                document.getElementById("addToCartBtn")?.addEventListener("click", function () {
+                                    let productID = document.getElementById("productID").value;
+                                    let quantity = document.getElementById("quantity").value;
 
-                fetch("${pageContext.request.contextPath}/CartController", {
-                    method: "POST",
-                    headers: {"Content-Type": "application/x-www-form-urlencoded"},
-                    body: "action=add&productId=" + encodeURIComponent(productID) + "&quantity=" + encodeURIComponent(quantity)
-                })
-                        .then(response => response.json())
-                        .then(result => {
-                            let alertBox = document.getElementById("alertBox");
-                            alertBox.style.display = "block";
-                            if (result.status === "success") {
-                                alertBox.className = "alert alert-success alert-box";
-                                alertBox.innerText = result.message;
-                            } else {
-                                alertBox.className = "alert alert-danger alert-box";
-                                alertBox.innerText = result.message;
-                                if (result.message.includes("đăng nhập")) {
-                                    setTimeout(() => window.location.href = "${pageContext.request.contextPath}/LoginController/Login", 1000);
-                                }
-                            }
-                            setTimeout(() => alertBox.style.display = "none", 2000);
-                        })
-                        .catch(error => {
-                            console.error("Lỗi:", error);
-                            let alertBox = document.getElementById("alertBox");
-                            alertBox.className = "alert alert-danger alert-box";
-                            alertBox.innerText = "Có lỗi xảy ra khi thêm vào giỏ hàng!";
-                            alertBox.style.display = "block";
-                            setTimeout(() => alertBox.style.display = "none", 3000);
-                        });
-            });
+                                    fetch("${pageContext.request.contextPath}/CartController", {
+                                        method: "POST",
+                                        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+                                        body: "action=add&productId=" + encodeURIComponent(productID) + "&quantity=" + encodeURIComponent(quantity)
+                                    })
+                                            .then(response => response.json())
+                                            .then(result => {
+                                                let alertBox = document.getElementById("alertBox");
+                                                alertBox.style.display = "block";
+                                                if (result.status === "success") {
+                                                    alertBox.className = "alert alert-success alert-box";
+                                                    alertBox.innerText = result.message;
+                                                } else {
+                                                    alertBox.className = "alert alert-danger alert-box";
+                                                    alertBox.innerText = result.message;
+                                                    if (result.message.includes("đăng nhập")) {
+                                                        setTimeout(() => window.location.href = "${pageContext.request.contextPath}/LoginController/Login", 1000);
+                                                    }
+                                                }
+                                                setTimeout(() => alertBox.style.display = "none", 2000);
+                                            })
+                                            .catch(error => {
+                                                console.error("Lỗi:", error);
+                                                let alertBox = document.getElementById("alertBox");
+                                                alertBox.className = "alert alert-danger alert-box";
+                                                alertBox.innerText = "Có lỗi xảy ra khi thêm vào giỏ hàng!";
+                                                alertBox.style.display = "block";
+                                                setTimeout(() => alertBox.style.display = "none", 3000);
+                                            });
+                                });
 
-            // Xử lý rating sao
-            document.querySelectorAll('.rating .star').forEach(star => {
-                star.addEventListener('click', function () {
-                    const value = this.getAttribute('data-value');
-                    document.getElementById('ratingValue').value = value;
-                    this.parentElement.querySelectorAll('.star').forEach(s => {
-                        s.classList.remove('selected');
-                        if (s.getAttribute('data-value') <= value)
-                            s.classList.add('selected');
-                    });
-                });
-            });
+                                // Xử lý rating sao
+                                document.querySelectorAll('.rating .star').forEach(star => {
+                                    star.addEventListener('click', function () {
+                                        const value = this.getAttribute('data-value');
+                                        document.getElementById('ratingValue').value = value;
+                                        this.parentElement.querySelectorAll('.star').forEach(s => {
+                                            s.classList.remove('selected');
+                                            if (s.getAttribute('data-value') <= value)
+                                                s.classList.add('selected');
+                                        });
+                                    });
+                                });
         </script>
     </body>
 </html>

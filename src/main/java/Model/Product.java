@@ -17,6 +17,7 @@ public class Product {
     private String proImg;
     private String proDes;
     private Category category;
+    private ProductDetail productDetail;
 
     public Product(int productID, String productName, int proQuantity, long proPrice, byte proState, String proImg, String proDes, Category category) {
         this.productID = productID;
@@ -28,6 +29,20 @@ public class Product {
         this.proDes = proDes;
         this.category = category;
     }
+
+    public Product(int productID, String productName, int proQuantity, long proPrice, byte proState, String proImg, String proDes, Category category, ProductDetail productDetail) {
+        this.productID = productID;
+        this.productName = productName;
+        this.proQuantity = proQuantity;
+        this.proPrice = proPrice;
+        this.proState = proState;
+        this.proImg = proImg;
+        this.proDes = proDes;
+        this.category = category;
+        this.productDetail = productDetail;
+    }
+
+    
 
     
 
@@ -97,6 +112,14 @@ public class Product {
 
     public void setCategory(Category category) {
         this.category = category;
+    }
+
+    public ProductDetail getProductDetail() {
+        return productDetail;
+    }
+
+    public void setProductDetail(ProductDetail productDetail) {
+        this.productDetail = productDetail;
     }
     
     
