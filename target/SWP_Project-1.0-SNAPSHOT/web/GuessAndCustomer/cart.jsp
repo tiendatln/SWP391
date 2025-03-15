@@ -175,8 +175,7 @@
     <jsp:include page="../../Header.jsp" />
     <div class="cart-container" id="cartContainer">
         <h2 class="cart-title">
-            Giỏ hàng của bạn 
-            
+            Your shopping cart
         </h2>
 
         <c:set var="cart" value="${sessionScope.cart}" />
@@ -188,12 +187,12 @@
                         <thead>
                             <tr>
                                 <th>Select</th>
-                                <th>Tên sản phẩm</th>
-                                <th>Hình ảnh</th>
-                                <th>Số lượng</th>
-                                <th>Giá</th>
-                                <th>Tổng</th>
-                                <th>Hành động</th>
+                                <th>Product name</th>
+                                <th>Image</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="cartItems">
@@ -217,7 +216,7 @@
                                     <td class="cart-item-total"><fmt:formatNumber value="${item.totalPrice}" type="number" groupingUsed="true"/> đ</td>
                                     <td>
                                         <button type="button" class="cart-delete-btn" 
-                                                data-product-id="${item.product.productID}">Xóa</button>
+                                                data-product-id="${item.product.productID}">Delete</button>
                                     </td>
                                 </tr>
                             </c:forEach>
@@ -226,17 +225,17 @@
                     <div class="cart-text-end">
                         <div class="cart-text-start">
                             <input type="checkbox" id="selectAll" class="cart-custom-checkbox">
-                            <label for="selectAll" class="cart-custom-checkbox-label"></label> Chọn tất cả
+                            <label for="selectAll" class="cart-custom-checkbox-label"></label> Select All
                         </div>
-                        <h4>Tổng tiền: 
+                        <h4>Total amount: 
                             <strong id="cartTotal"><fmt:formatNumber value="0" type="number" groupingUsed="true"/> đ</strong>
                         </h4>
-                        <button type="submit" class="cart-btn-success" id="checkoutBtn">Thanh toán</button>
+                        <button type="submit" class="cart-btn-success" id="checkoutBtn">Payment</button>
                     </div>
                 </form>
             </c:when>
             <c:otherwise>
-                <p class="cart-alert-warning">Giỏ hàng của bạn đang trống!</p>
+                <p class="cart-alert-warning">Your cart is empty!</p>
             </c:otherwise>
         </c:choose>
     </div>
@@ -275,7 +274,7 @@
                         updateCartTotal();
                     }
                 })
-                .catch(error => console.error('Lỗi:', error));
+                .catch(error => console.error('Error:', error));
             });
         });
 
@@ -299,8 +298,8 @@
                         const remainingItems = document.querySelectorAll('#cartItems tr');
                         if (remainingItems.length === 0) {
                             document.getElementById('cartContainer').innerHTML = `
-                                <h2 class="cart-title">Giỏ hàng của bạn <span class="user-id-display">(User ID: ${sessionScope.userId})</span></h2>
-                                <p class="cart-alert-warning">Giỏ hàng của bạn đang trống!</p>
+                                <h2 class="cart-title">Your shopping cart<span class="user-id-display">(User ID: ${sessionScope.userId})</span></h2>
+                                <p class="cart-alert-warning">Your cart is empty!</p>
                             `;
                         } else {
                             updateCartTotal();
