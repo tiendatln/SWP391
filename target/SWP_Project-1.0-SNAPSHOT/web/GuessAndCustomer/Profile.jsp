@@ -145,6 +145,9 @@
             <a href="<%=request.getContextPath()%>/ProfileController/Profile?isChangingPassword=true">
                 <i class="fas fa-lock"></i> Change Password
             </a>
+                <a href="<%=request.getContextPath()%>/OrderController/CustomerOrder/${account.id}">
+                <i class="fas fa-receipt"></i> Order
+            </a>
             <a href="/LoginController/Logout" class="profile-btn profile-btn-secondary">
                 <i class="fas fa-sign-out-alt"></i> Logout
             </a>

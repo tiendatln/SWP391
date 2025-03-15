@@ -97,7 +97,7 @@
         
 
         <div class="container">
-            <h2 class="text-center mb-4" style="font-weight: 600; color: #2c3e50;">Chi tiết sản phẩm</h2>
+            <h2 class="text-center mb-4" style="font-weight: 600; color: #2c3e50;">Product Detail</h2>
             <c:choose>
                 <c:when test="${not empty product}">
                     <div class="row align-items-center">
@@ -113,16 +113,14 @@
                                     </c:when>                                
                                 </c:choose>
                             </p>
-                            <p><strong>Mã sản phẩm:</strong> ${product.productID}</p>
-                            <p><strong>Trạng thái:</strong> 
+                            <p><strong>Product code:</strong> ${product.productID}</p>
+                            <p><strong>Status:</strong> 
                                 <span class="${product.proState == 1 ? 'text-success' : 'text-danger'}">
                                     <c:out value="${product.proState == 1 ? 'Còn hàng' : 'Hết hàng'}" />
                                 </span>
                             </p>
-                            <p><strong>Số lượng:</strong> ${product.proQuantity}</p>
-                            <p><strong>Mô tả:</strong> 
-                                <c:out value="${not empty product.proDes ? product.proDes : 'Không có mô tả'}" />
-                            </p>
+                            <p><strong>Quantity:</strong> ${product.proQuantity}</p>
+                            
 
                             <div id="alertBox" class="alert alert-success alert-box"></div>
 
@@ -135,7 +133,7 @@
                                     </div>
                                     <div style="margin-top: 5px;">
                                         <button type="button" id="addToCartBtn" class="btn btn-success ">
-                                            <i class="fas fa-cart-plus"></i> Thêm vào giỏ hàng
+                                            <i class="fas fa-cart-plus"></i> Add to cart
                                         </button>
                                         <button class="btn btn-primary btn-rounded">Buy Now</button>
                                     </div>
@@ -143,7 +141,7 @@
                             </c:if>
 
                             <c:if test="${product.proState == 0 || product.proQuantity == 0}">
-                                <button class="btn btn-secondary btn-custom mt-3" disabled>Hết hàng</button>
+                                <button class="btn btn-secondary btn-custom mt-3" disabled>Out of stock</button>
                             </c:if>
                         </div>
                     </div>
@@ -154,66 +152,66 @@
                 <div class="table-responsive">
                     <table class="table table-striped table-product">
                         <tbody>
-                            <tr>
-                                <td width="390">Brand</td>
-                                <td>Stellar</td>
-                            </tr>
-                            <tr>
-                                <td>Delivery Condition</td>
-                                <td>Knock Down</td>
-                            </tr>
-                            <tr>
-                                <td>Seat Lock Included</td>
-                                <td>Yes</td>
-                            </tr>
-                            <tr>
-                                <td>Type</td>
-                                <td>Office Chair</td>
-                            </tr>
-                            <tr>
-                                <td>Style</td>
-                                <td>Contemporary&amp;Modern</td>
-                            </tr>
-                            <tr>
-                                <td>Wheels Included</td>
-                                <td>Yes</td>
-                            </tr>
-                            <tr>
-                                <td>Upholstery Included</td>
-                                <td>Yes</td>
-                            </tr>
-                            <tr>
-                                <td>Upholstery Type</td>
-                                <td>Cushion</td>
-                            </tr>
-                            <tr>
-                                <td>Head Support</td>
-                                <td>No</td>
-                            </tr>
-                            <tr>
-                                <td>Suitable For</td>
-                                <td>Study&amp;Home Office</td>
-                            </tr>
-                            <tr>
-                                <td>Adjustable Height</td>
-                                <td>Yes</td>
-                            </tr>
-                            <tr>
-                                <td>Model Number</td>
-                                <td>F01020701-00HT744A06</td>
-                            </tr>
-                            <tr>
-                                <td>Armrest Included</td>
-                                <td>Yes</td>
-                            </tr>
-                            <tr>
-                                <td>Care Instructions</td>
-                                <td>Handle With Care,Keep In Dry Place,Do Not Apply Any Chemical For Cleaning.</td>
-                            </tr>
-                            <tr>
-                                <td>Finish Type</td>
-                                <td>Matte</td>
-                            </tr>
+                            <c:if test="${not empty productDetail.operatingSystem}">
+                                <tr><td width="390">Operating System</td><td>${productDetail.operatingSystem}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.cpuTechnology}">
+                                <tr><td>CPU Technology</td><td>${productDetail.cpuTechnology}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.coreCount}">
+                                <tr><td>Core Count</td><td>${productDetail.coreCount}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.threadCount}">
+                                <tr><td>Thread Count</td><td>${productDetail.threadCount}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.cpuSpeed}">
+                                <tr><td>CPU Speed</td><td>${productDetail.cpuSpeed}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.gpu}">
+                                <tr><td>GPU</td><td>${productDetail.gpu}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.ram}">
+                                <tr><td>RAM</td><td>${productDetail.ram} GB</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.ramType}">
+                                <tr><td>RAM Type</td><td>${productDetail.ramType}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.ramBusSpeed}">
+                                <tr><td>RAM Bus Speed</td><td>${productDetail.ramBusSpeed}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.maxRam}">
+                                <tr><td>Max RAM</td><td>${productDetail.maxRam} GB</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.storage}">
+                                <tr><td>Storage</td><td>${productDetail.storage}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.memoryCard}">
+                                <tr><td>Memory Card Support</td><td>${productDetail.memoryCard}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.screen}">
+                                <tr><td>Screen</td><td>${productDetail.screen}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.resolution}">
+                                <tr><td>Resolution</td><td>${productDetail.resolution}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.refreshRate}">
+                                <tr><td>Refresh Rate</td><td>${productDetail.refreshRate}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.batteryCapacity}">
+                                <tr><td>Battery Capacity</td><td>${productDetail.batteryCapacity}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.batteryType}">
+                                <tr><td>Battery Type</td><td>${productDetail.batteryType}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.maxChargingSupport}">
+                                <tr><td>Max Charging Support</td><td>${productDetail.maxChargingSupport}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.releaseDate}">
+                                <tr><td>Release Date</td><td>${productDetail.releaseDate}</td></tr>
+                            </c:if>
+                            <c:if test="${not empty productDetail.origin}">
+                                <tr><td>Origin</td><td>${productDetail.origin}</td></tr>
+                            </c:if>
                         </tbody>
                     </table>
                 </div>

@@ -151,13 +151,13 @@ protected void doGet(HttpServletRequest request, HttpServletResponse response)
             if (idParam == null || idParam.isEmpty()) {
                 // Thêm mới voucher
                 Voucher voucher = new Voucher(voucherCode, LocalDate.parse(startDate),
-                        LocalDate.parse(endDate), percentDiscount, quantity, usedTime, 0);
+                        LocalDate.parse(endDate), percentDiscount, quantity, usedTime);
                 result = voucherDao.insertVoucher(voucher);
             } else {
                 // Cập nhật voucher
                 int voucherId = Integer.parseInt(idParam);
                 Voucher updatedVoucher = new Voucher(voucherCode, LocalDate.parse(startDate),
-                        LocalDate.parse(endDate), percentDiscount, quantity, usedTime, voucherId);
+                        LocalDate.parse(endDate), percentDiscount, quantity, usedTime);
                 result = voucherDao.updateVoucher(updatedVoucher);
             }
 

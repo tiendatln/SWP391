@@ -18,12 +18,12 @@ public class Voucher {
     private int percentDiscount;
     private int quantity;
     private int usedTime;
-    private int Id;
+ 
 
     public Voucher() {
     }
 
-    public Voucher(int voucherID, String voucherCode, LocalDate startDate, LocalDate endDate, int percentDiscount, int quantity, int usedTime, int Id) {
+    public Voucher(int voucherID, String voucherCode, LocalDate startDate, LocalDate endDate, int percentDiscount, int quantity, int usedTime) {
         this.voucherID = voucherID;
         this.voucherCode = voucherCode;
         this.startDate = startDate;
@@ -31,17 +31,16 @@ public class Voucher {
         this.percentDiscount = percentDiscount;
         this.quantity = quantity;
         this.usedTime = usedTime;
-        this.Id = Id;
+ 
     }
 
-    public Voucher(String voucherCode, LocalDate startDate, LocalDate endDate, int percentDiscount, int quantity, int usedTime, int Id) {
+    public Voucher(String voucherCode, LocalDate startDate, LocalDate endDate, int percentDiscount, int quantity, int usedTime) {
         this.voucherCode = voucherCode;
         this.startDate = startDate;
         this.endDate = endDate;
         this.percentDiscount = percentDiscount;
         this.quantity = quantity;
         this.usedTime = usedTime;
-        this.Id = Id;
     }
 
     public int getVoucherID() {
@@ -98,13 +97,5 @@ public class Voucher {
 
     public void setUsedTime(int usedTime) {
         this.usedTime = usedTime;
-    }
-
-    public int getId() {
-        return Id;
-    }
-
-    public void setId(int accountId) {
-        this.Id = Id;
     }
 }

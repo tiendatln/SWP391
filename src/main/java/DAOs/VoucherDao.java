@@ -32,8 +32,7 @@ public class VoucherDao {
                         rs.getDate("endDate").toLocalDate(),
                         rs.getInt("percentDiscount"),
                         rs.getInt("quantity"),
-                        rs.getInt("usedTime"),
-                        rs.getInt("id")
+                        rs.getInt("usedTime")
                 ));
             }
         } catch (SQLException e) {
@@ -151,8 +150,7 @@ public class VoucherDao {
                         rs.getDate("endDate").toLocalDate(),
                         rs.getInt("percentDiscount"),
                         rs.getInt("quantity"),
-                        rs.getInt("usedTime"),
-                        rs.getInt("id")
+                        rs.getInt("usedTime")
                 ));
             }
         }

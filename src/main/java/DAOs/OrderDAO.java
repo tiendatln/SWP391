@@ -37,20 +37,133 @@ public class OrderDAO {
         }
     }
 
+    public List<Order> getAllOrderTotalByUserID(int id) {
+        List<Order> orderList = new ArrayList<>();
+        String query = "SELECT TOP 1\n"
+                + "    ot.orderID,\n"
+                + "    ot.phoneNumber,\n"
+                + "    ot.address,\n"
+                + "    ot.note,\n"
+                + "    ot.totalPrice,\n"
+                + "    ot.date,\n"
+                + "    ot.orderState,\n"
+                + "    ot.voucherID,\n"
+                + "    v.voucherCode,\n"
+                + "    v.startDate,\n"
+                + "    v.endDate,\n"
+                + "    v.percentDiscount,\n"
+                + "    v.quantity,\n"
+                + "    v.usedTime,\n"
+                + "    a.id AS accountID,\n"
+                + "    a.username,\n"
+                + "    a.email,\n"
+                + "    a.password,\n"
+                + "    a.phone_number AS accPhone,\n"
+                + "    a.address AS accAddress,\n"
+                + "    a.role,\n"
+                + "    p.productID,\n"
+                + "    p.productName,\n"
+                + "    o.orderQuantity,\n"
+                + "    o.orderPrice,\n"
+                + "    p.proState,\n"
+                + "    p.proImg,\n"
+                + "    p.proDes,\n"
+                + "    p.categoryID\n"
+                + "FROM orderTotal ot\n"
+                + "LEFT JOIN account a ON ot.id = a.id\n"
+                + "LEFT JOIN voucher v ON ot.voucherID = v.voucherID\n"
+                + "LEFT JOIN [order] o ON ot.orderID = o.orderID\n"
+                + "LEFT JOIN product p ON o.productID = p.productID\n"
+                + "WHERE ot.id = ?;";
+
+        try ( PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, id);  // Set the id parameter
+            try ( ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    OrderTotal ot = new OrderTotal(
+                            rs.getInt("orderID"),
+                            rs.getString("phoneNumber"),
+                            rs.getString("address"),
+                            rs.getString("note"),
+                            rs.getLong("totalPrice"),
+                            rs.getDate("date"),
+                            rs.getInt("orderState"),
+                            rs.getInt("voucherID"),
+                            new Account(
+                                    rs.getInt("accountID"),
+                                    rs.getString("username"),
+                                    rs.getString("email"),
+                                    rs.getString("password"),
+                                    rs.getString("accPhone"),
+                                    rs.getString("accAddress"),
+                                    rs.getString("role")
+                            )
+                    );
+
+                    Product product = new Product(
+                            rs.getInt("productID"),
+                            rs.getString("productName"),
+                            rs.getInt("orderQuantity"),
+                            rs.getLong("orderPrice"),
+                            rs.getByte("proState"),
+                            rs.getString("proImg"),
+                            rs.getString("proDes"),
+                            new Category(rs.getInt("categoryID")) // Adjust if Category has more parameters
+                    );
+
+                    Order order = new Order(
+                            product,
+                            ot,
+                            rs.getInt("orderQuantity"),
+                            rs.getLong("orderPrice")
+                    );
+
+                    orderList.add(order);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return orderList;
+    }
+
     public List<Order> getAllOrderTotal() {
         List<Order> orderList = new ArrayList<>();
-        String query = "SELECT "
-                + "    ot.orderID, ot.phoneNumber, ot.address, ot.note, "
-                + "    ot.totalPrice, ot.date, ot.orderState, ot.voucherID, "
-                + "    v.voucherCode, v.startDate, v.endDate, v.percentDiscount, v.quantity, v.usedTime, "
-                + "    a.id AS accountID, a.username, a.email, a.password, a.phone_number AS accPhone, a.address AS accAddress, a.role, "
-                + "    p.productID, p.productName, o.orderQuantity, o.orderPrice, "
-                + "    p.proState, p.proImg, p.proDes, p.categoryID "
-                + "FROM orderTotal ot "
-                + "LEFT JOIN account a ON ot.id = a.id "
-                + "LEFT JOIN voucher v ON ot.voucherID = v.voucherID "
-                + "LEFT JOIN [order] o ON ot.orderID = o.orderID "
-                + "LEFT JOIN product p ON o.productID = p.productID";
+        String query = "SELECT TOP 1 \n"
+                + "    ot.orderID, \n"
+                + "    ot.phoneNumber, \n"
+                + "    ot.address, \n"
+                + "    ot.note, \n"
+                + "    ot.totalPrice, \n"
+                + "    ot.date, \n"
+                + "    ot.orderState, \n"
+                + "    ot.voucherID, \n"
+                + "    v.voucherCode, \n"
+                + "    v.startDate, \n"
+                + "    v.endDate, \n"
+                + "    v.percentDiscount, \n"
+                + "    v.quantity, \n"
+                + "    v.usedTime, \n"
+                + "    a.id AS accountID, \n"
+                + "    a.username, \n"
+                + "    a.email, \n"
+                + "    a.password, \n"
+                + "    a.phone_number AS accPhone, \n"
+                + "    a.address AS accAddress, \n"
+                + "    a.role, \n"
+                + "    p.productID, \n"
+                + "    p.productName, \n"
+                + "    o.orderQuantity, \n"
+                + "    o.orderPrice, \n"
+                + "    p.proState, \n"
+                + "    p.proImg, \n"
+                + "    p.proDes, \n"
+                + "    p.categoryID \n"
+                + "FROM orderTotal ot\n"
+                + "LEFT JOIN account a ON ot.id = a.id\n"
+                + "LEFT JOIN voucher v ON ot.voucherID = v.voucherID\n"
+                + "LEFT JOIN [order] o ON ot.orderID = o.orderID\n"
+                + "LEFT JOIN product p ON o.productID = p.productID;";
 
         try ( PreparedStatement ps = conn.prepareStatement(query);  ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -180,13 +293,12 @@ public class OrderDAO {
     }
 
     public boolean addNewOrder(OrderTotal orderTotal, List<Order> orderDetails) {
-      
         PreparedStatement pstmtOrderTotal = null;
         PreparedStatement pstmtOrder = null;
+        PreparedStatement pstmtDeleteCart = null;
         ResultSet generatedKeys = null;
 
         try {
-           
             conn.setAutoCommit(false); // Bắt đầu transaction
 
             // 1. Thêm vào bảng orderTotal
@@ -199,32 +311,24 @@ public class OrderDAO {
             pstmtOrderTotal.setLong(4, orderTotal.getTotalPrice());
             pstmtOrderTotal.setTimestamp(5, new java.sql.Timestamp(orderTotal.getDate().getTime()));
             pstmtOrderTotal.setInt(6, orderTotal.getOrderState());
-            if (orderTotal.getVoucherCode() == 0) { // Giả sử 0 là giá trị không có voucher
-                pstmtOrderTotal.setNull(7, java.sql.Types.INTEGER);
-            } else {
-                pstmtOrderTotal.setInt(7, orderTotal.getVoucherCode());
-            }
+            pstmtOrderTotal.setObject(7, orderTotal.getVoucherCode() == 0 ? null : orderTotal.getVoucherCode(), java.sql.Types.INTEGER);
             pstmtOrderTotal.setInt(8, orderTotal.getAccount().getId());
 
             int affectedRows = pstmtOrderTotal.executeUpdate();
             if (affectedRows == 0) {
-                conn.rollback();
-                return false; // Thêm OrderTotal thất bại
+                throw new SQLException("Không thể thêm orderTotal.");
             }
 
             // Lấy orderID vừa được tạo
             generatedKeys = pstmtOrderTotal.getGeneratedKeys();
-            if (generatedKeys.next()) {
-                int orderID = generatedKeys.getInt(1);
-                orderTotal.setOrderID(orderID); // Cập nhật orderID vào đối tượng OrderTotal
-            } else {
-                conn.rollback();
-                return false; // Không lấy được orderID
+            if (!generatedKeys.next()) {
+                throw new SQLException("Không thể lấy orderID.");
             }
+            int orderID = generatedKeys.getInt(1);
+            orderTotal.setOrderID(orderID);
 
-            // 2. Thêm các chi tiết đơn hàng vào bảng order
-            String insertOrderSQL = "INSERT INTO [order] (productID, orderID, orderQuantity, orderPrice) "
-                    + "VALUES (?, ?, ?, ?)";
+            // 2. Thêm chi tiết đơn hàng vào bảng order
+            String insertOrderSQL = "INSERT INTO [order] (productID, orderID, orderQuantity, orderPrice) VALUES (?, ?, ?, ?)";
             pstmtOrder = conn.prepareStatement(insertOrderSQL);
 
             for (Order order : orderDetails) {
@@ -232,34 +336,50 @@ public class OrderDAO {
                 pstmtOrder.setInt(2, orderTotal.getOrderID());
                 pstmtOrder.setInt(3, order.getQuantity());
                 pstmtOrder.setLong(4, order.getOrderPrice());
-                pstmtOrder.addBatch(); // Thêm vào batch
+                pstmtOrder.addBatch();
             }
 
             int[] batchResults = pstmtOrder.executeBatch();
             for (int result : batchResults) {
-                if (result == Statement.EXECUTE_FAILED) {
-                    conn.rollback();
-                    return false; // Thêm chi tiết Order thất bại
+                if (result < 0) { // Kiểm tra lỗi chính xác hơn
+                    throw new SQLException("Lỗi khi thêm chi tiết đơn hàng.");
+                }
+            }
+
+            // 3. Xóa sản phẩm khỏi giỏ hàng
+            String deleteCartSQL = "DELETE FROM cart WHERE id = ? AND productID = ?";
+            pstmtDeleteCart = conn.prepareStatement(deleteCartSQL);
+
+            for (Order order : orderDetails) {
+                pstmtDeleteCart.setInt(1, orderTotal.getAccount().getId());
+                pstmtDeleteCart.setInt(2, order.getProduct().getProductID());
+                pstmtDeleteCart.addBatch();
+            }
+
+            int[] deleteResults = pstmtDeleteCart.executeBatch();
+            for (int result : deleteResults) {
+                if (result < 0) {
+                    throw new SQLException("Lỗi khi xóa giỏ hàng.");
                 }
             }
 
             // Commit transaction nếu mọi thứ thành công
             conn.commit();
-            System.out.println("Thêm đơn hàng mới thành công!");
+            System.out.println("Thêm đơn hàng mới thành công và xóa giỏ hàng!");
             return true;
 
         } catch (SQLException e) {
+            e.printStackTrace();
             try {
                 if (conn != null) {
-                    conn.rollback(); // Rollback nếu có lỗi
+                    conn.rollback();
+                    System.err.println("Transaction đã bị rollback!");
                 }
             } catch (SQLException rollbackEx) {
-                System.err.println("Lỗi khi rollback: " + rollbackEx.getMessage());
+                rollbackEx.printStackTrace();
             }
-            System.err.println("Lỗi khi thêm đơn hàng: " + e.getMessage());
             return false;
         } finally {
-            // Đóng các tài nguyên
             try {
                 if (generatedKeys != null) {
                     generatedKeys.close();
@@ -270,24 +390,26 @@ public class OrderDAO {
                 if (pstmtOrder != null) {
                     pstmtOrder.close();
                 }
+                if (pstmtDeleteCart != null) {
+                    pstmtDeleteCart.close();
+                }
                 if (conn != null) {
-                    conn.close();
+                    conn.setAutoCommit(true); // Khôi phục trạng thái auto-commit
                 }
             } catch (SQLException e) {
                 System.err.println("Lỗi khi đóng tài nguyên: " + e.getMessage());
             }
         }
     }
-     public Account getAccountByID(int ID) {
-        Account accounts = new Account();
-        String sql = "SELECT * FROM [dbo].[account] where id = ?";
-        
-        try  {
-                PreparedStatement stmt = conn.prepareStatement(sql); 
-                stmt.setInt(1, ID);
-                ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                accounts = new Account(
+
+    public Account getAccountByID(int ID) {
+        String sql = "SELECT * FROM [dbo].[account] WHERE id = ?";
+        try {
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, ID);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {  // Nếu có dữ liệu thì mới tạo đối tượng Account
+                return new Account(
                         rs.getInt("id"),
                         rs.getString("username"),
                         rs.getString("email"),
@@ -300,30 +422,21 @@ public class OrderDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return accounts;
+        return null;  // Trả về null nếu không tìm thấy user
     }
-     
-     public boolean deleteCart(int userID, int ProductID){
-         int count = 0;
-         try {
-             PreparedStatement ps = conn.prepareStatement("DELETE FROM cart WHERE id = ? AND productID = ?;");
-             ps.setInt(1, userID);
-             ps.setInt(2, ProductID);
-             count = ps.executeUpdate();
-             if(count > 0){
-                 return true;
-             }
-         } catch (Exception e) {
-         }
-         return false;
-     }
-     public Voucher getVOucherID(){
-         Voucher v = null;
-         try {
-             PreparedStatement ps = conn.prepareCall("");
-             
-         } catch (Exception e) {
-         }
-         return v;
-     }
+
+    public int getVoucherID(String voucherCode) {
+        try {
+            PreparedStatement ps = conn.prepareStatement("SELECT voucherID FROM voucher WHERE voucherCode = ?");
+            ps.setString(1, voucherCode);
+            ResultSet rs = ps.executeQuery();  // Sử dụng executeQuery() thay vì executeUpdate()
+            if (rs.next()) {
+                return rs.getInt("voucherID");  // Lấy giá trị thực tế
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;  // Trả về -1 nếu không tìm thấy
+    }
+
 }

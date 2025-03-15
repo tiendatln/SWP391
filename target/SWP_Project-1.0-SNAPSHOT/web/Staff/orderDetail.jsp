@@ -12,125 +12,189 @@
         <!-- Bootstrap CSS -->
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <style>
-            body {
-                background-color: #f8f9fa;
-                font-family: Arial, sans-serif;
-            }
+    body {
+        background-color: #f8f9fa;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
 
-            .container {
-                margin-top: 30px;
-                max-width: 800px;
-                background: white;
-                padding: 20px;
-                border-radius: 10px;
-                box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-            }
+    .order-container {
+        max-width: 800px;
+        margin: 30px auto;
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
 
-            .order-status {
-                font-weight: bold;
-                font-size: 18px;
-            }
+    .order-header {
+        margin-bottom: 20px;
+    }
 
-            .status-completed {
-                color: green;
-            }
+    .status-badge {
+        font-weight: bold;
+        font-size: 18px;
+    }
 
-            .status-pending {
-                color: orange;
-            }
+    .status-completed {
+        color: #28a745; /* Màu xanh đậm hơn cho trạng thái hoàn thành */
+    }
 
-            .status-cancelled {
-                color: red;
-            }
+    .status-pending {
+        color: #ff9800; /* Màu cam đậm hơn cho trạng thái đang xử lý */
+    }
 
-            .info-box {
-                background: #f8f9fa;
-                padding: 10px;
-                border-radius: 8px;
-                margin-bottom: 10px;
-            }
+    .status-cancelled {
+        color: #dc3545; /* Màu đỏ đậm hơn cho trạng thái hủy */
+    }
 
-            .product-img {
-                width: 80px;
-                height: auto;
-                border-radius: 5px;
-            }
+    .section-card {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
 
-            .btn-custom {
-                background: #ff5722;
-                color: white;
-                font-weight: bold;
-                border: none;
-                padding: 10px;
-                border-radius: 5px;
-                text-align: center;
-                width: 100%;
-                margin-top: 20px;
-                display: block;
-                text-decoration: none;
-            }
+    .product-img {
+        width: 80px;
+        height: auto;
+        border-radius: 5px;
+        object-fit: cover; /* Đảm bảo ảnh không bị méo */
+    }
 
-            .btn-custom:hover {
-                background: #e64a19;
-                color: white;
-            }
+    .btn-back {
+        display: block;
+        background: #ff5722;
+        color: #ffffff;
+        font-weight: bold;
+        text-align: center;
+        padding: 10px;
+        border-radius: 5px;
+        text-decoration: none;
+        transition: background 0.3s ease; /* Thêm hiệu ứng chuyển màu mượt */
+    }
 
-            .price {
-                font-weight: bold;
-                font-size: 20px;
-                color: red;
-            }
-        </style>
+    .btn-back:hover {
+        background: #e64a19;
+        color: #ffffff;
+    }
+
+    .price {
+        font-weight: bold;
+        font-size: 20px;
+        color: #dc3545; /* Đồng nhất màu đỏ với status-cancelled */
+    }
+
+    .total-section {
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .text-muted {
+        font-size: 14px;
+    }
+
+    h6 {
+        color: #333;
+        margin-bottom: 15px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 576px) {
+        .order-container {
+            margin: 15px;
+            padding: 15px;
+        }
+
+        .product-img {
+            width: 60px;
+        }
+
+        .price {
+            font-size: 18px;
+        }
+    }
+</style>
     </head>
     <body>
 
-        <div class="container">
-            <c:forEach var="order" items="${orderDetails}">
-                <h4 class="text-center">
-                    Order Details #${order.product.productName}
-                    <span class="order-status
-                          <c:choose>
-                              <c:when test="${order.orderTotal.orderState == 1}"> status-pending">Processing</c:when>
-                              <c:when test="${order.orderTotal.orderState == 2}"> status-completed">Delivered</c:when>
-                              <c:otherwise> status-cancelled">Cancelled</c:otherwise>
-                          </c:choose>
-                    </span>
-                </h4>
-
-                <p class="text-muted">Order Time: <fmt:formatDate value="${order.orderTotal.date}" pattern="HH:mm dd/MM/yyyy"/></p>
-
-                <!-- Shipping Information -->
-                <div class="info-box">
-                    <h6>📦 SHIPPING INFORMATION</h6>
-                    <p><strong>Recipient:</strong> ${order.orderTotal.account.username} - ${order.orderTotal.phoneNumber}</p>
-                    <p><strong>Address:</strong> ${order.orderTotal.address}</p>
+        <div class="order-container">
+        <c:forEach var="order" items="${orderDetails}" varStatus="loop">
+            <c:if test="${loop.first}">
+                <div class="order-header">
+                    <h4 class="d-flex justify-content-between align-items-center">
+                        <span>Order #${order.orderTotal.orderID}</span>
+                        <span class="status-badge 
+                            <c:choose>
+                                <c:when test="${order.orderTotal.orderState == 0}">status-pending">Pending</c:when>
+                                <c:when test="${order.orderTotal.orderState == 1}">status-completed">Completed</c:when>
+                                <c:otherwise>status-cancelled">Cancelled</c:otherwise>
+                            </c:choose>">
+                    </h4>
+                    <small class="text-muted">
+                        Placed on: <fmt:formatDate value="${order.orderTotal.date}" pattern="dd MMM yyyy, HH:mm"/>
+                    </small>
                 </div>
+            </c:if>
 
-                <!-- Product Information -->
-                <div class="info-box">
-                    <h6>🛒 PRODUCT INFORMATION</h6>
-                    <div class="d-flex">
-                        <img src="images/${order.product.proImg}" alt="Product" class="product-img me-3">
-                        <div>
-                            <p><strong>${order.product.productName}</strong></p>
-                            <p>Quantity: ${order.quantity}</p>
-                            <p><del class="text-muted"><fmt:formatNumber value="${order.orderPrice}" type="currency" currencySymbol="đ"/></del> 
-                                <span class="text-danger"><fmt:formatNumber value="${order.orderPrice}" type="currency" currencySymbol="đ"/></span></p>
-                        </div>
+            <!-- Shipping Information -->
+            <div class="section-card">
+                <h6 class="mb-3">📦 Shipping Details</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Recipient:</strong> ${order.orderTotal.account.username}</p>
+                        <p><strong>Phone:</strong> ${order.orderTotal.phoneNumber}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Address:</strong> ${order.orderTotal.address}</p>
                     </div>
                 </div>
+            </div>
 
-                <!-- Total Price -->
-                <div class="info-box">
-                    <h6>💰 TOTAL PRICE</h6>
-                    <p>Subtotal: <fmt:formatNumber value="${order.orderTotal.totalPrice}" type="currency" currencySymbol="đ"/></p>
-                    <p><strong class="price">Amount Paid: <fmt:formatNumber value="${order.orderTotal.totalPrice}" type="currency" currencySymbol="đ"/></strong></p>
+            <!-- Product Information -->
+            <div class="section-card">
+                <h6 class="mb-3">🛒 Items Ordered</h6>
+                <div class="d-flex align-items-center mb-3">
+                    <img src="images/${order.product.proImg}" alt="${order.product.productName}" class="product-img me-3">
+                    <div class="flex-grow-1">
+                        <p class="mb-1"><strong>${order.product.productName}</strong></p>
+                        <p class="mb-1">Quantity: ${order.quantity}</p>
+                        <p class="mb-0">
+                            <span class="text-danger">
+                                <fmt:formatNumber value="${order.orderPrice}" type="currency" currencySymbol="đ"/>
+                            </span>
+                            <c:if test="${order.orderPrice < order.product.proPrice}">
+                                <del class="text-muted ms-2">
+                                    <fmt:formatNumber value="${order.product.originalPrice}" type="currency" currencySymbol="đ"/>
+                                </del>
+                            </c:if>
+                        </p>
+                    </div>
                 </div>
-            </c:forEach>
-            <!-- Back Button -->
-            <a href="orderList.jsp" class="btn btn-custom">BACK TO ORDER LIST</a>
+            </div>
 
-        </div>
+            <c:if test="${loop.last}">
+                <!-- Total Price -->
+                <div class="total-section">
+                    <h6 class="mb-3">💰 Order Summary</h6>
+                    <div class="d-flex justify-content-between">
+                        <span>Subtotal:</span>
+                        <span><fmt:formatNumber value="${order.orderTotal.totalPrice}" type="currency" currencySymbol="đ"/></span>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2 fw-bold">
+                        <span>Total:</span>
+                        <span class="text-primary">
+                            <fmt:formatNumber value="${order.orderTotal.totalPrice}" type="currency" currencySymbol="đ"/>
+                        </span>
+                    </div>
+                </div>
+            </c:if>
+        </c:forEach>
+
+        <a href="orderList.jsp" class="btn-back mt-4">Back to Orders</a>
+    </div>
 
         <!-- Bootstrap JS -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
