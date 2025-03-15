@@ -5,6 +5,7 @@
 package DAOs;
 
 import DB.DBConnection;
+import Model.Account;
 import Model.Cart;
 import Model.Category;
 import Model.Product;
@@ -111,5 +112,25 @@ public class CartDAO {
             }
         }
         return cart;
+    }
+    
+    public Account getAccountByUsername(String username) throws SQLException, ClassNotFoundException {
+        String sql = "SELECT * FROM Account WHERE username = ?";
+        try (Connection conn = DBConnection.connect(); 
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Account account = new Account();
+                    account.setId(rs.getInt("id"));
+                    account.setUsername(rs.getString("username"));
+                    account.setPassword(rs.getString("password"));
+                    account.setRole(rs.getString("role"));
+                    // Thêm các trường khác nếu cần
+                    return account;
+                }
+            }
+        }
+        return null;
     }
 }
