@@ -119,5 +119,17 @@ public class OrderTotal {
         this.voucherID = voucherID;
     }
 
+    public OrderTotal(String phoneNumber, String address, String note, long totalPrice, Date date, int orderState, int voucherID, Account account) {
+        this.phoneNumber = phoneNumber;
+        this.address = address;
+        this.note = note;
+        this.totalPrice = totalPrice;
+        this.date = date;
+        this.orderState = orderState;
+        this.voucherID = voucherID;
+        this.account = account;
+    }
+
+
    
 }

@@ -20,14 +20,14 @@ import java.sql.SQLException;
  */
 public class CartDAO {
 
-   public Product getProductById(int productId) throws SQLException, ClassNotFoundException {
+    public Product getProductById(int productId) throws SQLException, ClassNotFoundException {
         String sql = "SELECT p.*, c.categoryID, c.[type] "
                 + "FROM product p "
                 + "JOIN category c ON p.categoryID = c.categoryID "
                 + "WHERE p.productID = ?";
-        try (Connection conn = DBConnection.connect(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try ( Connection conn = DBConnection.connect();  PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, productId);
-            try (ResultSet rs = ps.executeQuery()) {
+            try ( ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     Category category = new Category(rs.getInt("categoryID"), rs.getString("type"));
                     return new Product(
@@ -53,7 +53,7 @@ public class CartDAO {
                 + "WHEN MATCHED THEN UPDATE SET target.quantity = target.quantity + source.quantity "
                 + "WHEN NOT MATCHED THEN INSERT (id, productID, quantity) VALUES (source.id, source.productID, source.quantity);";
 
-        try (Connection conn = DBConnection.connect(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try ( Connection conn = DBConnection.connect();  PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setInt(2, productId);
             ps.setInt(3, quantity);
@@ -64,7 +64,7 @@ public class CartDAO {
     public void removeFromCart(int userId, int productId) throws SQLException, ClassNotFoundException {
         String sql = "DELETE FROM cart WHERE id = ? AND productID = ?";
 
-        try (Connection conn = DBConnection.connect(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try ( Connection conn = DBConnection.connect();  PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setInt(2, productId);
             ps.executeUpdate();
@@ -74,7 +74,7 @@ public class CartDAO {
     public void updateCart(int userId, int productId, int quantity) throws SQLException, ClassNotFoundException {
         if (quantity > 0) {
             String sql = "UPDATE cart SET quantity = ? WHERE id = ? AND productID = ?";
-            try (Connection conn = DBConnection.connect(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            try ( Connection conn = DBConnection.connect();  PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setInt(1, quantity);
                 ps.setInt(2, userId);
                 ps.setInt(3, productId);
@@ -92,9 +92,9 @@ public class CartDAO {
                 + "JOIN product p ON c.productID = p.productID "
                 + "JOIN category cat ON p.categoryID = cat.categoryID "
                 + "WHERE c.id = ?";
-        try (Connection conn = DBConnection.connect(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try ( Connection conn = DBConnection.connect();  PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
-            try (ResultSet rs = ps.executeQuery()) {
+            try ( ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Category category = new Category(rs.getInt("categoryID"), rs.getString("type"));
                     Product product = new Product(
@@ -113,13 +113,12 @@ public class CartDAO {
         }
         return cart;
     }
-    
+
     public Account getAccountByUsername(String username) throws SQLException, ClassNotFoundException {
         String sql = "SELECT * FROM Account WHERE username = ?";
-        try (Connection conn = DBConnection.connect(); 
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try ( Connection conn = DBConnection.connect();  PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, username);
-            try (ResultSet rs = ps.executeQuery()) {
+            try ( ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     Account account = new Account();
                     account.setId(rs.getInt("id"));
@@ -133,4 +132,16 @@ public class CartDAO {
         }
         return null;
     }
+
+    public boolean checkProductInCart(int productId) throws SQLException, ClassNotFoundException {
+        Connection conn = DBConnection.connect();
+        String query = "SELECT * FROM cart WHERE productID = ?";
+        PreparedStatement ps = conn.prepareStatement(query);
+        ps.setInt(1, productId);
+        ResultSet rs = ps.executeQuery();
+
+        // Nếu tìm thấy sản phẩm trong giỏ hàng, trả về true
+        return rs.next();
+    }
+
 }

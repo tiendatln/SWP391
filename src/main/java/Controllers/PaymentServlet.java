@@ -23,18 +23,27 @@ public class PaymentServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        // Lấy dữ liệu từ form
-        String account = "070112566455";
-        String amount = "10000";
-        String description = "description";
+        // Lấy dữ liệu từ request hoặc session được truyền từ OrderController
+        String account = "070112566455"; // Số tài khoản Sacombank (có thể cấu hình từ file config)
+        String amount = (String) request.getAttribute("amount"); // Số tiền từ OrderController
+        String description = (String) request.getAttribute("description"); // Ghi chú từ OrderController
+
+        // Kiểm tra dữ liệu đầu vào
+        if (amount == null || amount.isEmpty()) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Số tiền không được để trống!");
+            return;
+        }
+        if (description == null || description.isEmpty()) {
+            description = "Thanh toán đơn hàng"; // Giá trị mặc định nếu không có ghi chú
+        }
 
         // Chuỗi VietQR cho Sacombank
         String paymentData = "00020101021238570010A00000072701270006970403" + // BIN Sacombank
                             "0112" + account + // Số tài khoản
                             "520400005303704" +
-                            (amount != null && !amount.isEmpty() ? "5406" + String.format("%06d", Integer.parseInt(amount)) : "") + // Số tiền (6 chữ số, thêm 0 nếu cần)
+                            "5406" + String.format("%06d", Long.parseLong(amount)) + // Số tiền (đảm bảo 6 chữ số)
                             "5802VN" + 
-                            "62" + (description != null ? String.format("%02d", description.length() + 4) + "0802" + description : "0408") + // Nội dung
+                            "62" + String.format("%02d", description.length() + 4) + "0802" + description + // Nội dung
                             "6304A1B2"; // Checksum (giả định, cần tính chính xác nếu dùng thực tế)
 
         // Đường dẫn lưu QR
@@ -43,8 +52,11 @@ public class PaymentServlet extends HttpServlet {
             generateQRCodeImage(paymentData, 250, 250, filePath);
         } catch (WriterException e) {
             e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Lỗi khi tạo mã QR!");
+            return;
         }
 
+        // Truyền đường dẫn QR về JSP để hiển thị
         request.setAttribute("qrPath", "sacombank_qr.png");
         request.getRequestDispatcher("payment.jsp").forward(request, response);
     }

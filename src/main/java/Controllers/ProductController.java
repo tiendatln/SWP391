@@ -4,6 +4,7 @@
  */
 package Controllers;
 
+import DAOs.CartDAO;
 import DAOs.CategoryDAO;
 import DAOs.ProductDAO;
 import Model.Category;
@@ -22,9 +23,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Date;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -81,9 +85,9 @@ public class ProductController extends HttpServlet {
 //
 //            request.getRequestDispatcher("/web/Staff/updateQuantity.jsp").forward(request, response);
 //        } else 
-            if (path.startsWith("/ProductController/DetailProductCustomer")) {
+        if (path.startsWith("/ProductController/DetailProductCustomer")) {
             int id = Integer.parseInt(request.getParameter("id"));
-            
+
             Product product = productDAO.getProductById(id);
             ProductDetail productDetail = productDAO.getProductDetailById(id);
             request.setAttribute("product", product);
@@ -101,17 +105,25 @@ public class ProductController extends HttpServlet {
         }
 
         if ("deleteProduct".equalsIgnoreCase(action)) {
+            CartDAO cartDAO = new CartDAO();
+
+            int productID = Integer.parseInt(request.getParameter("productID"));
+
             try {
-                int id = Integer.parseInt(request.getParameter("productID"));
-                productDAO.deleteProductDetail(id);
-                productDAO.deleteProduct(id);                
-                response.sendRedirect("/ProductController/ProductManagement");
+                if (cartDAO.checkProductInCart(productID)) {
+                    // Thay vì setAttribute, ta sẽ dùng session và xóa ngay sau khi hiển thị
+                    request.getSession().setAttribute("errorMessage", "Cannot delete product because it is in cart!");
+                    response.sendRedirect("/ProductController/ProductManagement");
+                } else {
+                    productDAO.deleteProductDetail(productID);
+                    productDAO.deleteProduct(productID);
+                    response.sendRedirect("/ProductController/ProductManagement");
+                }
             } catch (Exception e) {
                 e.printStackTrace();
-                request.setAttribute("errorMessage", "Lỗi khi xóa sản phẩm: " + e.getMessage());
-                response.sendRedirect("/ProductController/ProductManagement");
+                request.setAttribute("errorMessage", "Error while deleting product: " + e.getMessage());
+                request.getRequestDispatcher("/ProductController/ProductManagement").forward(request, response);
             }
-
         }
 
     }
@@ -169,7 +181,7 @@ public class ProductController extends HttpServlet {
                 response.sendRedirect("/ProductController/ProductManagement");
             } catch (Exception e) {
                 e.printStackTrace();
-                request.setAttribute("errorMessage", "Lỗi khi thêm sản phẩm: " + e.getMessage());
+                request.setAttribute("errorMessage", "Error adding product: " + e.getMessage());
                 response.sendRedirect("/ProductController/ProductManagement");
             }
         }
@@ -201,13 +213,12 @@ public class ProductController extends HttpServlet {
                     }
                 }
 
-                
                 productDAO.updateProduct(id, name, quantity, price, state, picture, description, categoryID);
 
                 response.sendRedirect("/ProductController/ProductManagement");
             } catch (Exception e) {
                 e.printStackTrace();
-                request.setAttribute("errorMessage", "Lỗi khi cập nhật sản phẩm: " + e.getMessage());
+                request.setAttribute("errorMessage", "Error while updating product: " + e.getMessage());
                 response.sendRedirect("/ProductController/ProductManagement");
             }
         }
@@ -247,7 +258,7 @@ public class ProductController extends HttpServlet {
                 response.sendRedirect("/ProductController/ProductManagement");
             } catch (Exception e) {
                 e.printStackTrace();
-                request.setAttribute("errorMessage", "Lỗi khi cập nhật chi tiết sản phẩm: " + e.getMessage());
+                request.setAttribute("errorMessage", "Error updating product details: " + e.getMessage());
                 response.sendRedirect("/ProductController/ProductManagement");
             }
         }

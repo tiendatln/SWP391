@@ -27,6 +27,10 @@
             font-size: 16px;
             color: #333;
         }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
         img {
             width: 250px;
             height: 250px;
@@ -63,11 +67,16 @@
 <body>
     <div class="container">
         <h2>Mã QR Thanh toán Sacombank</h2>
-        <p>Vui lòng quét mã QR bên dưới bằng ứng dụng Sacombank hoặc app hỗ trợ VietQR:</p>
-        <img src="${qrPath}" alt="Sacombank QR Code">
-        <br><br>
-        <a href="/OrderController/OrderManagement" class="btn">Quay lại</a>
-        <a href="confirmPayment.jsp" class="btn success">Xác nhận thanh toán thành công</a>
+        
+        <%-- Hiển thị thông tin thanh toán và mã QR --%>
+        <c:if test="${not empty qrPath}">
+            <p>Vui lòng quét mã QR bên dưới bằng ứng dụng Sacombank hoặc app hỗ trợ VietQR:</p>
+            <p>${sessionScope.message1}</p>
+            <p>${sessionScope.message2}</p>
+            <img src="${pageContext.request.contextPath}/${qrPath}" alt="Sacombank QR Code">
+            <br><br>
+            <a href="${pageContext.request.contextPath}/index.jsp" class="btn success">Xác nhận thanh toán thành công</a>
+        </c:if>
     </div>
 </body>
 </html>

@@ -18,6 +18,7 @@ Model\Account.class
 DAOs\AccountDAO.class
 Controllers\AccountController.class
 DAOs\ProductDAO.class
+Model\CartForOrder.class
 DAOs\VoucherDao.class
 Model\Voucher.class
 Controllers\OrderController.class

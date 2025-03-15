@@ -94,10 +94,10 @@
     </head>
     <jsp:include page="/Header.jsp" />
     <body>
-
+        
 
         <div class="container">
-            <h2 class="text-center mb-4" style="font-weight: 600; color: #2c3e50;">Chi tiết sản phẩm</h2>
+            <h2 class="text-center mb-4" style="font-weight: 600; color: #2c3e50;">Product Detail</h2>
             <c:choose>
                 <c:when test="${not empty product}">
                     <div class="row align-items-center">
@@ -113,81 +113,36 @@
                                     </c:when>                                
                                 </c:choose>
                             </p>
-                            <p><strong>Mã sản phẩm:</strong> ${product.productID}</p>
-                            <p><strong>Trạng thái:</strong> 
+                            <p><strong>Product code:</strong> ${product.productID}</p>
+                            <p><strong>Status:</strong> 
                                 <span class="${product.proState == 1 ? 'text-success' : 'text-danger'}">
                                     <c:out value="${product.proState == 1 ? 'Còn hàng' : 'Hết hàng'}" />
                                 </span>
                             </p>
-                            <p><strong>Số lượng:</strong> ${product.proQuantity}</p>
-                            <p><strong>Mô tả:</strong> 
-                                <c:out value="${not empty product.proDes ? product.proDes : 'Không có mô tả'}" />
-                            </p>
+                            <p><strong>Quantity:</strong> ${product.proQuantity}</p>
+                            
 
                             <div id="alertBox" class="alert alert-success alert-box"></div>
 
-                            
-
-                            
-
-                            <!--Thêm san phẩm vào giỏ hàng-->
-                            <form id="addToCartForm">
-                                <input type="hidden" name="action" value="add">
-                                <input type="hidden" name="productId" value="${product.productID}">
-
-                                <div class="mb-3">
-                                    <label for="quantity" class="form-label">Số lượng:</label>
-                                    <input type="number" id="quantity" name="quantity" value="1" min="1" class="form-control w-25">
-                                </div>
-
-                                <button type="submit" class="btn btn-success"><i class="fa fa-shopping-cart"></i> Thêm vào giỏ hàng</button>
-                            </form>
-
-                            <div id="cartMessage" class="alert alert-success mt-3 d-none"></div>
-
-                            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-                            <script>
-                                $(document).ready(function () {
-                                    $("#addToCartForm").submit(function (event) {
-                                        event.preventDefault(); // Ngăn reload trang
-
-                                        $.ajax({
-                                            type: "POST",
-                                            url: "CartController",
-                                            data: $(this).serialize(),
-                                            dataType: "json",
-                                            success: function (response) {
-                                                if (response.status === "success") {
-                                                    $("#cartMessage").removeClass("d-none").text(response.message);
-                                                    setTimeout(function () {
-                                                        $("#cartMessage").addClass("d-none"); // Ẩn sau 3 giây
-                                                    }, 3000);
-                                                }
-                                            },
-                                            error: function () {
-                                                alert("Có lỗi xảy ra, vui lòng thử lại!");
-                                            }
-                                        });
-                                    });
-                                });
-                            </script>
-
-
-
-                            <button class="btn btn-primary btn-rounded">Buy Now</button>
-                            <h3 class="box-title mt-5">Key Highlights</h3>
-                            <ul class="list-unstyled">
-                                <li><i class="fa fa-check text-success"></i>Sturdy structure</li>
-                                <li><i class="fa fa-check text-success"></i>Designed to foster easy portability</li>
-                                <li><i class="fa fa-check text-success"></i>Perfect furniture to flaunt your wonderful collectibles</li>
-                            </ul>
-                        </div>
-                        <div class="col-lg-12 col-md-12 col-sm-12">
-                                                      
-                            <c:if test="${product.proState == 0 || product.proQuantity == 0}">
-                                <button class="btn btn-secondary btn-custom mt-3" disabled>Hết hàng</button>
+                            <c:if test="${product.proState == 1 && product.proQuantity > 0}">
+                                <form id="addToCartForm" class="align-items-center gap-3">
+                                    <input type="hidden" name="productID" id="productID" value="${product.productID}">
+                                    <div class="d-flex">
+                                        <label for="quantity" class="fw-bold">Số lượng:</label>
+                                        <input type="number" name="quantity" id="quantity" min="1" max="${product.proQuantity}" value="1" class="form-control w-25">
+                                    </div>
+                                    <div style="margin-top: 5px;">
+                                        <button type="button" id="addToCartBtn" class="btn btn-success ">
+                                            <i class="fas fa-cart-plus"></i> Add to cart
+                                        </button>
+                                        <button class="btn btn-primary btn-rounded">Buy Now</button>
+                                    </div>
+                                </form>
                             </c:if>
-                            
+
+                            <c:if test="${product.proState == 0 || product.proQuantity == 0}">
+                                <button class="btn btn-secondary btn-custom mt-3" disabled>Out of stock</button>
+                            </c:if>
                         </div>
                     </div>
                 </c:when>
@@ -320,54 +275,54 @@
         <!-- JavaScript -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
-                                // Xử lý AJAX thêm vào giỏ hàng
-                                document.getElementById("addToCartBtn")?.addEventListener("click", function () {
-                                    let productID = document.getElementById("productID").value;
-                                    let quantity = document.getElementById("quantity").value;
+            // Xử lý AJAX thêm vào giỏ hàng
+            document.getElementById("addToCartBtn")?.addEventListener("click", function () {
+                let productID = document.getElementById("productID").value;
+                let quantity = document.getElementById("quantity").value;
 
-                                    fetch("${pageContext.request.contextPath}/CartController", {
-                                        method: "POST",
-                                        headers: {"Content-Type": "application/x-www-form-urlencoded"},
-                                        body: "action=add&productId=" + encodeURIComponent(productID) + "&quantity=" + encodeURIComponent(quantity)
-                                    })
-                                            .then(response => response.json())
-                                            .then(result => {
-                                                let alertBox = document.getElementById("alertBox");
-                                                alertBox.style.display = "block";
-                                                if (result.status === "success") {
-                                                    alertBox.className = "alert alert-success alert-box";
-                                                    alertBox.innerText = result.message;
-                                                } else {
-                                                    alertBox.className = "alert alert-danger alert-box";
-                                                    alertBox.innerText = result.message;
-                                                    if (result.message.includes("đăng nhập")) {
-                                                        setTimeout(() => window.location.href = "${pageContext.request.contextPath}/LoginController/Login", 1000);
-                                                    }
-                                                }
-                                                setTimeout(() => alertBox.style.display = "none", 2000);
-                                            })
-                                            .catch(error => {
-                                                console.error("Lỗi:", error);
-                                                let alertBox = document.getElementById("alertBox");
-                                                alertBox.className = "alert alert-danger alert-box";
-                                                alertBox.innerText = "Có lỗi xảy ra khi thêm vào giỏ hàng!";
-                                                alertBox.style.display = "block";
-                                                setTimeout(() => alertBox.style.display = "none", 3000);
-                                            });
-                                });
+                fetch("${pageContext.request.contextPath}/CartController", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/x-www-form-urlencoded"},
+                    body: "action=add&productId=" + encodeURIComponent(productID) + "&quantity=" + encodeURIComponent(quantity)
+                })
+                        .then(response => response.json())
+                        .then(result => {
+                            let alertBox = document.getElementById("alertBox");
+                            alertBox.style.display = "block";
+                            if (result.status === "success") {
+                                alertBox.className = "alert alert-success alert-box";
+                                alertBox.innerText = result.message;
+                            } else {
+                                alertBox.className = "alert alert-danger alert-box";
+                                alertBox.innerText = result.message;
+                                if (result.message.includes("đăng nhập")) {
+                                    setTimeout(() => window.location.href = "${pageContext.request.contextPath}/LoginController/Login", 1000);
+                                }
+                            }
+                            setTimeout(() => alertBox.style.display = "none", 2000);
+                        })
+                        .catch(error => {
+                            console.error("Lỗi:", error);
+                            let alertBox = document.getElementById("alertBox");
+                            alertBox.className = "alert alert-danger alert-box";
+                            alertBox.innerText = "Có lỗi xảy ra khi thêm vào giỏ hàng!";
+                            alertBox.style.display = "block";
+                            setTimeout(() => alertBox.style.display = "none", 3000);
+                        });
+            });
 
-                                // Xử lý rating sao
-                                document.querySelectorAll('.rating .star').forEach(star => {
-                                    star.addEventListener('click', function () {
-                                        const value = this.getAttribute('data-value');
-                                        document.getElementById('ratingValue').value = value;
-                                        this.parentElement.querySelectorAll('.star').forEach(s => {
-                                            s.classList.remove('selected');
-                                            if (s.getAttribute('data-value') <= value)
-                                                s.classList.add('selected');
-                                        });
-                                    });
-                                });
+            // Xử lý rating sao
+            document.querySelectorAll('.rating .star').forEach(star => {
+                star.addEventListener('click', function () {
+                    const value = this.getAttribute('data-value');
+                    document.getElementById('ratingValue').value = value;
+                    this.parentElement.querySelectorAll('.star').forEach(s => {
+                        s.classList.remove('selected');
+                        if (s.getAttribute('data-value') <= value)
+                            s.classList.add('selected');
+                    });
+                });
+            });
         </script>
     </body>
 </html>
