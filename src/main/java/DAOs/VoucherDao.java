@@ -14,8 +14,10 @@ import java.util.List;
  */
 public class VoucherDao {
 
-    /*
-     * Show danh sách voucher
+    /**
+     * Lấy danh sách tất cả voucher từ cơ sở dữ liệu.
+     * @return danh sách các đối tượng Voucher
+     * @throws ClassNotFoundException nếu không tìm thấy driver JDBC
      */
     public List<Voucher> getAllVouchers() throws ClassNotFoundException {
         List<Voucher> list = new ArrayList<>();
@@ -27,6 +29,7 @@ public class VoucherDao {
 
             while (rs.next()) {
                 list.add(new Voucher(
+                        rs.getInt("voucherID"), // Gán voucherID từ cơ sở dữ liệu
                         rs.getString("voucherCode"),
                         rs.getDate("startDate").toLocalDate(),
                         rs.getDate("endDate").toLocalDate(),
@@ -41,10 +44,18 @@ public class VoucherDao {
         return list;
     }
 
-    /*
-     * Thêm voucher mới
+    /**
+     * Thêm voucher mới vào cơ sở dữ liệu.
+     * @param voucher đối tượng Voucher cần thêm
+     * @return true nếu thêm thành công, false nếu thất bại
+     * @throws SQLException nếu có lỗi SQL
+     * @throws ClassNotFoundException nếu không tìm thấy driver JDBC
      */
     public boolean insertVoucher(Voucher voucher) throws SQLException, ClassNotFoundException {
+        if (voucherExists(voucher.getVoucherCode())) {
+            return false; // Không thêm nếu mã voucher đã tồn tại
+        }
+
         String query = "INSERT INTO voucher (voucherCode, startDate, endDate, percentDiscount, quantity, usedTime) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DBConnection.connect(); 
@@ -62,43 +73,48 @@ public class VoucherDao {
         }
     }
 
-    /*
-     * Cập nhật voucher
+    /**
+     * Cập nhật thông tin voucher trong cơ sở dữ liệu dựa trên voucherID.
+     * @param voucher đối tượng Voucher cần cập nhật
+     * @return true nếu cập nhật thành công, false nếu thất bại
+     * @throws SQLException nếu có lỗi SQL
+     * @throws ClassNotFoundException nếu không tìm thấy driver JDBC
      */
     public boolean updateVoucher(Voucher voucher) throws SQLException, ClassNotFoundException {
-        String query = "UPDATE voucher SET startDate = ?, endDate = ?, percentDiscount = ?, quantity = ?, usedTime = ? WHERE voucherCode = ?";
+        String query = "UPDATE voucher SET voucherCode = ?, startDate = ?, endDate = ?, percentDiscount = ?, quantity = ?, usedTime = ? WHERE voucherID = ?";
 
         try (Connection conn = DBConnection.connect(); 
              PreparedStatement ps = conn.prepareStatement(query)) {
 
-            ps.setDate(1, java.sql.Date.valueOf(voucher.getStartDate()));
-            ps.setDate(2, java.sql.Date.valueOf(voucher.getEndDate()));
-            ps.setInt(3, voucher.getPercentDiscount());
-            ps.setInt(4, voucher.getQuantity());
-            ps.setInt(5, voucher.getUsedTime());
-            ps.setString(6, voucher.getVoucherCode());  // Điều kiện WHERE để tìm đúng voucher
+            ps.setString(1, voucher.getVoucherCode());
+            ps.setDate(2, java.sql.Date.valueOf(voucher.getStartDate()));
+            ps.setDate(3, java.sql.Date.valueOf(voucher.getEndDate()));
+            ps.setInt(4, voucher.getPercentDiscount());
+            ps.setInt(5, voucher.getQuantity());
+            ps.setInt(6, voucher.getUsedTime());
+            ps.setInt(7, voucher.getVoucherID()); // Sử dụng voucherID để xác định bản ghi
 
             int rowsAffected = ps.executeUpdate();
             return rowsAffected > 0;
         }
     }
 
-    /*
-     * Xóa voucher
+    /**
+     * Xóa voucher khỏi cơ sở dữ liệu dựa trên voucherID.
+     * @param voucher đối tượng Voucher cần xóa
+     * @return true nếu xóa thành công, false nếu thất bại
+     * @throws SQLException nếu có lỗi SQL
+     * @throws ClassNotFoundException nếu không tìm thấy driver JDBC
      */
     public boolean deleteVoucher(Voucher voucher) throws SQLException, ClassNotFoundException {
-        String query = "DELETE FROM voucher WHERE voucherCode = ?";
+        String query = "DELETE FROM voucher WHERE voucherID = ?";
 
         try (Connection conn = DBConnection.connect(); 
              PreparedStatement ps = conn.prepareStatement(query)) {
 
-            // Chỉ cần set voucherCode vào câu lệnh SQL
-            ps.setString(1, voucher.getVoucherCode());  // Điều kiện WHERE để tìm đúng voucher
+            ps.setInt(1, voucher.getVoucherID()); // Sử dụng voucherID để xóa
 
-            // Thực thi câu lệnh xóa và kiểm tra số dòng bị ảnh hưởng
             int rowsAffected = ps.executeUpdate();
-
-            // Nếu có ít nhất 1 bản ghi bị xóa, trả về true
             return rowsAffected > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -106,8 +122,12 @@ public class VoucherDao {
         }
     }
 
-    /*
-     * Kiểm tra voucher có tồn tại không
+    /**
+     * Kiểm tra xem voucher có tồn tại dựa trên voucherCode.
+     * @param voucherCode mã voucher cần kiểm tra
+     * @return true nếu voucher tồn tại, false nếu không
+     * @throws SQLException nếu có lỗi SQL
+     * @throws ClassNotFoundException nếu không tìm thấy driver JDBC
      */
     public boolean voucherExists(String voucherCode) throws SQLException, ClassNotFoundException {
         String query = "SELECT COUNT(*) FROM voucher WHERE voucherCode = ?";
@@ -125,69 +145,72 @@ public class VoucherDao {
         }
         return false;
     }
-    
-    /*
- * Tìm kiếm voucher theo từ khóa
- */
-    
-     public List<Voucher> searchVouchers(String searchKeyword) throws SQLException, ClassNotFoundException {
-    List<Voucher> list = new ArrayList<>();
-    String query = "SELECT * FROM voucher WHERE voucherCode LIKE ? OR startDate LIKE ? OR endDate LIKE ?";
 
-    try (Connection conn = DBConnection.connect(); 
-         PreparedStatement ps = conn.prepareStatement(query)) {
-        
-        String searchPattern = "%" + searchKeyword + "%";
-        ps.setString(1, searchPattern); // voucherCode
-        ps.setString(2, searchPattern); // startDate
-        ps.setString(3, searchPattern); // endDate
-        
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                list.add(new Voucher(
+    /**
+     * Lấy voucher dựa trên voucherCode.
+     * @param voucherCode mã voucher cần tìm
+     * @return đối tượng Voucher nếu tìm thấy, null nếu không
+     * @throws SQLException nếu có lỗi SQL
+     * @throws ClassNotFoundException nếu không tìm thấy driver JDBC
+     */
+    public Voucher getVoucherByCode(String voucherCode) throws SQLException, ClassNotFoundException {
+        String query = "SELECT * FROM voucher WHERE voucherCode = ?";
+        try (Connection conn = DBConnection.connect(); 
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            
+            ps.setString(1, voucherCode);
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                return new Voucher(
+                        rs.getInt("voucherID"),
                         rs.getString("voucherCode"),
                         rs.getDate("startDate").toLocalDate(),
                         rs.getDate("endDate").toLocalDate(),
                         rs.getInt("percentDiscount"),
                         rs.getInt("quantity"),
                         rs.getInt("usedTime")
-                ));
+                );
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-    } catch (SQLException e) {
-        e.printStackTrace();
+        return null;
     }
-    return list;
-}
 
-   
+    /**
+     * Tìm kiếm voucher theo từ khóa trong voucherCode.
+     * @param searchKeyword từ khóa tìm kiếm
+     * @return danh sách các đối tượng Voucher khớp với từ khóa
+     * @throws SQLException nếu có lỗi SQL
+     * @throws ClassNotFoundException nếu không tìm thấy driver JDBC
+     */
+    public List<Voucher> searchVouchers(String searchKeyword) throws SQLException, ClassNotFoundException {
+        List<Voucher> list = new ArrayList<>();
+        String query = "SELECT * FROM voucher WHERE voucherCode LIKE ?";
 
-   
-    public static void main(String[] args) throws ClassNotFoundException, SQLException {
-        // Tạo đối tượng VoucherDao để gọi phương thức tìm kiếm
-        VoucherDao voucherDao = new VoucherDao();
-        
-        // Từ khóa tìm kiếm
-        String searchKeyword = "cv";  // Ví dụ tìm kiếm các voucher có "2023" trong mã voucher hoặc ngày
-
-        // Gọi phương thức tìm kiếm
-        List<Voucher> voucherList = voucherDao.searchVouchers(searchKeyword);
-
-        // In kết quả tìm kiếm
-        if (voucherList.isEmpty()) {
-            System.out.println("Không tìm thấy voucher nào với từ khóa: " + searchKeyword);
-        } else {
-            System.out.println("Danh sách voucher tìm được:");
-            for (Voucher voucher : voucherList) {
-                System.out.println("Voucher Code: " + voucher.getVoucherCode() +
-                        ", Start Date: " + voucher.getStartDate() +
-                        ", End Date: " + voucher.getEndDate() +
-                        ", Percent Discount: " + voucher.getPercentDiscount() +
-                        ", Quantity: " + voucher.getQuantity() +
-                        ", Used Time: " + voucher.getUsedTime());
+        try (Connection conn = DBConnection.connect(); 
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            
+            String searchPattern = "%" + searchKeyword + "%";
+            ps.setString(1, searchPattern);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new Voucher(
+                            rs.getInt("voucherID"),
+                            rs.getString("voucherCode"),
+                            rs.getDate("startDate").toLocalDate(),
+                            rs.getDate("endDate").toLocalDate(),
+                            rs.getInt("percentDiscount"),
+                            rs.getInt("quantity"),
+                            rs.getInt("usedTime")
+                    ));
+                }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+        return list;
     }
 }
-
-

@@ -6,8 +6,10 @@ package Controllers;
 
 import DAOs.CartDAO;
 import DAOs.CategoryDAO;
+import DAOs.CommentDAO;
 import DAOs.ProductDAO;
 import Model.Category;
+import Model.Comment;
 import Model.Product;
 import Model.ProductDetail;
 import java.io.IOException;
@@ -22,16 +24,12 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Date;
-import java.sql.SQLException;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
- *
+ * Servlet xử lý các yêu cầu liên quan đến sản phẩm, bao gồm hiển thị chi tiết sản phẩm,
+ * quản lý sản phẩm, thêm/sửa/xóa sản phẩm và bình luận.
  * @author tiend
  */
 @MultipartConfig
@@ -39,7 +37,7 @@ public class ProductController extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
-     * methods.
+     * methods. Hiển thị trang HTML mặc định nếu không có logic cụ thể được gọi.
      *
      * @param request servlet request
      * @param response servlet response
@@ -49,8 +47,8 @@ public class ProductController extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        try ( PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
+        try (PrintWriter out = response.getWriter()) {
+            // Hiển thị trang HTML mẫu mặc định
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
@@ -63,9 +61,9 @@ public class ProductController extends HttpServlet {
         }
     }
 
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
     /**
-     * Handles the HTTP <code>GET</code> method.
+     * Handles the HTTP <code>GET</code> method. Xử lý các yêu cầu lấy thông tin sản phẩm,
+     * chi tiết sản phẩm, quản lý sản phẩm và xóa sản phẩm.
      *
      * @param request servlet request
      * @param response servlet response
@@ -75,48 +73,80 @@ public class ProductController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String path = request.getRequestURI();
-        String action = request.getParameter("action");
+        String path = request.getRequestURI(); // Đường dẫn URI của yêu cầu
+        String action = request.getParameter("action"); // Tham số action từ query string
 
+        // Ghi log để debug yêu cầu GET
+        System.out.println("Received GET request for URI: " + request.getRequestURI() + ", Query: " + request.getQueryString());
+
+        // Khởi tạo các DAO để tương tác với cơ sở dữ liệu
         ProductDAO productDAO = new ProductDAO();
         CategoryDAO categoryDAO = new CategoryDAO();
+        CommentDAO commentDAO = new CommentDAO();
 
-//        if (path.endsWith("/UpdateQuantity")) {
-//
-//            request.getRequestDispatcher("/web/Staff/updateQuantity.jsp").forward(request, response);
-//        } else 
+        // Xử lý yêu cầu hiển thị chi tiết sản phẩm cho khách hàng
         if (path.startsWith("/ProductController/DetailProductCustomer")) {
-            int id = Integer.parseInt(request.getParameter("id"));
+            int id;
+            try {
+                id = Integer.parseInt(request.getParameter("id")); // Lấy ID sản phẩm từ tham số
+            } catch (NumberFormatException e) {
+                request.setAttribute("errorMessage", "ID sản phẩm không hợp lệ: " + e.getMessage());
+                request.getRequestDispatcher("/web/GuessAndCustomer/DetailProduct.jsp").forward(request, response);
+                return;
+            }
 
+            // Lấy thông tin sản phẩm, chi tiết sản phẩm và danh sách bình luận
             Product product = productDAO.getProductById(id);
             ProductDetail productDetail = productDAO.getProductDetailById(id);
+            List<Comment> comments = commentDAO.getCommentsByProductID(id);
+            System.out.println("Danh sách bình luận cho productID " + id + ": " + comments);
+
+            // Kiểm tra nếu sản phẩm không tồn tại
+            if (product == null) {
+                request.setAttribute("errorMessage", "Sản phẩm không tồn tại cho ID: " + id);
+                request.getRequestDispatcher("/web/GuessAndCustomer/DetailProduct.jsp").forward(request, response);
+                return;
+            }
+
+            // Nếu không có bình luận, khởi tạo danh sách rỗng
+            if (comments == null) {
+                comments = new ArrayList<>();
+            }
+
+            // Đặt các thuộc tính để truyền sang JSP
             request.setAttribute("product", product);
             request.setAttribute("productDetail", productDetail);
+            request.setAttribute("productId", id);
+            request.setAttribute("comments", comments);
+            System.out.println("Forwarding to DetailProduct.jsp with productId: " + id + ", comments size: " + comments.size());
             request.getRequestDispatcher("/web/GuessAndCustomer/DetailProduct.jsp").forward(request, response);
 
+        // Xử lý yêu cầu hiển thị trang quản lý sản phẩm
         } else if (path.endsWith("/ProductManagement")) {
-            List<Product> productList = productDAO.getAllProducts();
-            List<Category> category = categoryDAO.getAllCategories();
+            List<Product> productList = productDAO.getAllProducts(); // Lấy danh sách tất cả sản phẩm
+            List<Category> category = categoryDAO.getAllCategories(); // Lấy danh sách danh mục
             request.setAttribute("productList", productList);
             request.setAttribute("category", category);
             request.getRequestDispatcher("/web/Staff/productManagement.jsp").forward(request, response);
+
+        // Xử lý yêu cầu hiển thị trang cập nhật số lượng sản phẩm
         } else if (path.endsWith("/UpdateQuantity")) {
             request.getRequestDispatcher("/web/Staff/updateQuantity.jsp").forward(request, response);
         }
 
+        // Xử lý yêu cầu xóa sản phẩm
         if ("deleteProduct".equalsIgnoreCase(action)) {
             CartDAO cartDAO = new CartDAO();
-
-            int productID = Integer.parseInt(request.getParameter("productID"));
+            int productID = Integer.parseInt(request.getParameter("productID")); // Lấy ID sản phẩm cần xóa
 
             try {
+                // Kiểm tra xem sản phẩm có trong giỏ hàng không
                 if (cartDAO.checkProductInCart(productID)) {
-                    // Thay vì setAttribute, ta sẽ dùng session và xóa ngay sau khi hiển thị
                     request.getSession().setAttribute("errorMessage", "Cannot delete product because it is in cart!");
                     response.sendRedirect("/ProductController/ProductManagement");
                 } else {
-                    productDAO.deleteProductDetail(productID);
-                    productDAO.deleteProduct(productID);
+                    productDAO.deleteProductDetail(productID); // Xóa chi tiết sản phẩm
+                    productDAO.deleteProduct(productID); // Xóa sản phẩm
                     response.sendRedirect("/ProductController/ProductManagement");
                 }
             } catch (Exception e) {
@@ -125,11 +155,11 @@ public class ProductController extends HttpServlet {
                 request.getRequestDispatcher("/ProductController/ProductManagement").forward(request, response);
             }
         }
-
     }
 
     /**
-     * Handles the HTTP <code>POST</code> method.
+     * Handles the HTTP <code>POST</code> method. Xử lý các yêu cầu thêm, sửa, xóa sản phẩm,
+     * thêm bình luận, xóa bình luận và cập nhật bình luận từ modal.
      *
      * @param request servlet request
      * @param response servlet response
@@ -139,9 +169,10 @@ public class ProductController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.setCharacterEncoding("UTF-8");
-        response.setCharacterEncoding("UTF-8");
+        request.setCharacterEncoding("UTF-8"); // Đặt mã hóa ký tự UTF-8 cho request
+        response.setCharacterEncoding("UTF-8"); // Đặt mã hóa ký tự UTF-8 cho response
 
+        // Xác định thư mục lưu trữ hình ảnh sản phẩm
         String file = request.getSession().getServletContext().getRealPath("/link/img");
         String[] s = file.split("\\\\");
         String fileImg = "";
@@ -153,12 +184,12 @@ public class ProductController extends HttpServlet {
                 }
             }
         }
-        fileImg.substring(0, fileImg.length() - 1);
-        String action = request.getParameter("action");
+        fileImg = fileImg.substring(0, fileImg.length() - 1); // Xóa ký tự thừa ở cuối
+        String action = request.getParameter("action"); // Lấy tham số action từ request
 
+        // Xử lý yêu cầu thêm sản phẩm mới
         if ("addProduct".equalsIgnoreCase(action)) {
             try {
-                // Lấy dữ liệu từ form
                 String name = request.getParameter("productName");
                 int quantity = Integer.parseInt(request.getParameter("proQuantity"));
                 double price = Double.parseDouble(request.getParameter("proPrice"));
@@ -166,15 +197,16 @@ public class ProductController extends HttpServlet {
                 String description = request.getParameter("proDescription");
                 int categoryID = Integer.parseInt(request.getParameter("proCategory"));
 
+                // Xử lý tải lên hình ảnh sản phẩm
                 Part part = request.getPart("proImg");
                 Path fileName = Paths.get(part.getSubmittedFileName());
                 if (!Files.exists(Paths.get(fileImg))) {
                     Files.createDirectories(Paths.get(fileImg));
                 }
                 String picture = fileName.getFileName().toString();
-
                 part.write(fileImg + "/" + fileName);
 
+                // Thêm sản phẩm vào cơ sở dữ liệu
                 ProductDAO productDAO = new ProductDAO();
                 productDAO.addProduct(name, quantity, price, state, picture, description, categoryID);
 
@@ -186,6 +218,7 @@ public class ProductController extends HttpServlet {
             }
         }
 
+        // Xử lý yêu cầu chỉnh sửa sản phẩm
         if ("editProduct".equalsIgnoreCase(action)) {
             ProductDAO productDAO = new ProductDAO();
             try {
@@ -197,22 +230,22 @@ public class ProductController extends HttpServlet {
                 String description = request.getParameter("proDescription");
                 int categoryID = Integer.parseInt(request.getParameter("proCategory"));
 
-                // **Nhận file ảnh từ request**
-                Part filePart = request.getPart("proImg"); // Lấy ảnh từ input có id="proImg"
-                Path fileName = Paths.get(filePart.getSubmittedFileName()); // Lấy tên file gốc
+                // Xử lý tải lên hình ảnh mới (nếu có)
+                Part filePart = request.getPart("proImg");
+                Path fileName = Paths.get(filePart.getSubmittedFileName());
                 if (!Files.exists(Paths.get(fileImg))) {
                     Files.createDirectories(Paths.get(fileImg));
                 }
                 String picture = fileName.getFileName().toString();
                 if (!picture.isEmpty()) {
                     filePart.write(fileImg + "/" + fileName);
-
                     File filePic = new File(fileImg + "/" + productDAO.getProductImgById(id));
                     if (filePic.exists()) {
-                        filePic.delete();
+                        filePic.delete(); // Xóa hình ảnh cũ
                     }
                 }
 
+                // Cập nhật thông tin sản phẩm
                 productDAO.updateProduct(id, name, quantity, price, state, picture, description, categoryID);
 
                 response.sendRedirect("/ProductController/ProductManagement");
@@ -223,6 +256,7 @@ public class ProductController extends HttpServlet {
             }
         }
 
+        // Xử lý yêu cầu cập nhật chi tiết sản phẩm
         if ("updateProductDetail".equalsIgnoreCase(action)) {
             try {
                 int productID = Integer.parseInt(request.getParameter("productID"));
@@ -247,6 +281,7 @@ public class ProductController extends HttpServlet {
                 String releaseDate = request.getParameter("releaseDate");
                 String origin = request.getParameter("origin");
 
+                // Tạo đối tượng ProductDetail và cập nhật vào cơ sở dữ liệu
                 ProductDAO productDAO = new ProductDAO();
                 Product product = productDAO.getProductById(productID);
                 ProductDetail productDetail = new ProductDetail(product, operatingSystem, cpuTechnology, coreCount,
@@ -263,6 +298,126 @@ public class ProductController extends HttpServlet {
             }
         }
 
+        // Xử lý yêu cầu thêm bình luận từ biểu mẫu
+        if (request.getParameter("rate") != null && request.getParameter("comment") != null && request.getParameter("action") == null) {
+            try {
+                int productID = Integer.parseInt(request.getParameter("productId"));
+                int rate = Integer.parseInt(request.getParameter("rate"));
+                String commentContent = request.getParameter("comment");
+                String userIDParam = request.getParameter("id");
+
+                // Ghi log để debug yêu cầu thêm bình luận
+                System.out.println("Nhận yêu cầu thêm bình luận - ProductID: " + productID + ", Rate: " + rate + ", Comment: " + commentContent + ", UserID: " + userIDParam);
+
+                // Kiểm tra xem người dùng đã đăng nhập chưa
+                if (userIDParam == null || userIDParam.trim().isEmpty()) {
+                    request.setAttribute("errorMessage", "Bạn cần đăng nhập để bình luận.");
+                    request.getRequestDispatcher("/ProductController/DetailProductCustomer?id=" + productID).forward(request, response);
+                    return;
+                }
+
+                int userID = Integer.parseInt(userIDParam);
+
+                // Kiểm tra dữ liệu đầu vào
+                if (rate < 1 || rate > 5) {
+                    request.setAttribute("errorMessage", "Điểm đánh giá phải từ 1 đến 5.");
+                    request.getRequestDispatcher("/ProductController/DetailProductCustomer?id=" + productID).forward(request, response);
+                    return;
+                }
+                if (commentContent == null || commentContent.trim().isEmpty()) {
+                    request.setAttribute("errorMessage", "Nội dung bình luận không được để trống.");
+                    request.getRequestDispatcher("/ProductController/DetailProductCustomer?id=" + productID).forward(request, response);
+                    return;
+                }
+
+                // Thêm bình luận vào cơ sở dữ liệu
+                CommentDAO commentDAO = new CommentDAO();
+                commentDAO.addComment(productID, rate, commentContent, userID);
+
+                response.sendRedirect("/ProductController/DetailProductCustomer?id=" + productID);
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+                request.setAttribute("errorMessage", "Dữ liệu không hợp lệ: " + e.getMessage());
+                String productID = request.getParameter("productId");
+                request.getRequestDispatcher("/ProductController/DetailProductCustomer?id=" + productID).forward(request, response);
+            } catch (Exception e) {
+                e.printStackTrace();
+                request.setAttribute("errorMessage", "Lỗi khi thêm bình luận: " + e.getMessage());
+                String productID = request.getParameter("productId");
+                request.getRequestDispatcher("/ProductController/DetailProductCustomer?id=" + productID).forward(request, response);
+            }
+        }
+
+        // Xử lý yêu cầu xóa bình luận
+        if ("deleteComment".equalsIgnoreCase(action)) {
+            try {
+                int commentID = Integer.parseInt(request.getParameter("commentID"));
+                int productID = Integer.parseInt(request.getParameter("productId"));
+
+                // Ghi log để debug yêu cầu xóa bình luận
+                System.out.println("Nhận yêu cầu deleteComment - commentID: " + commentID + ", ProductID: " + productID);
+
+                // Xóa bình luận khỏi cơ sở dữ liệu
+                CommentDAO commentDAO = new CommentDAO();
+                boolean success = commentDAO.deleteComment(commentID);
+
+                if (success) {
+                    response.sendRedirect("/ProductController/DetailProductCustomer?id=" + productID);
+                } else {
+                    request.setAttribute("errorMessage", "Không thể xóa bình luận.");
+                    request.getRequestDispatcher("/ProductController/DetailProductCustomer?id=" + productID).forward(request, response);
+                }
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+                request.setAttribute("errorMessage", "Dữ liệu không hợp lệ: " + e.getMessage());
+                String productID = request.getParameter("productId");
+                request.getRequestDispatcher("/ProductController/DetailProductCustomer?id=" + productID).forward(request, response);
+            } catch (Exception e) {
+                e.printStackTrace();
+                request.setAttribute("errorMessage", "Lỗi khi xóa bình luận: " + e.getMessage());
+                String productID = request.getParameter("productId");
+                request.getRequestDispatcher("/ProductController/DetailProductCustomer?id=" + productID).forward(request, response);
+            }
+        }
+
+        // Xử lý yêu cầu cập nhật bình luận từ modal
+        if ("updateComment".equalsIgnoreCase(action)) {
+            try {
+                // Lấy dữ liệu từ form trong modal
+                int commentID = Integer.parseInt(request.getParameter("commentID"));
+                int rate = Integer.parseInt(request.getParameter("rate"));
+                String commentContent = request.getParameter("comment");
+                int productID = Integer.parseInt(request.getParameter("productId"));
+
+                // Ghi log để debug yêu cầu cập nhật bình luận
+                System.out.println("Nhận yêu cầu updateComment - commentID: " + commentID + ", Rate: " + rate + ", Comment: " + commentContent + ", ProductID: " + productID);
+
+                // Cập nhật bình luận trong cơ sở dữ liệu
+                CommentDAO commentDAO = new CommentDAO();
+                boolean success = commentDAO.updateComment(commentID, rate, commentContent);
+
+                if (success) {
+                    // Nếu cập nhật thành công, chuyển hướng về trang chi tiết sản phẩm
+                    response.sendRedirect("/ProductController/DetailProductCustomer?id=" + productID);
+                } else {
+                    // Nếu thất bại, hiển thị thông báo lỗi
+                    request.setAttribute("errorMessage", "Không thể cập nhật bình luận.");
+                    request.getRequestDispatcher("/ProductController/DetailProductCustomer?id=" + productID).forward(request, response);
+                }
+            } catch (NumberFormatException e) {
+                // Xử lý lỗi khi dữ liệu không đúng định dạng số
+                e.printStackTrace();
+                request.setAttribute("errorMessage", "Dữ liệu không hợp lệ: " + e.getMessage());
+                String productID = request.getParameter("productId");
+                request.getRequestDispatcher("/ProductController/DetailProductCustomer?id=" + productID).forward(request, response);
+            } catch (Exception e) {
+                // Xử lý các lỗi khác khi cập nhật bình luận
+                e.printStackTrace();
+                request.setAttribute("errorMessage", "Lỗi khi cập nhật bình luận: " + e.getMessage());
+                String productID = request.getParameter("productId");
+                request.getRequestDispatcher("/ProductController/DetailProductCustomer?id=" + productID).forward(request, response);
+            }
+        }
     }
 
     /**
@@ -273,6 +428,5 @@ public class ProductController extends HttpServlet {
     @Override
     public String getServletInfo() {
         return "Short description";
-    }// </editor-fold>
-
+    }
 }
