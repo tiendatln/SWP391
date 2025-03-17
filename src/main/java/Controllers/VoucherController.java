@@ -7,7 +7,6 @@ package Controllers;
 import DAOs.VoucherDao;
 import Model.Voucher;
 import java.io.IOException;
-import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,14 +15,14 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- *
+ * Servlet xử lý các yêu cầu liên quan đến quản lý voucher: hiển thị, thêm, cập nhật, xóa.
  * @author tiend
  */
 public class VoucherController extends HttpServlet {
 
     /**
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
-     * methods.
+     * Processes requests for both HTTP <code>GET</code> and <code>POST</code> methods.
+     * Chuyển hướng đến doGet để hiển thị danh sách voucher.
      *
      * @param request servlet request
      * @param response servlet response
@@ -33,23 +32,11 @@ public class VoucherController extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        try ( PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
-            out.println("<!DOCTYPE html>");
-            out.println("<html>");
-            out.println("<head>");
-            out.println("<title>Servlet VoucherController</title>");
-            out.println("</head>");
-            out.println("<body>");
-            out.println("<h1>Servlet VoucherController at " + request.getContextPath() + "</h1>");
-            out.println("</body>");
-            out.println("</html>");
-        }
+        response.sendRedirect(request.getContextPath() + "/VoucherController");
     }
 
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
     /**
-     * Handles the HTTP <code>GET</code> method.
+     * Handles the HTTP <code>GET</code> method. Hiển thị danh sách voucher dựa trên từ khóa tìm kiếm.
      *
      * @param request servlet request
      * @param response servlet response
@@ -57,38 +44,30 @@ public class VoucherController extends HttpServlet {
      * @throws IOException if an I/O error occurs
      */
     @Override
-protected void doGet(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
-    try {
-        // Lấy từ khóa tìm kiếm từ yêu cầu
-        String searchKeyword = request.getParameter("search");
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        try {
+            String searchKeyword = request.getParameter("search");
+            VoucherDao voucherDao = new VoucherDao();
+            List<Voucher> voucherList;
 
-        VoucherDao voucherDao = new VoucherDao();
-        List<Voucher> voucherList;
+            if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
+                voucherList = voucherDao.searchVouchers(searchKeyword.trim());
+            } else {
+                voucherList = voucherDao.getAllVouchers();
+            }
 
-        if (searchKeyword != null && !searchKeyword.isEmpty()) {
-            // Nếu có từ khóa tìm kiếm, gọi phương thức tìm kiếm
-            voucherList = voucherDao.searchVouchers(searchKeyword);
-        } else {
-            // Nếu không có từ khóa tìm kiếm, lấy tất cả voucher
-            voucherList = voucherDao.getAllVouchers();
+            request.setAttribute("voucherList", voucherList);
+            request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("error", "Lỗi khi tải danh sách voucher: " + e.getMessage());
+            request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
         }
-
-        // Đưa danh sách voucher vào request để truyền sang JSP
-        request.setAttribute("voucherList", voucherList);
-
-        // Chuyển hướng đến trang hiển thị danh sách voucher
-        request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
-    } catch (Exception e) {
-        e.printStackTrace();
-        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Lỗi khi tải danh sách voucher.");
     }
-}
-
-
 
     /**
-     * Handles the HTTP <code>POST</code> method.
+     * Handles the HTTP <code>POST</code> method. Xử lý thêm, cập nhật và xóa voucher.
      *
      * @param request servlet request
      * @param response servlet response
@@ -100,82 +79,111 @@ protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
             String voucherCode = request.getParameter("voucherCode");
-            String startDate = request.getParameter("startDate");
-            String endDate = request.getParameter("endDate");
+            String startDateStr = request.getParameter("startDate");
+            String endDateStr = request.getParameter("endDate");
             String percentDiscountStr = request.getParameter("percentDiscount");
             String quantityStr = request.getParameter("quantity");
-            String usedTimeStr = request.getParameter("usedTime");
-            String deleteVoucherCode = request.getParameter("deleteVoucherCode"); // Lấy mã voucher cần xóa
+            String deleteVoucherCode = request.getParameter("deleteVoucherCode");
+            String idParam = request.getParameter("id");
 
-            // Kiểm tra nếu xóa voucher, chỉ cần mã voucher là đủ
+            VoucherDao voucherDao = new VoucherDao();
+
+            // Xử lý xóa voucher
             if (deleteVoucherCode != null && !deleteVoucherCode.isEmpty()) {
-                // Nếu có mã voucher cần xóa
-                VoucherDao voucherDao = new VoucherDao();
-                Voucher voucherToDelete = new Voucher();
-                voucherToDelete.setVoucherCode(deleteVoucherCode);  // Gán voucherCode vào đối tượng Voucher
-
-                boolean result = voucherDao.deleteVoucher(voucherToDelete);  // Gọi phương thức xóa voucher
-
-                if (result) {
-                    response.sendRedirect(request.getContextPath() + "/VoucherController");
+                Voucher voucherToDelete = voucherDao.getVoucherByCode(deleteVoucherCode);
+                if (voucherToDelete != null) {
+                    boolean result = voucherDao.deleteVoucher(voucherToDelete);
+                    if (result) {
+                        request.getSession().setAttribute("message", "Xóa voucher thành công!");
+                    } else {
+                        request.setAttribute("error", "Lỗi khi xóa voucher.");
+                    }
                 } else {
-                    request.setAttribute("error", "Lỗi khi xóa voucher.");
-                    request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
+                    request.setAttribute("error", "Không tìm thấy voucher để xóa.");
                 }
-                return; // Dừng lại khi thực hiện xóa
+                response.sendRedirect(request.getContextPath() + "/VoucherController");
+                return;
             }
 
-            // Kiểm tra các trường không được để trống khi không xóa
-            if (voucherCode == null || voucherCode.isEmpty()
-                    || startDate == null || startDate.isEmpty()
-                    || endDate == null || endDate.isEmpty()
-                    || percentDiscountStr == null || percentDiscountStr.isEmpty()
-                    || quantityStr == null || quantityStr.isEmpty()) {
-                request.setAttribute("error", "Các trường không được để trống.");
+            // Kiểm tra dữ liệu đầu vào
+            if (voucherCode == null || voucherCode.trim().isEmpty() || 
+                startDateStr == null || startDateStr.isEmpty() || 
+                endDateStr == null || endDateStr.isEmpty() || 
+                percentDiscountStr == null || percentDiscountStr.isEmpty() || 
+                quantityStr == null || quantityStr.isEmpty()) {
+                request.setAttribute("error", "Vui lòng điền đầy đủ các trường.");
                 request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
                 return;
             }
 
-            // Chuyển đổi các giá trị số và kiểm tra hợp lệ
+            // Chuyển đổi dữ liệu
+            LocalDate startDate = LocalDate.parse(startDateStr);
+            LocalDate endDate = LocalDate.parse(endDateStr);
             int percentDiscount = Integer.parseInt(percentDiscountStr);
             int quantity = Integer.parseInt(quantityStr);
-            int usedTime = 0;
-            if (usedTimeStr != null && !usedTimeStr.isEmpty()) {
-                usedTime = Integer.parseInt(usedTimeStr);
+
+            // Kiểm tra logic nghiệp vụ
+            if (startDate.isAfter(endDate)) {
+                request.setAttribute("error", "Ngày bắt đầu phải trước ngày hết hạn.");
+                request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
+                return;
+            }
+            if (percentDiscount < 0 || percentDiscount > 100) {
+                request.setAttribute("error", "Phần trăm giảm giá phải từ 0 đến 100.");
+                request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
+                return;
             }
 
-            VoucherDao voucherDao = new VoucherDao();
-            String idParam = request.getParameter("id");
+            Voucher voucher = new Voucher(voucherCode, startDate, endDate, percentDiscount, quantity, 0); // Mặc định usedTime là 0 khi thêm mới
             boolean result;
 
-            if (idParam == null || idParam.isEmpty()) {
-                // Thêm mới voucher
-                Voucher voucher = new Voucher(voucherCode, LocalDate.parse(startDate),
-                        LocalDate.parse(endDate), percentDiscount, quantity, usedTime);
-                result = voucherDao.insertVoucher(voucher);
-            } else {
+            if (idParam != null && !idParam.isEmpty()) {
                 // Cập nhật voucher
                 int voucherId = Integer.parseInt(idParam);
-                Voucher updatedVoucher = new Voucher(voucherCode, LocalDate.parse(startDate),
-                        LocalDate.parse(endDate), percentDiscount, quantity, usedTime);
-                result = voucherDao.updateVoucher(updatedVoucher);
+                Voucher existingVoucher = voucherDao.getVoucherByCode(voucherCode); // Lấy thông tin hiện tại từ DB
+                if (existingVoucher != null && existingVoucher.getVoucherID() == voucherId) {
+                    voucher.setVoucherID(voucherId);
+                    voucher.setUsedTime(existingVoucher.getUsedTime()); // Giữ nguyên usedTime từ DB
+                    if (quantity < existingVoucher.getUsedTime()) {
+                        request.setAttribute("error", "Số lượng phải lớn hơn hoặc bằng số lần đã dùng (" + existingVoucher.getUsedTime() + ").");
+                        request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
+                        return;
+                    }
+                    result = voucherDao.updateVoucher(voucher);
+                    if (result) {
+                        request.getSession().setAttribute("message", "Cập nhật voucher thành công!");
+                    } else {
+                        request.setAttribute("error", "Lỗi khi cập nhật voucher.");
+                    }
+                } else {
+                    request.setAttribute("error", "Voucher không tồn tại hoặc mã không khớp.");
+                    request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
+                    return;
+                }
+            } else {
+                // Thêm voucher mới
+                if (voucherDao.getVoucherByCode(voucherCode) != null) {
+                    request.setAttribute("error", "Mã voucher đã tồn tại.");
+                    request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
+                    return;
+                }
+                result = voucherDao.insertVoucher(voucher);
+                if (result) {
+                    request.getSession().setAttribute("message", "Thêm voucher thành công!");
+                } else {
+                    request.setAttribute("error", "Lỗi khi thêm voucher.");
+                }
             }
 
-            if (result) {
-                response.sendRedirect(request.getContextPath() + "/VoucherController");
-            } else {
-                request.setAttribute("error", "Lỗi khi xử lý voucher.");
-                request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
-            }
+            response.sendRedirect(request.getContextPath() + "/VoucherController");
         } catch (NumberFormatException e) {
             e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Dữ liệu không hợp lệ.");
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+            request.setAttribute("error", "Dữ liệu số không hợp lệ: " + e.getMessage());
+            request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Lỗi hệ thống.");
+            request.setAttribute("error", "Lỗi hệ thống: " + e.getMessage());
+            request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
         }
     }
 
@@ -186,7 +194,6 @@ protected void doGet(HttpServletRequest request, HttpServletResponse response)
      */
     @Override
     public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
-
+        return "Servlet quản lý voucher cho nhân viên.";
+    }
 }
