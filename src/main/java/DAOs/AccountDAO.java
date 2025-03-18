@@ -171,5 +171,43 @@ public class AccountDAO {
     }
     return account;
 }
+    
+    public Account getAccountByUsername(String username) {
+        String query = "SELECT * FROM account WHERE username = ?";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, username);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return new Account(
+                    rs.getInt("id"),
+                    rs.getString("username"),
+                    rs.getString("email"),
+                    rs.getString("password"),
+                    rs.getString("phone"),
+                    rs.getString("address"),
+                    rs.getString("role")
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
+    public boolean addNewAccount(Account account) {
+        String query = "INSERT INTO account (username, email, password, phone_number, address, role) VALUES (?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, account.getUsername());
+            ps.setString(2, account.getEmail());
+            ps.setString(3, hashMD5(account.getPassword())); // Hash password
+            ps.setString(4, account.getPhoneNumber());
+            ps.setString(5, account.getAddress());
+            ps.setString(6, account.getRole());
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 
 }

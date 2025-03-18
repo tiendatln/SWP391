@@ -75,7 +75,7 @@
             <button type="submit" class="btn">Login</button>
         </form>
         <div class="links">
-            <a href="forgotPassword.jsp">Forgot Password</a> | <a href="register.jsp">register </a>
+            <a href="/web/forget-password.jsp">Forgot Password</a> | <a href="/LoginController/Register">Register </a>
         </div>
     </div>
 </body>

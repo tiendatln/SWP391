@@ -14,14 +14,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f8f9fa;
         }
-        .container {
-            max-width: 1200px;
-            margin-top: 30px;
-            background: #fff;
-            border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-        }
+        
         .product-img {
             max-width: 100%;
             height: auto;
@@ -100,9 +93,11 @@
         }
     </style>
 </head>
-<jsp:include page="/Header.jsp" />
+
+
 <body>
-    <div class="container">
+    <jsp:include page="/Header.jsp" />
+    <div class="container mt-4">
         <h2 class="text-center mb-4" style="font-weight: 600; color: #2c3e50;">Product Detail</h2>
         <c:choose>
             <c:when test="${not empty product}">
@@ -248,8 +243,7 @@
                     <p class="text-danger mt-2">Vui lòng <a href="${pageContext.request.contextPath}/LoginController/Login">đăng nhập</a> để bình luận.</p>
                 </c:if>
             </form>
-
-            <!-- Danh sách bình luận -->
+           <!-- Danh sách bình luận -->
             <div class="mt-4 comment-container">
                 <h5 class="fw-bold">Bình luận:</h5>
                 <c:choose>
@@ -286,7 +280,6 @@
             </div>
         </div>
     </div>
-
     <!-- Modal chỉnh sửa bình luận -->
     <div class="modal fade" id="editCommentModal" tabindex="-1" aria-labelledby="editCommentModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -323,11 +316,7 @@
                 </div>
             </div>
         </div>
-    </div>        
-                    
-                    
-                    
-
+    </div>     
   <!-- JavaScript -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -356,7 +345,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     });
-
     // Xử lý rating sao trong modal
     document.querySelectorAll('#editRating .star').forEach(star => {
         star.addEventListener('click', function () {
@@ -370,7 +358,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     });
-
     // Xử lý AJAX thêm vào giỏ hàng
     document.getElementById("addToCartBtn")?.addEventListener("click", function () {
         let productID = document.getElementById("productID").value;
@@ -406,7 +393,6 @@ document.addEventListener('DOMContentLoaded', function () {
             setTimeout(() => alertBox.style.display = "none", 3000);
         });
     });
-
     // Xử lý rating sao cho thêm bình luận
     document.querySelectorAll('.comment-section > form .rating .star').forEach(star => {
         star.addEventListener('click', function () {
