@@ -17,7 +17,9 @@ D:\JAVA\Project\Ky7\zipmoi\SWP391\src\main\java\Controllers\LoginAPIController.j
 D:\JAVA\Project\Ky7\zipmoi\SWP391\src\main\java\Model\Order.java
 D:\JAVA\Project\Ky7\zipmoi\SWP391\src\main\java\DAOs\MainCategoryDAO.java
 D:\JAVA\Project\Ky7\zipmoi\SWP391\src\main\java\Model\Category.java
+D:\JAVA\Project\Ky7\zipmoi\SWP391\src\main\java\Model\Comment.java
 D:\JAVA\Project\Ky7\zipmoi\SWP391\src\main\java\Controllers\VoucherController.java
+D:\JAVA\Project\Ky7\zipmoi\SWP391\src\main\java\DAOs\CommentDAO.java
 D:\JAVA\Project\Ky7\zipmoi\SWP391\src\main\java\Model\OrderTotal.java
 D:\JAVA\Project\Ky7\zipmoi\SWP391\src\main\java\Controllers\ProfileController.java
 D:\JAVA\Project\Ky7\zipmoi\SWP391\src\main\java\DAOs\OrderDAO.java

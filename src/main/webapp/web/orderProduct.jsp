@@ -137,7 +137,7 @@
                                 <div class="row g-3">
                                     <div class="col-md-4">
                                         <label class="checkout-form-label">Full Name</label>
-                                        <input type="text" class="form-control checkout-form-control" value="${account.username}" placeholder="Enter your name">
+                                        <input type="text" class="form-control checkout-form-control" value="${account.username}" disabled="true" placeholder="Enter your name">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="checkout-form-label">Email</label>
@@ -159,7 +159,7 @@
                                         <label class="checkout-form-label">Voucher</label>
                                         <select name="voucher" id="checkout-form-label">
                                             <c:forEach items="${sessionScope.voucher}" var="voucher">
-                                                <option value="${voucher.voucherCode}">${voucher.voucherCode}</option>
+                                                <option value="${voucher.voucherCode}">${voucher.voucherCode}: <span style="color: green">${voucher.percentDiscount}%</span></option>
                                             </c:forEach>
                                         </select>
                                         <div class="d-flex justify-content-between mt-4">
@@ -187,7 +187,7 @@
                         <div class="p-4">
                             <c:forEach items="${sessionScope.cartOrder}" var="cartItem">
                                 <div class="d-flex align-items-center mb-4">
-                                    <img src="${cartItem.product.proImg}" class="checkout-product-img me-3" alt="product" width="80">
+                                    <img src="../link/img/${cartItem.product.proImg}" class="checkout-product-img me-3" alt="product" width="80">
                                     <div>
                                         <h6 class="mb-1">${cartItem.product.productName}</h6>
                                         <p class="text-muted mb-0">
@@ -220,6 +220,57 @@
                 </div>
             </div>
         </div>
+                                <!-- Thêm đoạn script này vào trước thẻ đóng </body> trong file JSP -->
+<script>
+    // Lấy dữ liệu voucher từ sessionScope và chuyển thành JSON
+    const vouchers = [
+        <c:forEach items="${sessionScope.voucher}" var="voucher" varStatus="loop">
+            {
+                code: "${voucher.voucherCode}",
+                percent: ${voucher.percentDiscount}
+            }${!loop.last ? ',' : ''}
+        </c:forEach>
+    ];
+
+    // Lấy các element cần thao tác
+    const voucherSelect = document.getElementById('checkout-form-label');
+    const subtotalElement = document.querySelector('.d-flex.mb-2 span:last-child');
+    const discountElement = document.querySelector('.d-flex.mb-2:nth-child(2) span:last-child');
+    const totalElement = document.querySelector('.d-flex.pt-3.border-top h5:last-child');
+
+    // Lấy giá trị subtotal ban đầu
+    const subtotalText = "${subtotal}";
+    const subtotal = parseFloat(subtotalText.replace(/[^0-9.-]+/g,""));
+
+    // Hàm định dạng số tiền
+    function formatNumber(number) {
+        return '$' + number.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    }
+
+    // Hàm cập nhật discount và total
+    function updatePrice() {
+        const selectedVoucherCode = voucherSelect.value;
+        const selectedVoucher = vouchers.find(v => v.code === selectedVoucherCode);
+        
+        // Tính discount dựa trên percentDiscount của voucher
+        const discountPercent = selectedVoucher ? selectedVoucher.percent / 100 : 0.1; // Mặc định 10% nếu không chọn
+        const discount = subtotal * discountPercent;
+        const total = subtotal - discount;
+
+        // Cập nhật giá trị lên giao diện
+        discountElement.textContent = '- ' + formatNumber(discount);
+        totalElement.textContent = formatNumber(total);
+        
+        // Cập nhật giá trị hidden input để gửi form
+        document.querySelector('input[name="priceTotal"]').value = total;
+    }
+
+    // Thêm event listener cho select
+    voucherSelect.addEventListener('change', updatePrice);
+
+    // Gọi hàm lần đầu để hiển thị giá trị ban đầu
+    updatePrice();
+</script>
                                     <%@include file="../Footer.jsp" %>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     </body>

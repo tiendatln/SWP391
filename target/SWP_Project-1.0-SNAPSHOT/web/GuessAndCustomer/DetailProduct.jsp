@@ -108,7 +108,7 @@
             <c:when test="${not empty product}">
                 <div class="row align-items-center">
                     <div class="col-md-6">
-                        <img src="/link/img/${product.proImg}" class="product-img" alt="${product.productName}">
+                        <img src="../../link/img/${product.proImg}" class="product-img" alt="${product.productName}">
                     </div>
                     <div class="col-md-6 product-details">
                         <h3 style="color: #34495e;">${product.productName}</h3>
