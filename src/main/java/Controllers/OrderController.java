@@ -167,10 +167,10 @@ public class OrderController extends HttpServlet {
             request.getRequestDispatcher("/web/orderProduct.jsp").forward(request, response);
         } else if (path.startsWith("/OrderController/ConfirmOrder")) {
             // Lấy session từ request
-        HttpSession session = request.getSession();
 
-        // Xử lý logic của ConfirmOrder
-        
+            HttpSession session = request.getSession();
+
+            // Xử lý logic của ConfirmOrder
             List<CartForOrder> proList = new ArrayList<>();
             proList = (List<CartForOrder>) session.getAttribute("cartOrder");
 
@@ -222,20 +222,19 @@ public class OrderController extends HttpServlet {
                 orderList.add(o);
             }
 
-            // Thêm đơn hàng và xóa giỏ hàng
+            // Add order and clear cart
             if (oDAO.addNewOrder(ot, orderList)) {
-                session.setAttribute("message1", "Tổng số tiền: " + _priceTotal);
-                session.setAttribute("message2", "Ghi chú khi chuyển khoản: " + proList.get(0).getAccount().getUsername() + "_Price_" + _priceTotal);
+                session.setAttribute("message1", "Total amount: " + _priceTotal + "$");
+                session.setAttribute("message2", "Transfer note: " + proList.get(0).getAccount().getUsername() + "_Price_" + _priceTotal);
                 request.setAttribute("amount", String.valueOf(_priceTotal));
-                request.setAttribute("description", proList.get(0).getAccount().getUsername() + "_Price_" + _priceTotal);
+                request.setAttribute("description:", proList.get(0).getAccount().getUsername() + "_Price_" + _priceTotal);
                 request.getRequestDispatcher("/generateQR").forward(request, response);
             } else {
-                session.setAttribute("message1", "Đặt hàng thất bại!");
+                session.setAttribute("message1", "Order placement failed!");
                 request.getRequestDispatcher("/errorPage.jsp").forward(request, response);
             }
-        
-        }
 
+        }
     }
 
     /**

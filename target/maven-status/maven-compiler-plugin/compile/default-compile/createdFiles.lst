@@ -8,6 +8,7 @@ Model\Category.class
 Model\Order.class
 Model\OrderTotal.class
 Controllers\LoginController.class
+DAOs\CommentDAO.class
 DAOs\CartDAO.class
 Model\Cart.class
 Model\Product.class
@@ -16,6 +17,7 @@ Model\CartItem.class
 DAOs\ProfileDAO.class
 Model\Account.class
 DAOs\AccountDAO.class
+Model\Comment.class
 Controllers\AccountController.class
 DAOs\ProductDAO.class
 Model\CartForOrder.class
