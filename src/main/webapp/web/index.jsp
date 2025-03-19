@@ -61,7 +61,7 @@
         <div class="container mt-4" style="min-height: 58.6vh;">
             <h2 class="text-center mb-4">Danh sách Laptop</h2>
             <!-- FORM LỌC -->
-            <form method="GET" action="" class="row g-3 mb-4">
+            <form method="GET" action="index.jsp" class="row g-3 mb-4">
                 <div class="col-md-3">
                     <label for="brand" class="form-label">Chọn thương hiệu:</label>
                     <select name="brand" id="brand" class="form-select">
@@ -86,6 +86,7 @@
                     <button type="submit" class="btn btn-primary w-100">Lọc</button>
                 </div>
             </form>
+
             <div class="row">
                 <%-- Dữ liệu danh sách laptop --%>
                 <%                    Connection conn = DBConnection.connect();
@@ -95,10 +96,18 @@
                     String searchQuery = request.getParameter("q");
                     List<Product> productList;
 
+                    String brand = request.getParameter("brand");
+                    String minPriceStr = request.getParameter("minPrice");
+                    String maxPriceStr = request.getParameter("maxPrice");
+
+                    // Chuyển đổi giá trị minPrice và maxPrice sang kiểu Double
+                    Double minPrice = (minPriceStr != null && !minPriceStr.isEmpty()) ? Double.parseDouble(minPriceStr) : null;
+                    Double maxPrice = (maxPriceStr != null && !maxPriceStr.isEmpty()) ? Double.parseDouble(maxPriceStr) : null;
+
                     if (searchQuery != null && !searchQuery.trim().isEmpty()) {
                         productList = productDAO.searchProductsByName(searchQuery.trim());
                     } else {
-                        productList = productDAO.getAllActiveProducts();
+                        productList = productDAO.searchProducts(brand, minPrice, maxPrice);
                     }
 
                     int itemsPerPage = 20; // Số laptop hiển thị trên mỗi trang

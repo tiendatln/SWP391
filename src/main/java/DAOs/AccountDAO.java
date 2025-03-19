@@ -172,26 +172,18 @@ public class AccountDAO {
     return account;
 }
     
-    public Account getAccountByUsername(String username) {
+    public boolean checkAccountExist(String username) {
         String query = "SELECT * FROM account WHERE username = ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, username);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                return new Account(
-                    rs.getInt("id"),
-                    rs.getString("username"),
-                    rs.getString("email"),
-                    rs.getString("password"),
-                    rs.getString("phone"),
-                    rs.getString("address"),
-                    rs.getString("role")
-                );
+                return true;
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+        return false;
     }
     
     public boolean addNewAccount(Account account) {
