@@ -444,11 +444,6 @@
                     </div>
                 </div>
             </c:forEach>
-
-
-
-
-
             <script>
                 function confirmDelete(productID) {
                     if (confirm("Are you sure you want to delete this product?")) {
@@ -477,11 +472,7 @@
                         rows[i].style.display = match ? "" : "none";
                     }
                 }
-
-
             </script>
-
-
         </div>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

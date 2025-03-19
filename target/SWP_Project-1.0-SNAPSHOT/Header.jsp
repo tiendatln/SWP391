@@ -34,25 +34,13 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Thế Giới Di Động Layout</title>
+        <title>Layout</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
         <script src="https://cdn.tailwindcss.com"></script>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <style>
-            .nav-item {
-                justify-content: center;
-            }
-            .nav-item li {
-                cursor: pointer;
-                padding: 10px;
-                width: 150px;
-                position: relative;
-                border-radius: 10px 10px 0 0;
-            }
-            .nav-item li:hover {
-                background-color: orange;
-            }
+            
             .user:hover, .cart:hover {
                 background-color: orange;
             }
@@ -75,8 +63,9 @@
                     </a>
                 </div>
                 <div class="flex-1 mx-6">
-                    <form class="d-flex search-bar" method="GET" action="/search">
-                        <input class="form-control me-md-2" type="search" name="q" placeholder="Search" aria-label="Search">
+                    <form class="d-flex search-bar" onsubmit="return searchRedirect(event)">
+                        <input class="form-control me-md-2" type="search" id="searchInput" name="q" placeholder="Search" aria-label="Search">
+                        <button type="submit" class="btn btn-primary">Tìm kiếm</button>
                     </form>
                 </div>
                 <div class="flex space-x-4">
@@ -96,17 +85,14 @@
             </div>
         </header>
 
-        <nav class="bg-yellow-400">
-            <ul class="flex bg-yellow-400 container text-black font-medium nav-item">
-                <li><a href="#" class="flex header-item justify-content-center items-center no-underline">Smartphone</a></li>
-                <li><a href="#" class="flex header-item justify-content-center items-center no-underline">Laptop</a></li>
-                <li><a href="#" class="flex header-item justify-content-center items-center no-underline">Headphones</a></li>
-                <li><a href="#" class="flex header-item justify-content-center items-center no-underline">Watch</a></li>
-                <li><a href="#" class="flex header-item justify-content-center items-center no-underline">Tablet</a></li>
-                <li><a href="#" class="flex header-item justify-content-center items-center no-underline">PC, Print</a></li>
-                <li><a href="#" class="flex header-item justify-content-center items-center no-underline">sim_card</a></li>
-                <li><a href="#" class="flex header-item justify-content-center items-center no-underline">build</a></li>
-            </ul>
-        </nav>
+        <script>
+            function searchRedirect(event) {
+                event.preventDefault(); // Ngăn chặn gửi form mặc định
+                let query = document.getElementById("searchInput").value.trim();
+                if (query) {
+                    window.location.href = "/web/index.jsp?q=" + encodeURIComponent(query);
+                }
+            }
+        </script>
     </body>
 </html>

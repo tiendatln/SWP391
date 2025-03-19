@@ -114,6 +114,10 @@ public class ProductDetail {
         this.origin = origin;
     }
 
+    public ProductDetail(int aInt, String string, String string0, int aInt0, int aInt1, int aInt2, double aDouble, String string1, int aInt3, String string2, String string3) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
     
 
     

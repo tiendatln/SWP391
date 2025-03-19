@@ -92,7 +92,14 @@
 
                     ProductDAO productDAO = new ProductDAO();
 
-                    List<Product> productList = productDAO.getAllActiveProducts();
+                    String searchQuery = request.getParameter("q");
+                    List<Product> productList;
+
+                    if (searchQuery != null && !searchQuery.trim().isEmpty()) {
+                        productList = productDAO.searchProductsByName(searchQuery.trim());
+                    } else {
+                        productList = productDAO.getAllActiveProducts();
+                    }
 
                     int itemsPerPage = 20; // Số laptop hiển thị trên mỗi trang
                     int totalItems = productList.size();

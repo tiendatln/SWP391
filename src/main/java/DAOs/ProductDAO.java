@@ -132,7 +132,7 @@ public class ProductDAO {
         String sql = "SELECT * FROM product where proState=1";
         try ( Statement stmt = conn.createStatement();  ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
-                
+
                 Category category = categoryDAO.getNormalCategoryByID(rs.getInt("categoryID"));
                 ProductDetail productDetail = getProductDetailById(rs.getInt("productID"));
                 Product product = new Product(
@@ -336,7 +336,7 @@ public class ProductDAO {
         String productImg = null;
         String sql = "SELECT proImg FROM Product WHERE productID = ?";
 
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try ( PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, productID);
             try ( ResultSet rs = ps.executeQuery()) {
@@ -348,6 +348,42 @@ public class ProductDAO {
             e.printStackTrace();
         }
         return productImg;
+    }
+
+    public List<Product> searchProductsByName(String keyword) {
+        List<Product> productList = new ArrayList<>();
+        CategoryDAO categoryDAO = new CategoryDAO();
+        String query = "SELECT p.*, c.categoryID, pd.* FROM product p JOIN category c ON p.categoryID = c.categoryID\n"
+                + " LEFT JOIN productDetail pd ON p.productID = pd.productID\n"
+                + " WHERE p.productName LIKE ? AND p.proState = 1";
+
+        try ( PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, "%" + keyword + "%");
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                // Tạo đối tượng Category
+                 Category category = categoryDAO.getNormalCategoryByID(rs.getInt("categoryID"));
+                ProductDetail productDetail = getProductDetailById(rs.getInt("productID"));
+                Product product = new Product(
+                        rs.getInt("productID"),
+                        rs.getString("productName"),
+                        rs.getInt("proQuantity"),
+                        rs.getLong("proPrice"),
+                        rs.getByte("proState"),
+                        rs.getString("proImg"),
+                        rs.getString("proDes"),
+                        category,
+                        productDetail
+                );
+
+                productList.add(product);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return productList;
     }
 
 }

@@ -59,7 +59,7 @@ public class LoginController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-       String path = request.getRequestURI();
+        String path = request.getRequestURI();
         if (path.endsWith("/LoginController/Login")) {
             Cookie[] cookies = request.getCookies();
             String userName = null;
@@ -84,7 +84,7 @@ public class LoginController extends HttpServlet {
             request.getRequestDispatcher("/web/login.jsp").forward(request, response);
         } else if (path.endsWith("/LoginController/ForgotPassword")) {
             request.getRequestDispatcher("/web/forget-password.jsp").forward(request, response);
-        } else if (path.endsWith("/LoginController/CreateAccount")) {
+        } else if (path.endsWith("/LoginController/Register")) {
             request.getRequestDispatcher("/web/register.jsp").forward(request, response);
         } else if (path.endsWith("/LoginController/SendLink")) {
             request.getRequestDispatcher("/web/reset_password.jsp").forward(request, response);
@@ -130,7 +130,7 @@ public class LoginController extends HttpServlet {
                 HttpSession session = request.getSession();
                 session.setAttribute("user", user);
                 session.setAttribute("userId", user.getId()); // Lưu userId vào session
-                
+
                 Cookie userCookie = new Cookie("user", user.getUsername() + "|" + user.getRole());
                 userCookie.setMaxAge(60 * 60 * 24);
                 userCookie.setSecure(false);
@@ -145,6 +145,30 @@ public class LoginController extends HttpServlet {
                 }
             } else {
                 response.sendRedirect("/web/login.jsp?error=invalid");
+            }
+        } else if (path.endsWith("/LoginController/Register")) {
+            // Lấy dữ liệu từ form đăng ký
+            String username = request.getParameter("username");
+            String email = request.getParameter("email");
+            String password = request.getParameter("password");
+            String retypePassword = request.getParameter("confirmPassword");
+            String phone = request.getParameter("phone");
+            String address = request.getParameter("address");
+            AccountDAO userDAO = new AccountDAO();
+
+            // Kiểm tra username đã tồn tại chưa
+            if (userDAO.getAccountByUsername(username) != null) {
+                response.sendRedirect("/web/register.jsp?error=Username already exists");
+                return;
+            }
+
+            // Tạo tài khoản mới
+            Account newUser = new Account(username, email, password, phone, address, "customer"); // Mặc định role là "customer"
+            boolean success = userDAO.addNewAccount(newUser);
+            if (success) {
+                response.sendRedirect("/web/login.jsp?message=Registration successful");
+            } else {
+                response.sendRedirect("/web/register.jsp?error=Registration failed");
             }
         }
     }
