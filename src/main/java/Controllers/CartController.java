@@ -66,8 +66,64 @@ public class CartController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-   String path = request.getRequestURI();
-    if (path.endsWith("/CartController/Cart")) {
+        String path = request.getRequestURI();
+        if (path.endsWith("/CartController/Cart")) {
+            HttpSession session = request.getSession();
+            Integer userId = (Integer) session.getAttribute("userId");
+
+            if (userId == null) {
+                Cookie[] cookies = request.getCookies();
+                if (cookies != null) {
+                    for (Cookie cookie : cookies) {
+                        if ("user".equals(cookie.getName())) {
+                            String[] values = cookie.getValue().split("\\|");
+                            if (values.length == 2) {
+                                String username = values[0];
+                                String role = values[1];
+                                CartDAO userDAO = new CartDAO();
+                                try {
+                                    Account user = userDAO.getAccountByUsername(username);
+                                    if (user != null && user.getRole().equals(role)) {
+                                        userId = user.getId();
+                                        session.setAttribute("userId", userId);
+                                        session.setAttribute("user", user);
+                                    }
+                                } catch (SQLException | ClassNotFoundException ex) {
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (userId == null) {
+                response.sendRedirect(request.getContextPath() + "/LoginController/Login");
+                return;
+            }
+
+            CartDAO dao = new CartDAO();
+            try {
+                Cart cart = dao.loadCartFromDB(userId);
+                session.setAttribute("cart", cart != null ? cart : new Cart(userId));
+            } catch (SQLException | ClassNotFoundException ex) {
+                session.setAttribute("cart", new Cart(userId));
+            }
+            request.getRequestDispatcher("/web/GuessAndCustomer/cart.jsp").forward(request, response);
+        }
+    }
+
+    /**
+     * Handles the HTTP <code>POST</code> method.
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         HttpSession session = request.getSession();
         Integer userId = (Integer) session.getAttribute("userId");
 
@@ -82,18 +138,15 @@ public class CartController extends HttpServlet {
                             String username = values[0];
                             String role = values[1];
                             CartDAO userDAO = new CartDAO();
-                            Account user = null;
                             try {
-                                user = userDAO.getAccountByUsername(username); // Giả sử có phương thức này
-                            } catch (SQLException ex) {
-                                Logger.getLogger(CartController.class.getName()).log(Level.SEVERE, null, ex);
-                            } catch (ClassNotFoundException ex) {
-                                Logger.getLogger(CartController.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                            if (user != null && user.getRole().equals(role)) {
-                                userId = user.getId();
-                                session.setAttribute("userId", userId);
-                                session.setAttribute("user", user);
+                                Account user = userDAO.getAccountByUsername(username);
+                                if (user != null && user.getRole().equals(role)) {
+                                    userId = user.getId();
+                                    session.setAttribute("userId", userId);
+                                    session.setAttribute("user", user);
+                                }
+                            } catch (SQLException | ClassNotFoundException ex) {
+                                // Ghi log lỗi nếu cần
                             }
                             break;
                         }
@@ -102,43 +155,7 @@ public class CartController extends HttpServlet {
             }
         }
 
-        // Nếu vẫn không có userId, chuyển hướng đến login
-        if (userId == null) {
-            response.sendRedirect(request.getContextPath() + "/login.jsp");
-            return;
-        }
-
-        CartDAO dao = new CartDAO();
         Cart cart = (Cart) session.getAttribute("cart");
-        try {
-            cart = dao.loadCartFromDB(userId);
-            if (cart == null) {
-                cart = new Cart(userId);
-            }
-            session.setAttribute("cart", cart);
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(CartController.class.getName()).log(Level.SEVERE, "Lỗi khi tải giỏ hàng từ DB", ex);
-            cart = new Cart(userId);
-            session.setAttribute("cart", cart);
-        }
-        request.getRequestDispatcher("/web/GuessAndCustomer/cart.jsp").forward(request, response);
-    }
-    }
-
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-       HttpSession session = request.getSession();
-        Integer userId = (Integer) session.getAttribute("userId");
-       Cart cart = (Cart) session.getAttribute("cart");
 
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
@@ -146,86 +163,56 @@ public class CartController extends HttpServlet {
 
         String action = request.getParameter("action");
         if (action == null) {
-            jsonResponse.put("status", "error");
-            jsonResponse.put("message", "Thiếu tham số action!");
+            jsonResponse.put("status", "error").put("message", "Missing action parameter!");
             out.print(jsonResponse.toString());
-            out.flush();
             return;
         }
 
         try {
             int productId = Integer.parseInt(request.getParameter("productId"));
             CartDAO dao = new CartDAO();
-
             if ("add".equals(action)) {
                 if (userId == null) {
-                    jsonResponse.put("status", "error");
-                    jsonResponse.put("message", "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!");
-                    out.print(jsonResponse.toString());
-                    out.flush();
-                    return;
-                }
-                if (cart == null) {
-                    cart = new Cart(userId);
-                    session.setAttribute("cart", cart);
-                }
-                int quantity = request.getParameter("quantity") != null
-                        ? Integer.parseInt(request.getParameter("quantity"))
-                        : 1;
-                Product product = dao.getProductById(productId);
-                if (product != null && product.getProState() == 1 && product.getProQuantity() >= quantity) {
-                    cart.addItem(product, quantity);
-                    dao.addToCart(userId, productId, quantity);
-                    session.setAttribute("cart", cart);
-                    jsonResponse.put("status", "success");
-                    jsonResponse.put("message", "Sản phẩm đã được thêm vào giỏ hàng.");
+                    jsonResponse.put("status", "error").put("message", "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!");
                 } else {
-                    jsonResponse.put("status", "error");
-                    jsonResponse.put("message", "Sản phẩm không tồn tại hoặc không đủ số lượng!");
+                    if (cart == null) {
+                        cart = new Cart(userId);
+                        session.setAttribute("cart", cart);
+                    }
+                    int quantity = request.getParameter("quantity") != null ? Integer.parseInt(request.getParameter("quantity")) : 1;
+                    Product product = dao.getProductById(productId);
+                    if (product != null && product.getProState() == 1 && product.getProQuantity() >= quantity) {
+                        cart.addItem(product, quantity);
+                        dao.addToCart(userId, productId, quantity);
+                        session.setAttribute("cart", cart);
+                        jsonResponse.put("status", "success").put("message", "Product has been added to cart.");
+                    } else {
+                        jsonResponse.put("status", "error").put("message", "Product does not exist or is not available in sufficient quantity!");
+                    }
                 }
             } else if (userId != null && cart != null) {
                 switch (action) {
-                    case "update": {
+                    case "update":
                         int quantity = Integer.parseInt(request.getParameter("quantity"));
                         cart.updateQuantity(productId, quantity);
                         dao.updateCart(userId, productId, quantity);
-                        session.setAttribute("cart", cart);
-                        jsonResponse.put("status", "success");
-                        jsonResponse.put("message", "Đã cập nhật số lượng.");
+                        jsonResponse.put("status", "success").put("message", "");
                         break;
-                    }
-                    case "delete": {
+                    case "delete":
                         cart.removeItem(productId);
                         dao.removeFromCart(userId, productId);
-                        session.setAttribute("cart", cart);
-                        jsonResponse.put("status", "success");
-                        jsonResponse.put("message", "Đã xóa sản phẩm.");
+                        jsonResponse.put("status", "success").put("message", "");
                         break;
-                    }
-                    default: {
-                        jsonResponse.put("status", "error");
-                        jsonResponse.put("message", "Hành động không hợp lệ!");
-                        break;
-                    }
+                    default:
+                        jsonResponse.put("status", "error").put("message", "");
                 }
             } else {
-                jsonResponse.put("status", "error");
-                jsonResponse.put("message", "Vui lòng đăng nhập để thực hiện hành động này!");
+                jsonResponse.put("status", "error").put("message", "Please login to perform this action!");
             }
-
-            out.print(jsonResponse.toString());
-            out.flush();
-        } catch (NumberFormatException e) {
-            jsonResponse.put("status", "error");
-            jsonResponse.put("message", "Dữ liệu không hợp lệ!");
-            out.print(jsonResponse.toString());
-            out.flush();
-        } catch (SQLException | ClassNotFoundException ex) {
-            jsonResponse.put("status", "error");
-            jsonResponse.put("message", "Lỗi cơ sở dữ liệu!");
-            out.print(jsonResponse.toString());
-            out.flush();
+        } catch (NumberFormatException | SQLException | ClassNotFoundException e) {
+            jsonResponse.put("status", "error").put("message", "Data processing error!");
         }
+        out.print(jsonResponse.toString());
     }
 
     /**

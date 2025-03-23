@@ -58,21 +58,21 @@
             <div class="container flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                     <a class="flex btn" href="/web/index.jsp">
-                        <img src="logo.png" alt="Logo" class="w-10 h-10">
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSVYroGkvt_NefPYiihJImOZZW8ittS-G6vjQ&s" alt="Logo" class="w-10 h-10">
                         <span class="text-black text-2xl font-bold italic">Device</span>
                     </a>
                 </div>
                 <div class="flex-1 mx-6">
                     <form class="d-flex search-bar" onsubmit="return searchRedirect(event)">
                         <input class="form-control me-md-2" type="search" id="searchInput" name="q" placeholder="Search" aria-label="Search">
-                        <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+                        <button type="submit" class="btn btn-primary">Search</button>
                     </form>
                 </div>
                 <div class="flex space-x-4">
                     <div class="user">
                         <a id="loginLink" href="<%= isLoggedIn ? "/ProfileController/Profile" : "/LoginController/Login"%>" class="text-black btn font-medium flex items-center no-underline">
                             <i class="fa-solid fa-user" style="margin: 4px;"></i>
-                            <span id="userText"><%= isLoggedIn ? userName : "Đăng nhập"%></span>
+                            <span id="userText"><%= isLoggedIn ? userName : "Login"%></span>
                         </a>
                     </div>
                     <div class="cart">

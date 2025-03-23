@@ -363,7 +363,7 @@ public class ProductDAO {
 
             while (rs.next()) {
                 // Tạo đối tượng Category
-                 Category category = categoryDAO.getNormalCategoryByID(rs.getInt("categoryID"));
+                Category category = categoryDAO.getNormalCategoryByID(rs.getInt("categoryID"));
                 ProductDetail productDetail = getProductDetailById(rs.getInt("productID"));
                 Product product = new Product(
                         rs.getInt("productID"),
@@ -386,4 +386,69 @@ public class ProductDAO {
         return productList;
     }
 
+    public List<Product> searchProducts(String brand, Double minPrice, Double maxPrice) {
+        List<Product> products = new ArrayList<>();
+        CategoryDAO categoryDAO = new CategoryDAO();
+        String sql = "SELECT * FROM product WHERE proState = 1";
+
+        if (brand != null && !brand.isEmpty()) {
+            sql += " AND productName LIKE ?";
+        }
+        if (minPrice != null) {
+            sql += " AND proPrice >= ?";
+        }
+        if (maxPrice != null) {
+            sql += " AND proPrice <= ?";
+        }
+
+        try ( PreparedStatement stmt = conn.prepareStatement(sql)) {
+            int paramIndex = 1;
+            if (brand != null && !brand.isEmpty()) {
+                stmt.setString(paramIndex++, "%" + brand + "%");
+            }
+            if (minPrice != null) {
+                stmt.setDouble(paramIndex++, minPrice);
+            }
+            if (maxPrice != null) {
+                stmt.setDouble(paramIndex++, maxPrice);
+            }
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                Category category = categoryDAO.getNormalCategoryByID(rs.getInt("categoryID"));
+                ProductDetail productDetail = getProductDetailById(rs.getInt("productID"));
+                Product product = new Product(
+                        rs.getInt("productID"),
+                        rs.getString("productName"),
+                        rs.getInt("proQuantity"),
+                        rs.getLong("proPrice"),
+                        rs.getByte("proState"),
+                        rs.getString("proImg"),
+                        rs.getString("proDes"),
+                        category,
+                        productDetail
+                );
+                products.add(product);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return products;
+    }
+
+    public boolean checkImageUsedByOtherProducts(String imageName, int productId) {
+        String query = "SELECT COUNT(*) FROM product WHERE proImg = ? AND productID != ?";
+        try ( PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, imageName);
+            ps.setInt(2, productId);
+            try ( ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return true; // Nếu có sản phẩm khác sử dụng ảnh này, trả về true
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

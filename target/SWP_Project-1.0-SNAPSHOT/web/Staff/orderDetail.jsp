@@ -131,7 +131,8 @@
                                       <c:when test="${order.orderTotal.orderState == 0}">status-pending">Pending</c:when>
                                       <c:when test="${order.orderTotal.orderState == 1}">status-completed">Completed</c:when>
                                       <c:otherwise>status-cancelled">Cancelled</c:otherwise>
-                                  </c:choose>">
+                                  </c:choose>
+                            </span>
                         </h4>
                         <small class="text-muted">
                             Placed on: <fmt:formatDate value="${order.orderTotal.date}" pattern="dd MMM yyyy, HH:mm"/>

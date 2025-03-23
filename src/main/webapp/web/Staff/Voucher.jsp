@@ -11,7 +11,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Quản lý Voucher</title>
+        <title>Voucher Management</title>
         <style>
             * {
                 margin: 0;
@@ -159,7 +159,7 @@
         <%@ include file="../../AdminLayout.jsp" %>
         <div class="main">
             <div class="content">
-                <h2>Quản lý Voucher</h2>
+                <h2>Voucher Management</h2>
 
                 <!-- Hiển thị thông báo thành công hoặc lỗi -->
                 <% if (session.getAttribute("message") != null) { %>
@@ -171,21 +171,21 @@
                 <% } %>
 
                 <form action="VoucherController" method="get" class="search-box">
-                    <input type="text" name="search" placeholder="Nhập mã voucher..." value="<%= request.getParameter("search") != null ? request.getParameter("search") : ""%>">
-                    <button type="submit">Tìm kiếm</button>
+                    <input type="text" name="search" placeholder="Input voucher code..." value="<%= request.getParameter("search") != null ? request.getParameter("search") : ""%>">
+                    <button type="submit">Search</button>
                 </form>
-                <button class="btn-add" onclick="openAddModal()">Thêm Voucher</button>
+                <button class="btn-add" onclick="openAddModal()">Add Voucher</button>
                 <table>
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Mã Voucher</th>
-                            <th>Giảm Giá (%)</th>
-                            <th>Ngày Bắt Đầu</th>
-                            <th>Ngày Hết Hạn</th>
-                            <th>Số Lượng</th>
-                            <th>Đã Dùng</th>
-                            <th>Hành động</th>
+                            <th>Voucher Code</th>
+                            <th>Discount (%)</th>
+                            <th>Start Day</th>
+                            <th>End Day</th>
+                            <th>Total</th>
+                            <th>Used</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -206,7 +206,7 @@
                                 <button class="btn-edit" onclick="openEditModal('<%= voucher.getVoucherID() %>', '<%= voucher.getVoucherCode() %>', '<%= voucher.getPercentDiscount() %>', '<%= voucher.getStartDate() %>', '<%= voucher.getEndDate() %>', '<%= voucher.getQuantity() %>', '<%= voucher.getUsedTime() %>')">Sửa</button>
                                 <form action="VoucherController" method="POST" style="display:inline;">
                                     <input type="hidden" name="deleteVoucherCode" value="<%= voucher.getVoucherCode() %>">
-                                    <button type="submit" class="btn-delete" onclick="return confirm('Bạn có chắc chắn muốn xóa voucher này không?')">Xóa</button>
+                                    <button type="submit" class="btn-delete" onclick="return confirm('Are you sure to delete this voucher?')">Delete</button>
                                 </form>
                             </td>
                         </tr>
@@ -215,7 +215,7 @@
                         } else {
                         %>
                         <tr>
-                            <td colspan="8">Không có dữ liệu voucher.</td>
+                            <td colspan="8">No voucher data.</td>
                         </tr>
                         <% } %>
                     </tbody>
@@ -227,25 +227,25 @@
         <div id="modal-add-voucher" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeModal('modal-add-voucher')">×</span>
-                <h3>Thêm Voucher Mới</h3>
+                <h3>Add New Voucher</h3>
                 <form action="VoucherController" method="post">
-                    <label for="add-voucherCode">Mã Voucher:</label>
+                    <label for="add-voucherCode">Voucher Code:</label>
                     <input type="text" id="add-voucherCode" name="voucherCode" required><br>
 
-                    <label for="add-discount">Giảm Giá (%):</label>
+                    <label for="add-discount">Discount (%):</label>
                     <input type="number" id="add-discount" name="percentDiscount" min="0" max="100" required><br>
 
-                    <label for="add-startDate">Ngày Bắt Đầu:</label>
+                    <label for="add-startDate">Start Day:</label>
                     <input type="date" id="add-startDate" name="startDate" required><br>
 
-                    <label for="add-endDate">Ngày Hết Hạn:</label>
+                    <label for="add-endDate">End Day:</label>
                     <input type="date" id="add-endDate" name="endDate" required><br>
 
-                    <label for="add-quantity">Số Lượng:</label>
+                    <label for="add-quantity">Total:</label>
                     <input type="number" id="add-quantity" name="quantity" min="0" required><br>
 
-                    <button type="submit" class="btn-add">Lưu</button>
-                    <button type="button" class="btn-cancel" onclick="closeModal('modal-add-voucher')">Hủy</button>
+                    <button type="submit" class="btn-add">Add</button>
+                    <button type="button" class="btn-cancel" onclick="closeModal('modal-add-voucher')">Cancel</button>
                 </form>
             </div>
         </div>
@@ -254,30 +254,30 @@
         <div id="modal-edit-voucher" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeModal('modal-edit-voucher')">×</span>
-                <h3>Chỉnh Sửa Voucher</h3>
+                <h3>Edit Voucher</h3>
                 <form action="VoucherController" method="post">
                     <input type="hidden" id="edit-id" name="id">
-                    <label for="edit-voucherCode">Mã Voucher:</label>
+                    <label for="edit-voucherCode">Voucher Code:</label>
                     <input type="text" id="edit-voucherCode" name="voucherCode" required><br>
 
-                    <label for="edit-discount">Giảm Giá (%):</label>
+                    <label for="edit-discount">Discount (%):</label>
                     <input type="number" id="edit-discount" name="percentDiscount" min="0" max="100" required><br>
 
-                    <label for="edit-startDate">Ngày Bắt Đầu:</label>
+                    <label for="edit-startDate">Start Day:</label>
                     <input type="date" id="edit-startDate" name="startDate" required><br>
 
-                    <label for="edit-endDate">Ngày Hết Hạn:</label>
+                    <label for="edit-endDate">End Day:</label>
                     <input type="date" id="edit-endDate" name="endDate" required><br>
 
-                    <label for="edit-quantity">Số Lượng:</label>
+                    <label for="edit-quantity">Total:</label>
                     <input type="number" id="edit-quantity" name="quantity" min="0" required><br>
 
                     <!-- Trường "Đã Dùng" chỉ hiển thị, không cho sửa -->
-                    <label for="edit-usedTime">Đã Dùng:</label>
+                    <label for="edit-usedTime">Used:</label>
                     <input type="number" id="edit-usedTime" name="usedTime" readonly><br>
 
-                    <button type="submit" class="btn-add">Cập Nhật</button>
-                    <button type="button" class="btn-cancel" onclick="closeModal('modal-edit-voucher')">Hủy</button>
+                    <button type="submit" class="btn-add">Edit</button>
+                    <button type="button" class="btn-cancel" onclick="closeModal('modal-edit-voucher')">Cancel</button>
                 </form>
             </div>
         </div>
