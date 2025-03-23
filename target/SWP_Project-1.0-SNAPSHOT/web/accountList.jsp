@@ -14,33 +14,149 @@
         <!-- Custom CSS -->
         <style>
             body {
-                background-color: #f8f9fa;
+                margin: 0;
+                padding: 0;
+                font-family: Arial, sans-serif;
+                display: flex;
             }
-            .container {
-                margin-top: 40px;
-            }
-            table {
-                border-radius: 8px;
-                overflow: hidden;
-            }
-            th {
-                background-color: #007bff;
+
+            /* Sidebar styling */
+            .sidebar {
+                width: 250px;
+                background: #FF9900;
                 color: white;
+                padding: 20px;
+                height: 100vh;
+                font-family: Arial, sans-serif;
+                position: fixed;
+                top: 0;
+                left: 0;
+                border-right: 2px solid #FFD700;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .dashboard {
+                font-size: 20px;
+                font-weight: bold;
+                margin-bottom: 10px; /* Reduced from 20px to 10px */
                 text-align: center;
             }
-            tr:hover {
-                background-color: #f1f1f1;
+
+            .sidebar ul {
+                list-style: none;
+                padding: 0;
+                width: 100%;
             }
-            .roleSelect {
-                padding: 5px;
+
+            .sidebar ul li {
+                margin: 5px 0; /* Reduced from 15px to 5px */
+            }
+
+            .sidebar ul li a {
+                display: block;
+                text-decoration: none;
+                color: white;
+                padding: 10px;
+                background: #34495e;
                 border-radius: 5px;
-                border: 1px solid #ced4da;
-                background: #fff;
+                text-align: center;
+                transition: 0.3s;
             }
-            .search-box {
+
+            .sidebar ul li a:hover {
+                background: #1abc9c;
+            }
+
+            /* Main content container */
+            .account-list-container {
+                margin-left: 250px;
+                background-color: #fff;
+                margin-top: 20px;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                width: calc(100% - 250px);
+            }
+
+            .account-list-container h2 {
+                font-size: 24px;
+                font-weight: bold;
+                color: #333;
+                margin-bottom: 20px;
+                text-align: left;
+            }
+
+            /* Search box styling */
+            .account-list-search-box {
                 margin-bottom: 20px;
                 display: flex;
-                justify-content: center;
+                justify-content: flex-end;
+            }
+
+            .account-list-search-box input {
+                width: 200px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                padding: 5px 10px;
+            }
+
+            .account-list-search-box button {
+                background-color: #007bff;
+                border: none;
+                border-radius: 4px;
+                padding: 5px 15px;
+                margin-left: 10px;
+            }
+
+            /* Table styling */
+            .account-list-container table {
+                width: 100%;
+                border-collapse: collapse;
+                background-color: #fff;
+            }
+
+            .account-list-container th {
+                background-color: #f8f9fa;
+                color: #333;
+                font-weight: bold;
+                padding: 10px;
+                text-align: left;
+                border-bottom: 2px solid #dee2e6;
+            }
+
+            .account-list-container td {
+                padding: 10px;
+                border-bottom: 1px solid #dee2e6;
+                text-align: left;
+            }
+
+            .account-list-container tr:hover {
+                background-color: #f1f1f1;
+            }
+
+            /* Role select styling */
+            .account-list-container .account-list-role-select {
+                padding: 5px;
+                border-radius: 4px;
+                border: 1px solid #ccc;
+                background: #fff;
+                width: 100px;
+            }
+
+            /* Plain text for admin role */
+            .account-list-container .admin-role-text {
+                padding: 5px;
+                width: 100px;
+                display: inline-block;
+            }
+
+            /* Message styling */
+            .account-list-container .text-danger {
+                color: #dc3545;
+                text-align: center;
+                margin: 20px 0;
             }
         </style>
 
@@ -49,26 +165,25 @@
     <body>
         <jsp:include page="/AdminLayout.jsp" />
 
+        <div class="account-list-container">
+            <h2>Account List</h2>
 
-        <div class="container">
-            <h2 class="text-center text-primary">Account List</h2>
-
-            <!-- Ô tìm kiếm -->
-            <div class="search-box">
-                <input type="text" id="searchInput" class="form-control w-50" placeholder="Tìm kiếm username hoặc email">
-                <button class="btn btn-primary ms-2" onclick="searchAccount()">Tìm kiếm</button>
+            <!-- Search Box -->
+            <div class="account-list-search-box">
+                <input type="text" id="searchInput" class="form-control" placeholder="Search accounts...">
+                <button class="btn btn-primary" onclick="searchAccount()">Search</button>
             </div>
 
-            <!-- Hiển thị thông báo nếu không tìm thấy tài khoản -->
+            <!-- Display message if no accounts found -->
             <c:if test="${not empty message}">
-                <p class="text-danger text-center">${message}</p>
+                <p class="text-danger">${message}</p>
             </c:if>
 
             <c:choose>
                 <c:when test="${not empty accounts}">
                     <div class="table-responsive">
-                        <table class="table table-bordered table-hover text-center">
-                            <thead class="table-primary">
+                        <table class="table">
+                            <thead>
                                 <tr>
                                     <th>ID</th>
                                     <th>Username</th>
@@ -87,12 +202,18 @@
                                         <td>${account.phoneNumber}</td>
                                         <td>${account.address}</td>
                                         <td>
-                                            <select class="form-select roleSelect" data-account-id="${account.id}" ${account.role == 'admin' ? 'disabled' : ''}>
-                                                <option value="user" ${account.role == 'user' ? 'selected' : ''}>User</option>
-                                                <option value="admin" ${account.role == 'admin' ? 'selected' : ''}>Admin</option>
-                                                <option value="staff" ${account.role == 'staff' ? 'selected' : ''}>Staff</option>
-                                            </select>
-                                        
+                                            <c:choose>
+                                                <c:when test="${account.role == 'admin'}">
+                                                    <span class="admin-role-text">Admin</span>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <select class="account-list-role-select" data-account-id="${account.id}">
+                                                        <option value="user" ${account.role == 'user' ? 'selected' : ''}>User</option>
+                                                        <option value="admin" ${account.role == 'admin' ? 'selected' : ''}>Admin</option>
+                                                        <option value="staff" ${account.role == 'staff' ? 'selected' : ''}>Staff</option>
+                                                    </select>
+                                                </c:otherwise>
+                                            </c:choose>
                                         </td>
                                     </tr>
                                 </c:forEach>
@@ -101,7 +222,7 @@
                     </div>
                 </c:when>
                 <c:otherwise>
-                    <p class="text-danger text-center">Không tìm thấy tài khoản nào.</p>
+                    <p class="text-danger">Không tìm thấy tài khoản nào.</p>
                 </c:otherwise>
             </c:choose>
         </div>
@@ -113,7 +234,7 @@
             }
 
             $(document).ready(function () {
-                $(".roleSelect").change(function () {
+                $(".account-list-role-select").change(function () {
                     var accountId = $(this).data("account-id");
                     var newRole = $(this).val();
 

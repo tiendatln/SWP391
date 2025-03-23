@@ -8,6 +8,10 @@
         <servlet-name>PaymentServlet</servlet-name>
         <servlet-class>PaymentServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>ForgotPassword</servlet-name>
+        <servlet-class>Controllers.ForgotPassword</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>PaymentServlet</servlet-name>
         <url-pattern>/generateQR</url-pattern>
@@ -63,6 +67,10 @@
     <servlet-mapping>
         <servlet-name>LoginAPIController</servlet-name>
         <url-pattern>/LoginAPIController/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ForgotPassword</servlet-name>
+        <url-pattern>/ForgotPassword/*</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>

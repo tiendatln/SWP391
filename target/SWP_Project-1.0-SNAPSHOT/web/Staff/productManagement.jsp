@@ -76,20 +76,20 @@
     <body class="bg-light sb-nav-fixed">
         <%@include file="../../AdminLayout.jsp" %>
         <div class="content container-fluid px-4">
-            <h2>Quản Lý Sản Phẩm</h2>
-            <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addProductModal">Thêm Sản Phẩm</button>
+            <h2>Product Management</h2>
+            <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addProductModal">Add New Product</button>
 
-            <input type="text" id="searchInput" placeholder="Tìm kiếm sản phẩm..." class="form-control mb-3" onkeyup="searchProducts()">
+            <input type="text" id="searchInput" placeholder="Search product..." class="form-control mb-3" onkeyup="searchProducts()">
 
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th>Hình ảnh</th>
-                        <th>Tên Sản Phẩm</th>
-                        <th>Giá</th>
-                        <th>Số Lượng</th>
-                        <th>Trạng Thái</th>
-                        <th>Hành Động</th>
+                        <th>Image</th>
+                        <th>Product Name</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Status</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -102,17 +102,17 @@
                             <td>${product.proQuantity}</td>
                             <td>
                                 <c:choose>
-                                    <c:when test="${product.proState == 1}">Đang Bán</c:when>
-                                    <c:otherwise>Ngừng Kinh Doanh</c:otherwise>
+                                    <c:when test="${product.proState == 1}">Active</c:when>
+                                    <c:otherwise>Out Of Business</c:otherwise>
                                 </c:choose>
                             </td>
                             <td>
-                                <button class="btn btn-warning btn-sm"type="button" data-bs-toggle="modal" data-bs-target="#editProductModal${product.productID}" style="color: black;" >Edit</button>
+                                <button class="btn btn-primary"type="button" data-bs-toggle="modal" data-bs-target="#editProductModal${product.productID}" style="color: black;" >Edit</button>
                                 <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editProductDetailModal${product.productID}">
                                     Edit Product Detail
                                 </button>
 
-                                <button class="btn btn-outline-danger btn-sm"" type="button" style="color: black" onclick="confirmDelete('${product.productID}')"><i class="fa fa-trash"></i>
+                                <button class="btn btn-outline-danger"" type="button" style="color: black" onclick="confirmDelete('${product.productID}')"><i class="fa fa-trash"></i>
                                 </button>
                             </td>
                         </tr>
@@ -190,8 +190,9 @@
                                                 <div class="col-12 col-sm-6 mb-3">
                                                     <div class="mb-2"><b>Upload Product Image</b></div>
                                                     <div id="myfileupload">
-                                                        <input type="file" id="proImg" name="proImg" accept="image/*" onchange="previewImage(event)">
+                                                        <input type="file" id="proImg" name="proImg" accept="image/*" >
                                                         <img id="imagePreview" src="#" alt="Image Preview" style="display: none; width: 200px; margin-top: 10px;">
+
                                                     </div>
                                                 </div>
                                             </div>
@@ -226,9 +227,6 @@
                             <div class="modal-body">
                                 <div class="py-1">
                                     <form class="form" action="/ProductController?action=editProduct" method="post" enctype="multipart/form-data">
-
-
-
                                         <div class="row">
                                             <div class="col">
                                                 <div class="row">
@@ -299,8 +297,9 @@
                                                     <div class="col-12 col-sm-6 mb-3">
                                                         <div class="mb-2"><b>Upload Product Image</b></div>
                                                         <div id="myfileupload">
-                                                            <input type="file" id="proImg" name="proImg" accept="image/*" onchange="previewImage(event)">
-                                                            <img id="imagePreview" src="#" alt="Image Preview" style="display: none; width: 200px; margin-top: 10px;">
+                                                            <input type="file" id="proImg${product.productID}" name="proImg" accept="image/*" onchange="previewImage(event, 'imagePreview${product.productID}')">
+                                                            <img id="imagePreview${product.productID}" src="#" alt="Image Preview" style="display: none; width: 200px; margin-top: 10px;">
+
                                                         </div>
                                                     </div>
                                                 </div>
@@ -443,39 +442,65 @@
                         </div>
                     </div>
                 </div>
-            </c:forEach>
-            <script>
-                function confirmDelete(productID) {
-                    if (confirm("Are you sure you want to delete this product?")) {
-                        window.location.href = "/ProductController?action=deleteProduct&productID=" + productID;
-                    }
-                }
-
-            </script>
-            <script>
-                function searchProducts() {
-                    let input = document.getElementById("searchInput").value.toLowerCase();
-                    let table = document.querySelector("table tbody");
-                    let rows = table.getElementsByTagName("tr");
-
-                    for (let i = 0; i < rows.length; i++) {
-                        let cols = rows[i].getElementsByTagName("td");
-                        let match = false;
-
-                        for (let j = 0; j < cols.length; j++) {
-                            if (cols[j].textContent.toLowerCase().includes(input)) {
-                                match = true;
-                                break;
-                            }
-                        }
-
-                        rows[i].style.display = match ? "" : "none";
-                    }
-                }
-            </script>
+            </c:forEach>          
         </div>
+        <script>
+            function confirmDelete(productID) {
+                if (confirm("Are you sure you want to delete this product?")) {
+                    window.location.href = "/ProductController?action=deleteProduct&productID=" + productID;
+                }
+            }
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+            function searchProducts() {
+                let input = document.getElementById("searchInput").value.toLowerCase();
+                let table = document.querySelector("table tbody");
+                let rows = table.getElementsByTagName("tr");
+
+                for (let i = 0; i < rows.length; i++) {
+                    let cols = rows[i].getElementsByTagName("td");
+                    let match = false;
+
+                    for (let j = 0; j < cols.length; j++) {
+                        if (cols[j].textContent.toLowerCase().includes(input)) {
+                            match = true;
+                            break;
+                        }
+                    }
+
+                    rows[i].style.display = match ? "" : "none";
+                }
+            }
+
+            function previewImage(event, previewId) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const previewImage = document.getElementById(previewId);
+                        previewImage.src = e.target.result;
+                        previewImage.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+
+            document.getElementById('proImg').addEventListener('change', function (event) {
+                let file = event.target.files[0];
+                if (file) {
+                    let reader = new FileReader();
+                    reader.onload = function (e) {
+                        let img = document.getElementById('imagePreview');
+                        img.src = e.target.result;
+                        img.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    document.getElementById('imagePreview').style.display = 'none';
+                }
+            });
+        </script>
+        <script src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" ></script>
 
     </body>
 </html>

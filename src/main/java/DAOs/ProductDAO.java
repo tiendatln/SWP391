@@ -436,4 +436,19 @@ public class ProductDAO {
         return products;
     }
 
+    public boolean checkImageUsedByOtherProducts(String imageName, int productId) {
+        String query = "SELECT COUNT(*) FROM product WHERE proImg = ? AND productID != ?";
+        try ( PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, imageName);
+            ps.setInt(2, productId);
+            try ( ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return true; // Nếu có sản phẩm khác sử dụng ảnh này, trả về true
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }
