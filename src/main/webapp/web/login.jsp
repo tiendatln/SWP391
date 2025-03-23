@@ -59,7 +59,7 @@
             var username = document.getElementById("username").value.trim();
             var password = document.getElementById("password").value.trim();
             if (username === "" || password === "") {
-                alert("Tên đăng nhập và mật khẩu không được để trống!");
+                alert("Username and password cannot be blank!");
                 return false;
             }
             return true;
@@ -70,12 +70,12 @@
     <div class="login-container">
         <h2>Login</h2>
         <form action="/LoginController/Login" method="post" onsubmit="return validateForm()">
-            <input type="text" id="username" name="username" placeholder="Tên đăng nhập" required>
-            <input type="password" id="password" name="password" placeholder="Mật khẩu" required>
+            <input type="text" id="username" name="username" placeholder="Username" required>
+            <input type="password" id="password" name="password" placeholder="Password" required>
             <button type="submit" class="btn">Login</button>
         </form>
         <div class="links">
-            <a href="/web/forget-password.jsp">Forgot Password</a> | <a href="/LoginController/Register">Register </a>
+            <a href="/web/forgot-password.jsp">Forgot Password</a> | <a href="/LoginController/Register">Register </a>
         </div>
     </div>
 </body>

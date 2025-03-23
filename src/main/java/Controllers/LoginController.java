@@ -155,28 +155,26 @@ public class LoginController extends HttpServlet {
             String phone = request.getParameter("phone");
             String address = request.getParameter("address");
             AccountDAO userDAO = new AccountDAO();
-            boolean checkUsername = userDAO.checkAccountExist(username);
 
             // Kiểm tra username đã tồn tại chưa
-            if (checkUsername) {
+            if (userDAO.getAccountByUsername(username) != null) {
                 response.sendRedirect("/web/register.jsp?error=Username already exists");
                 return;
-            } else {
-                // Tạo tài khoản mới
-                Account newUser = new Account(username, email, password, phone, address, "customer"); // Mặc định role là "customer"
-                boolean success = userDAO.addNewAccount(newUser);
-                if (success) {
-                    response.sendRedirect("/web/login.jsp?message=Registration successful");
-                } else {
-                    response.sendRedirect("/web/register.jsp?error=Registration failed");
-                }
             }
 
+            // Tạo tài khoản mới
+            Account newUser = new Account(username, email, password, phone, address, "customer"); // Mặc định role là "customer"
+            boolean success = userDAO.addNewAccount(newUser);
+            if (success) {
+                response.sendRedirect("/web/login.jsp?message=Registration successful");
+            } else {
+                response.sendRedirect("/web/register.jsp?error=Registration failed");
+            }
         }
     }
 
     /**
-     * Returns a short description of the servlet.A
+     * Returns a short description of the servlet.
      *
      * @return a String containing servlet description
      */

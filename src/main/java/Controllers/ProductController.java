@@ -130,8 +130,6 @@ public class ProductController extends HttpServlet {
             request.getRequestDispatcher("/web/Staff/productManagement.jsp").forward(request, response);
 
         // Xử lý yêu cầu hiển thị trang cập nhật số lượng sản phẩm
-        } else if (path.endsWith("/UpdateQuantity")) {
-            request.getRequestDispatcher("/web/Staff/updateQuantity.jsp").forward(request, response);
         }
 
         // Xử lý yêu cầu xóa sản phẩm
@@ -184,7 +182,6 @@ public class ProductController extends HttpServlet {
                 }
             }
         }
-        fileImg = fileImg.substring(0, fileImg.length() - 1); // Xóa ký tự thừa ở cuối
         String action = request.getParameter("action"); // Lấy tham số action từ request
 
         // Xử lý yêu cầu thêm sản phẩm mới
@@ -236,13 +233,29 @@ public class ProductController extends HttpServlet {
                 if (!Files.exists(Paths.get(fileImg))) {
                     Files.createDirectories(Paths.get(fileImg));
                 }
+
                 String picture = fileName.getFileName().toString();
+
                 if (!picture.isEmpty()) {
-                    filePart.write(fileImg + "/" + fileName);
-                    File filePic = new File(fileImg + "/" + productDAO.getProductImgById(id));
-                    if (filePic.exists()) {
-                        filePic.delete(); // Xóa hình ảnh cũ
+                    // Lấy ảnh cũ của sản phẩm hiện tại
+                    String oldImage = productDAO.getProductImgById(id);
+
+                    // Kiểm tra nếu ảnh cũ không rỗng và không null
+                    if (oldImage != null && !oldImage.isEmpty()) {
+                        // Kiểm tra xem ảnh này có được sử dụng ở sản phẩm khác không
+                        boolean isUsedByOtherProducts = productDAO.checkImageUsedByOtherProducts(oldImage, id);
+
+                        // Nếu ảnh không được dùng ở sản phẩm khác, mới thực hiện xóa
+                        if (!isUsedByOtherProducts) {
+                            File filePic = new File(fileImg + "/" + oldImage);
+                            if (filePic.exists()) {
+                                filePic.delete();
+                            }
+                        }
                     }
+
+                    // Lưu ảnh mới
+                    filePart.write(fileImg + "/" + picture);
                 }
 
                 // Cập nhật thông tin sản phẩm

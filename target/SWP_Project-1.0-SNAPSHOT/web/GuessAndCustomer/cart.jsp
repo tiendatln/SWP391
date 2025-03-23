@@ -1,4 +1,4 @@
-<%-- 
+<%--
     Document   : cart
     Created on : 25 Feb 2025, 09:51:38
     Author     : hnpt6504
@@ -11,13 +11,13 @@
 <%@ page import="Model.CartItem" %>
 
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Giỏ hàng</title>
+    <title>Cart</title> <!-- Translated from "Giỏ hàng" -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <style>
-        /* Giữ nguyên phần CSS của bạn */
+        /* Keep your original CSS */
         body {
             background-color: #f5f5f5;
             font-family: 'Arial', sans-serif;
@@ -175,8 +175,7 @@
     <jsp:include page="../../Header.jsp" />
     <div class="cart-container" id="cartContainer">
         <h2 class="cart-title">
-            Giỏ hàng của bạn 
-            
+            Your Cart <!-- Translated from "Giỏ hàng của bạn" -->
         </h2>
 
         <c:set var="cart" value="${sessionScope.cart}" />
@@ -188,12 +187,12 @@
                         <thead>
                             <tr>
                                 <th>Select</th>
-                                <th>Tên sản phẩm</th>
-                                <th>Hình ảnh</th>
-                                <th>Số lượng</th>
-                                <th>Giá</th>
-                                <th>Tổng</th>
-                                <th>Hành động</th>
+                                <th>Product Name</th> <!-- Translated from "Tên sản phẩm" -->
+                                <th>Image</th> <!-- Translated from "Hình ảnh" -->
+                                <th>Quantity</th> <!-- Translated from "Số lượng" -->
+                                <th>Price</th> <!-- Translated from "Giá" -->
+                                <th>Total</th> <!-- Translated from "Tổng" -->
+                                <th>Action</th> <!-- Translated from "Hành động" -->
                             </tr>
                         </thead>
                         <tbody id="cartItems">
@@ -217,7 +216,7 @@
                                     <td class="cart-item-total"><fmt:formatNumber value="${item.totalPrice}" type="number" groupingUsed="true"/> đ</td>
                                     <td>
                                         <button type="button" class="cart-delete-btn" 
-                                                data-product-id="${item.product.productID}">Xóa</button>
+                                                data-product-id="${item.product.productID}">Delete</button> <!-- Translated from "Xóa" -->
                                     </td>
                                 </tr>
                             </c:forEach>
@@ -226,17 +225,17 @@
                     <div class="cart-text-end">
                         <div class="cart-text-start">
                             <input type="checkbox" id="selectAll" class="cart-custom-checkbox">
-                            <label for="selectAll" class="cart-custom-checkbox-label"></label> Chọn tất cả
+                            <label for="selectAll" class="cart-custom-checkbox-label"></label> Select All <!-- Translated from "Chọn tất cả" -->
                         </div>
-                        <h4>Tổng tiền: 
+                        <h4>Total Amount: <!-- Translated from "Tổng tiền:" -->
                             <strong id="cartTotal"><fmt:formatNumber value="0" type="number" groupingUsed="true"/> đ</strong>
                         </h4>
-                        <button type="submit" class="cart-btn-success" id="checkoutBtn">Thanh toán</button>
+                        <button type="submit" class="cart-btn-success" id="checkoutBtn">Checkout</button> <!-- Translated from "Thanh toán" -->
                     </div>
                 </form>
             </c:when>
             <c:otherwise>
-                <p class="cart-alert-warning">Giỏ hàng của bạn đang trống!</p>
+                <p class="cart-alert-warning">Your cart is empty!</p> <!-- Translated from "Giỏ hàng của bạn đang trống!" -->
             </c:otherwise>
         </c:choose>
     </div>
@@ -246,13 +245,13 @@
 
     <!-- JavaScript -->
     <script>
-        // Hàm định dạng số với dấu phân cách
-        function formatNumber(number) {
+        // Function to format numbers with separators
+        function formatNumber(number) { // Translated comment from "Hàm định dạng số với dấu phân cách"
             return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " đ";
         }
 
-        // Cập nhật số lượng
-        document.querySelectorAll('.cart-quantity-input').forEach(input => {
+        // Update quantity
+        document.querySelectorAll('.cart-quantity-input').forEach(input => { // Translated comment from "Cập nhật số lượng"
             input.addEventListener('change', function () {
                 const productId = this.getAttribute('data-product-id');
                 const quantity = this.value;
@@ -275,12 +274,12 @@
                         updateCartTotal();
                     }
                 })
-                .catch(error => console.error('Lỗi:', error));
+                .catch(error => console.error('Error:', error)); // Translated from "Lỗi:"
             });
         });
 
-        // Xóa sản phẩm
-        document.querySelectorAll('.cart-delete-btn').forEach(button => {
+        // Delete product
+        document.querySelectorAll('.cart-delete-btn').forEach(button => { // Translated comment from "Xóa sản phẩm"
             button.addEventListener('click', function () {
                 const productId = this.getAttribute('data-product-id');
 
@@ -299,20 +298,20 @@
                         const remainingItems = document.querySelectorAll('#cartItems tr');
                         if (remainingItems.length === 0) {
                             document.getElementById('cartContainer').innerHTML = `
-                                <h2 class="cart-title">Giỏ hàng của bạn <span class="user-id-display">(User ID: ${sessionScope.userId})</span></h2>
-                                <p class="cart-alert-warning">Giỏ hàng của bạn đang trống!</p>
+                                <h2 class="cart-title">Your Cart <span class="user-id-display">(User ID: ${sessionScope.userId})</span></h2>
+                                <p class="cart-alert-warning">Your cart is empty!</p> <!-- Translated from "Giỏ hàng của bạn đang trống!" -->
                             `;
                         } else {
                             updateCartTotal();
                         }
                     }
                 })
-                .catch(error => console.error('Lỗi:', error));
+                .catch(error => console.error('Error:', error)); // Translated from "Lỗi:"
             });
         });
 
-        // Hàm cập nhật tổng tiền dựa trên các sản phẩm được chọn
-        function updateCartTotal() {
+        // Function to update total amount based on selected products
+        function updateCartTotal() { // Translated comment from "Hàm cập nhật tổng tiền dựa trên các sản phẩm được chọn"
             let total = 0;
             document.querySelectorAll('#cartItems tr').forEach(row => {
                 const checkbox = row.querySelector('.cart-select-item');
@@ -324,8 +323,8 @@
             document.getElementById('cartTotal').textContent = formatNumber(total);
         }
 
-        // Xử lý checkbox "Chọn tất cả"
-        document.getElementById('selectAll')?.addEventListener('change', function () {
+        // Handle "Select All" checkbox
+        document.getElementById('selectAll')?.addEventListener('change', function () { // Translated comment from "Xử lý checkbox 'Chọn tất cả'"
             const isChecked = this.checked;
             document.querySelectorAll('.cart-select-item').forEach(checkbox => {
                 checkbox.checked = isChecked;
@@ -333,8 +332,8 @@
             updateCartTotal();
         });
 
-        // Xử lý checkbox từng sản phẩm
-        document.querySelectorAll('.cart-select-item').forEach(checkbox => {
+        // Handle individual product checkboxes
+        document.querySelectorAll('.cart-select-item').forEach(checkbox => { // Translated comment from "Xử lý checkbox từng sản phẩm"
             checkbox.addEventListener('change', function () {
                 updateCartTotal();
                 const allChecked = Array.from(document.querySelectorAll('.cart-select-item')).every(cb => cb.checked);
@@ -342,12 +341,12 @@
             });
         });
 
-        // Xử lý nút thanh toán
-        document.getElementById('checkoutBtn')?.addEventListener('click', function (e) {
+        // Handle checkout button
+        document.getElementById('checkoutBtn')?.addEventListener('click', function (e) { // Translated comment from "Xử lý nút thanh toán"
             const selectedItems = document.querySelectorAll('.cart-select-item:checked');
             if (selectedItems.length === 0) {
                 e.preventDefault();
-                alert('Vui lòng chọn ít nhất một sản phẩm để thanh toán!');
+                alert('Please select at least one product to checkout!'); // Translated from "Vui lòng chọn ít nhất một sản phẩm để thanh toán!"
             } else {
                 document.getElementById('checkoutForm').submit();
             }

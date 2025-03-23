@@ -17,7 +17,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Danh sách Laptop</title>
+        <title>Smart Devices Selling Website</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     </head>
     <style>
@@ -59,36 +59,37 @@
             <%@include file="../Header.jsp" %>
         </div>
         <div class="container mt-4" style="min-height: 58.6vh;">
-            <h2 class="text-center mb-4">Danh sách Laptop</h2>
+            <h2 class="text-center mb-4">Smart Devices Selling Website</h2>
             <!-- FORM LỌC -->
             <form method="GET" action="index.jsp" class="row g-3 mb-4">
                 <div class="col-md-3">
-                    <label for="brand" class="form-label">Chọn thương hiệu:</label>
+                    <label for="brand" class="form-label">Select brand:</label>
                     <select name="brand" id="brand" class="form-select">
-                        <option value="">Tất cả</option>
+                        <option value="">All</option>
                         <option value="Asus">Asus</option>
                         <option value="HP">HP</option>
                         <option value="Dell">Dell</option>
                         <option value="Acer">Acer</option>
                         <option value="Lenovo">Lenovo</option>
                         <option value="MacBook">MacBook</option>
+                        <option value="iPhone">iPhone</option>
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label for="minPrice" class="form-label">Giá tối thiểu:</label>
+                    <label for="minPrice" class="form-label">Min price:</label>
                     <input type="number" name="minPrice" id="minPrice" class="form-control" placeholder="VNĐ">
                 </div>
                 <div class="col-md-3">
-                    <label for="maxPrice" class="form-label">Giá tối đa:</label>
+                    <label for="maxPrice" class="form-label">Max price:</label>
                     <input type="number" name="maxPrice" id="maxPrice" class="form-control" placeholder="VNĐ">
                 </div>
                 <div class="col-md-3 align-self-end">
-                    <button type="submit" class="btn btn-primary w-100">Lọc</button>
+                    <button type="submit" class="btn btn-primary w-100">Sort</button>
                 </div>
             </form>
 
             <div class="row">
-                <%-- Dữ liệu danh sách laptop --%>
+                
                 <%                    Connection conn = DBConnection.connect();
 
                     ProductDAO productDAO = new ProductDAO();
