@@ -127,91 +127,57 @@ public class OrderDAO {
         return orderList;
     }
 
-    public List<Order> getAllOrderTotal() {
-        List<Order> orderList = new ArrayList<>();
-        String query = "SELECT TOP 1 \n"
-                + "    ot.orderID, \n"
-                + "    ot.phoneNumber, \n"
-                + "    ot.address, \n"
-                + "    ot.note, \n"
-                + "    ot.totalPrice, \n"
-                + "    ot.date, \n"
-                + "    ot.orderState, \n"
-                + "    ot.voucherID, \n"
-                + "    v.voucherCode, \n"
-                + "    v.startDate, \n"
-                + "    v.endDate, \n"
-                + "    v.percentDiscount, \n"
-                + "    v.quantity, \n"
-                + "    v.usedTime, \n"
-                + "    a.id AS accountID, \n"
-                + "    a.username, \n"
-                + "    a.email, \n"
-                + "    a.password, \n"
-                + "    a.phone_number AS accPhone, \n"
-                + "    a.address AS accAddress, \n"
-                + "    a.role, \n"
-                + "    p.productID, \n"
-                + "    p.productName, \n"
-                + "    o.orderQuantity, \n"
-                + "    o.orderPrice, \n"
-                + "    p.proState, \n"
-                + "    p.proImg, \n"
-                + "    p.proDes, \n"
-                + "    p.categoryID \n"
-                + "FROM orderTotal ot\n"
-                + "LEFT JOIN account a ON ot.id = a.id\n"
-                + "LEFT JOIN voucher v ON ot.voucherID = v.voucherID\n"
-                + "LEFT JOIN [order] o ON ot.orderID = o.orderID\n"
-                + "LEFT JOIN product p ON o.productID = p.productID;";
+    public List<Order> getAllOrderTotal() throws SQLException {
+    List<Order> orderList = new ArrayList<>();
+    String query = "SELECT \n"
+            + "    ot.orderID, \n"
+            + "    ot.phoneNumber, \n"
+            + "    ot.address, \n"
+            + "    ot.note, \n"
+            + "    ot.totalPrice, \n"
+            + "    ot.date, \n"
+            + "    ot.orderState, \n"
+            + "    ot.voucherID, \n"
+            + "    STRING_AGG(p.productName, ', ') AS productNames, \n"
+            + "    SUM(o.orderQuantity) AS totalQuantity, \n"
+            + "    SUM(o.orderPrice) AS totalOrderPrice \n"
+            + "FROM orderTotal ot \n"
+            + "LEFT JOIN [order] o ON ot.orderID = o.orderID \n"
+            + "LEFT JOIN product p ON o.productID = p.productID \n"
+            + "GROUP BY \n"
+            + "    ot.orderID, ot.phoneNumber, ot.address, ot.note, \n"
+            + "    ot.totalPrice, ot.date, ot.orderState, ot.voucherID;";
 
-        try ( PreparedStatement ps = conn.prepareStatement(query);  ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                OrderTotal ot = new OrderTotal(
-                        rs.getInt("orderID"),
-                        rs.getString("phoneNumber"),
-                        rs.getString("address"),
-                        rs.getString("note"),
-                        rs.getLong("totalPrice"),
-                        rs.getDate("date"),
-                        rs.getInt("orderState"),
-                        rs.getInt("voucherID"),
-                        new Account(
-                                rs.getInt("accountID"),
-                                rs.getString("username"),
-                                rs.getString("email"),
-                                rs.getString("password"),
-                                rs.getString("accPhone"),
-                                rs.getString("accAddress"),
-                                rs.getString("role")
-                        )
-                );
+    try (PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+            OrderTotal ot = new OrderTotal(
+                    rs.getInt("orderID"),
+                    rs.getString("phoneNumber"),
+                    rs.getString("address"),
+                    rs.getString("note"),
+                    rs.getLong("totalPrice"),
+                    rs.getDate("date"),
+                    rs.getInt("orderState"),
+                    rs.getInt("voucherID")
+            );
 
-                Product product = new Product(
-                        rs.getInt("productID"),
-                        rs.getString("productName"),
-                        rs.getInt("orderQuantity"),
-                        rs.getLong("orderPrice"),
-                        rs.getByte("proState"),
-                        rs.getString("proImg"),
-                        rs.getString("proDes"),
-                        new Category(rs.getInt("categoryID")) // Cần điều chỉnh nếu Category có nhiều hơn 1 tham số
-                );
+            // Lấy danh sách sản phẩm dưới dạng chuỗi
+            String productNames = rs.getString("productNames");
 
-                Order order = new Order(
-                        product,
-                        ot,
-                        rs.getInt("orderQuantity"),
-                        rs.getLong("orderPrice")
-                );
+            // Tạo Order với danh sách sản phẩm gộp
+            Order order = new Order(
+                    ot,
+                    productNames, // Danh sách sản phẩm dạng String
+                    rs.getInt("totalQuantity"),
+                    rs.getLong("totalOrderPrice")
+            );
 
-                orderList.add(order);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+            orderList.add(order);
         }
+    }
         return orderList;
     }
+
 
     public List<Order> getOrderDetails(int orderID) {
         List<Order> orderDetails = new ArrayList<>();

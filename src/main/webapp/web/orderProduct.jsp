@@ -163,7 +163,7 @@
                                             </c:forEach>
                                         </select>
                                         <div class="d-flex justify-content-between mt-4">
-                                            <a href="#" class="btn checkout-btn checkout-btn-outline btn-outline-danger">
+                                            <a href="/web/index.jsp" class="btn checkout-btn checkout-btn-outline btn-outline-danger">
                                                 <i class="bx bx-arrow-left me-1"></i> Continue Shopping
                                             </a>
                                             <button type="submit" class="btn checkout-btn checkout-btn-primary btn-outline-primary">
