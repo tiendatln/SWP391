@@ -5,9 +5,17 @@ import java.util.List;
 public class Order {
     private Product product;
     private OrderTotal orderTotal;
+    private String productNames;
     private int quantity;
     private long orderPrice; // ✅ Sửa lỗi chính tả
 
+    public Order(OrderTotal orderTotal, String productNames, int totalQuantity, long totalOrderPrice) {
+        this.orderTotal = orderTotal;
+        this.productNames = productNames;
+        this.quantity = totalQuantity;
+        this.orderPrice = totalOrderPrice;
+    }
+    
     public Order(Product product, OrderTotal orderTotal, int quantity, long orderPrice) { // ✅ Sửa constructor
         this.product = product;
         this.orderTotal = orderTotal;
