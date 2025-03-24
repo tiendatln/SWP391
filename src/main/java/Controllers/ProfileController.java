@@ -9,6 +9,7 @@ import Model.Account;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -36,7 +37,7 @@ public class ProfileController extends HttpServlet {
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
-            out.println("<title>Servlet ProfileController</title>");            
+            out.println("<title>Servlet ProfileController</title>");
             out.println("</head>");
             out.println("<body>");
             out.println("<h1>Servlet ProfileController at " + request.getContextPath() + "</h1>");
@@ -44,12 +45,13 @@ public class ProfileController extends HttpServlet {
             out.println("</html>");
         }
     }
-private ProfileDAO profileDAO; // Khai báo instance variable
-    
+    private ProfileDAO profileDAO; // Khai báo instance variable
+
     @Override
     public void init() throws ServletException {
         profileDAO = new ProfileDAO(); // Khởi tạo instance trong init()
     }
+
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
     /**
      * Handles the HTTP <code>GET</code> method.
@@ -62,22 +64,37 @@ private ProfileDAO profileDAO; // Khai báo instance variable
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-       String path = request.getRequestURI();
-    if (path.endsWith("/ProfileController/Profile")) {
-        int userId = 1; // Thay bằng cách lấy ID thực tế
-        try {
-            Account account = ProfileDAO.getAccountById(userId); // Gọi trực tiếp qua tên class
-            if (account != null) {
-                request.setAttribute("account", account);
-                request.getRequestDispatcher("/web/GuessAndCustomer/Profile.jsp").forward(request, response);
-            } else {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "User not found");
+        String path = request.getRequestURI();
+        if (path.endsWith("/ProfileController/Profile")) {
+            Cookie[] cookies = request.getCookies();
+            String userName = null;
+            String userRole = null;
+
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if ("user".equals(cookie.getName())) {
+                        String[] values = cookie.getValue().split("\\|");
+                        if (values.length == 2) {  // Kiểm tra xem có đủ phần tử không
+                            userName = values[0];
+                            userRole = values[1];
+                        }
+                    }
+                }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error retrieving profile");
+            ProfileDAO profileDAO = new ProfileDAO();
+            try {
+                Account account = profileDAO.getAccount(userName); // Gọi trực tiếp qua tên class
+                if (account != null) {
+                    request.setAttribute("account", account);
+                    request.getRequestDispatcher("/web/GuessAndCustomer/Profile.jsp").forward(request, response);
+                } else {
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "User not found");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error retrieving profile");
+            }
         }
-    }
     }
 
     /**
@@ -93,19 +110,34 @@ private ProfileDAO profileDAO; // Khai báo instance variable
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         String path = request.getRequestURI();
-        
+        ProfileDAO profileDAO = new ProfileDAO();
+
         if (path.endsWith("/ProfileController/Profile")) {
-            int userId = 1; // Thay bằng cách lấy ID thực tế từ session hoặc request
-            try {
-                Account account = profileDAO.getAccountById(userId);
-                if (account == null) {
+            Cookie[] cookies = request.getCookies();
+            String userName = null;
+            String userRole = null;
+
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if ("user".equals(cookie.getName())) {
+                        String[] values = cookie.getValue().split("\\|");
+                        if (values.length == 2) {  // Kiểm tra xem có đủ phần tử không
+                            userName = values[0];
+                            userRole = values[1];
+                        }
+                    }
+                }
+            }
+            Account account = profileDAO.getAccount(userName);
+            if (account == null) {
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "User not found");
                     return;
                 }
-
+            int userId= account.getId();
+            try {
                 // Kiểm tra hành động: cập nhật profile hay đổi mật khẩu
                 String action = request.getParameter("action");
-                
+
                 if ("changePassword".equals(action)) {
                     // Xử lý thay đổi mật khẩu
                     String oldPassword = request.getParameter("oldPassword");
@@ -115,6 +147,13 @@ private ProfileDAO profileDAO; // Khai báo instance variable
                     // Kiểm tra mật khẩu cũ
                     if (!profileDAO.checkOldPassword(userId, oldPassword)) {
                         request.setAttribute("errorMessage", "Old password is incorrect.");
+                        request.setAttribute("account", account);
+                        request.getRequestDispatcher("/web/GuessAndCustomer/Profile.jsp").forward(request, response);
+                        return;
+                    }
+                    // Kiểm tra mật khẩu mới trùng mật khẩu cũ
+                    if (newPassword.equals(oldPassword)) {
+                        request.setAttribute("errorMessage", "New password is similar to old password.");
                         request.setAttribute("account", account);
                         request.getRequestDispatcher("/web/GuessAndCustomer/Profile.jsp").forward(request, response);
                         return;
