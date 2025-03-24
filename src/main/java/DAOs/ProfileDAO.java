@@ -13,6 +13,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -156,5 +160,31 @@ public class ProfileDAO {
         catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
+    }
+    
+   public Account getAccount(String username) {
+        Account account = null;
+        String sql = "SELECT * FROM [dbo].[account] WHERE username = ?";
+
+        try (Connection conn = DBConnection.connect();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, username);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    account = new Account(
+                            rs.getInt("id"),
+                            rs.getString("username"),
+                            rs.getString("email"),
+                            rs.getString("password"),
+                            rs.getString("phone_number"),
+                            rs.getString("address"),
+                            rs.getString("role")
+                    );
+                }
+            }
+        } catch (ClassNotFoundException |SQLException e) {
+            Logger.getLogger(AccountDAO.class.getName()).log(Level.SEVERE, "Error retrieving account by ID.", e);
+        }
+        return account;
     }
 }

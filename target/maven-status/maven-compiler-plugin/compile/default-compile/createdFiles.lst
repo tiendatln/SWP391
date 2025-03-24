@@ -1,5 +1,5 @@
 DAOs\CategoryDAO.class
-Controllers\ProfileController.class
+Controllers\ForgotPasswordController$1.class
 Controllers\LoginAPIController$UserServlet.class
 Controllers\ProductController.class
 Controllers\VoucherController.class
@@ -10,6 +10,7 @@ Model\OrderTotal.class
 Controllers\LoginController.class
 DAOs\CommentDAO.class
 DAOs\CartDAO.class
+Controllers\ForgotPasswordController.class
 Model\Cart.class
 Model\Product.class
 PaymentServlet.class
@@ -23,7 +24,6 @@ DAOs\ProductDAO.class
 Model\CartForOrder.class
 DAOs\VoucherDao.class
 Model\Voucher.class
-Controllers\OrderController.class
 DAOs\MainCategoryDAO.class
 Controllers\LoginAPIController.class
 DB\DBConnection.class
