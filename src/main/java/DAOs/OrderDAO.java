@@ -129,7 +129,7 @@ public class OrderDAO {
 
     public List<Order> getAllOrderTotal() {
         List<Order> orderList = new ArrayList<>();
-        String query = "SELECT TOP 1 \n"
+        String query = "SELECT  \n"
                 + "    ot.orderID, \n"
                 + "    ot.phoneNumber, \n"
                 + "    ot.address, \n"
