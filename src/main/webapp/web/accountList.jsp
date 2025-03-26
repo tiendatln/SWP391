@@ -7,11 +7,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Account List</title>
-
-        <!-- Bootstrap CSS -->
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-        <!-- Custom CSS -->
         <style>
             body {
                 margin: 0;
@@ -20,7 +16,6 @@
                 display: flex;
             }
 
-            /* Sidebar styling */
             .sidebar {
                 width: 250px;
                 background: #FF9900;
@@ -40,7 +35,7 @@
             .dashboard {
                 font-size: 20px;
                 font-weight: bold;
-                margin-bottom: 10px; /* Reduced from 20px to 10px */
+                margin-bottom: 10px;
                 text-align: center;
             }
 
@@ -51,7 +46,7 @@
             }
 
             .sidebar ul li {
-                margin: 5px 0; /* Reduced from 15px to 5px */
+                margin: 5px 0;
             }
 
             .sidebar ul li a {
@@ -69,7 +64,6 @@
                 background: #1abc9c;
             }
 
-            /* Main content container */
             .account-list-container {
                 margin-left: 250px;
                 background-color: #fff;
@@ -88,7 +82,6 @@
                 text-align: left;
             }
 
-            /* Search box styling */
             .account-list-search-box {
                 margin-bottom: 20px;
                 display: flex;
@@ -110,7 +103,6 @@
                 margin-left: 10px;
             }
 
-            /* Table styling */
             .account-list-container table {
                 width: 100%;
                 border-collapse: collapse;
@@ -136,7 +128,6 @@
                 background-color: #f1f1f1;
             }
 
-            /* Role select styling */
             .account-list-container .account-list-role-select {
                 padding: 5px;
                 border-radius: 4px;
@@ -145,21 +136,25 @@
                 width: 100px;
             }
 
-            /* Plain text for admin role */
-            .account-list-container .admin-role-text {
-                padding: 5px;
-                width: 100px;
-                display: inline-block;
+            .account-list-container .update-btn {
+                background-color: #28a745;
+                color: white;
+                border: none;
+                padding: 5px 10px;
+                border-radius: 4px;
+                cursor: pointer;
             }
 
-            /* Message styling */
+            .account-list-container .update-btn:hover {
+                background-color: #218838;
+            }
+
             .account-list-container .text-danger {
                 color: #dc3545;
                 text-align: center;
                 margin: 20px 0;
             }
         </style>
-
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     </head>
     <body>
@@ -168,13 +163,11 @@
         <div class="account-list-container">
             <h2>Account List</h2>
 
-            <!-- Search Box -->
             <div class="account-list-search-box">
                 <input type="text" id="searchInput" class="form-control" placeholder="Search accounts...">
                 <button class="btn btn-primary" onclick="searchAccount()">Search</button>
             </div>
 
-            <!-- Display message if no accounts found -->
             <c:if test="${not empty message}">
                 <p class="text-danger">${message}</p>
             </c:if>
@@ -191,6 +184,7 @@
                                     <th>Phone</th>
                                     <th>Address</th>
                                     <th>Role</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -202,18 +196,13 @@
                                         <td>${account.phoneNumber}</td>
                                         <td>${account.address}</td>
                                         <td>
-                                            <c:choose>
-                                                <c:when test="${account.role == 'admin'}">
-                                                    <span class="admin-role-text">Admin</span>
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <select class="account-list-role-select" data-account-id="${account.id}">
-                                                        <option value="user" ${account.role == 'user' ? 'selected' : ''}>User</option>
-                                                        <option value="admin" ${account.role == 'admin' ? 'selected' : ''}>Admin</option>
-                                                        <option value="staff" ${account.role == 'staff' ? 'selected' : ''}>Staff</option>
-                                                    </select>
-                                                </c:otherwise>
-                                            </c:choose>
+                                            <select class="account-list-role-select" data-account-id="${account.id}">
+                                                <option value="customer" ${account.role == 'customer' ? 'selected' : ''}>Customer</option>
+                                                <option value="admin" ${account.role == 'admin' ? 'selected' : ''}>Admin</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <button class="update-btn" onclick="updateRole(${account.id})">Update</button>
                                         </td>
                                     </tr>
                                 </c:forEach>
@@ -222,7 +211,7 @@
                     </div>
                 </c:when>
                 <c:otherwise>
-                    <p class="text-danger">Không tìm thấy tài khoản nào.</p>
+                    
                 </c:otherwise>
             </c:choose>
         </div>
@@ -233,21 +222,25 @@
                 window.location.href = "<%= request.getContextPath()%>/AccountController/AccountList?search=" + encodeURIComponent(keyword);
             }
 
-            $(document).ready(function () {
-                $(".account-list-role-select").change(function () {
-                    var accountId = $(this).data("account-id");
-                    var newRole = $(this).val();
+            function updateRole(accountId) {
+                var selectElement = $("select[data-account-id='" + accountId + "']");
+                var newRole = selectElement.val();
 
-                    $.post("/AccountController/UpdateRole", {accountId: accountId, newRole: newRole}, function (response) {
-                        if (response === "success") {
-                            alert("Role updated successfully!");
-                        } else {
-                            alert("Failed to update role.");
-                        }
-                    });
+                $.post("/AccountController/UpdateRole", {accountId: accountId, newRole: newRole}, function (response) {
+                    if (response === "success") {
+                        alert("Role updated successfully!");
+                    } else if (response.startsWith("error")) {
+                        alert(response.substring(6)); // Hiển thị thông báo lỗi
+                        location.reload(); // Tải lại trang để giữ trạng thái cũ
+                    } else {
+                        alert("Failed to update role.");
+                    }
                 });
+            }
+
+            $(document).ready(function () {
+                // Không cần xử lý sự kiện change nữa
             });
         </script>
-
     </body>
 </html>

@@ -324,4 +324,16 @@ public class AccountDAO {
         }
         return false;
     }
+    public int countAdmins() {
+        String sql = "SELECT COUNT(*) FROM account WHERE role = 'admin'";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(AccountDAO.class.getName()).log(Level.SEVERE, "Error counting admin accounts.", e);
+        }
+        return 0;
+    }
 }
