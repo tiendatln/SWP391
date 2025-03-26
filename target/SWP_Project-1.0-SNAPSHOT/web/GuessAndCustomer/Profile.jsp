@@ -179,7 +179,7 @@
                                     <input type="text" name="phoneNumber" value="${account.phoneNumber}" required>
                                 </div>
                                 <div class="profile-field">
-                                    <label>Age:</label>
+                                    <label>Adress:</label>
                                     <input type="text" name="address" value="${account.address}" required>
                                 </div>
                                 <div class="profile-field">
@@ -221,7 +221,7 @@
                                 <input type="text" value="${account.phoneNumber}" readonly>
                             </div>
                             <div class="profile-field">
-                                <label>Age:</label>
+                                <label>Adress:</label>
                                 <input type="text" value="${account.address}" readonly>
                             </div>
                             <div class="profile-field">

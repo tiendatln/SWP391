@@ -64,15 +64,15 @@ public class AccountController extends HttpServlet {
             throws ServletException, IOException {
         String searchKeyword = request.getParameter("search");
 
-    List<Account> accounts;
-    if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
-        accounts = accountDAO.searchAccounts(searchKeyword.trim());
-        if (accounts.isEmpty()) {
-            request.setAttribute("message", "Không tìm thấy tài khoản nào.");
+        List<Account> accounts;
+        if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
+            accounts = accountDAO.searchAccounts(searchKeyword.trim());
+            if (accounts.isEmpty()) {
+                request.setAttribute("message", "Not Found");
+            }
+        } else {
+            accounts = accountDAO.getAllAccounts();
         }
-    } else {
-        accounts = accountDAO.getAllAccounts();
-    }
         request.setAttribute("accounts", accounts);
         request.getRequestDispatcher("/web/accountList.jsp").forward(request, response);
     }
@@ -91,6 +91,24 @@ public class AccountController extends HttpServlet {
         int accountId = Integer.parseInt(request.getParameter("accountId"));
         String newRole = request.getParameter("newRole");
 
+        // Lấy thông tin tài khoản hiện tại
+        Account currentAccount = accountDAO.getAccountById(accountId);
+        if (currentAccount == null) {
+            response.getWriter().write("error: Account not found");
+            return;
+        }
+
+        // Kiểm tra nếu đang thay đổi từ "admin" sang "customer"
+        if (currentAccount.getRole().equals("admin") && newRole.equals("customer")) {
+            // Đếm số lượng tài khoản admin hiện tại
+            int adminCount = accountDAO.countAdmins();
+            if (adminCount <= 1) {
+                response.getWriter().write("error: At least one admin account is required");
+                return;
+            }
+        }
+
+        // Cập nhật vai trò nếu hợp lệ
         accountDAO.updateRole(accountId, newRole);
         response.getWriter().write("success");
     }
