@@ -211,7 +211,7 @@
                     </div>
                 </c:when>
                 <c:otherwise>
-                    <p class="text-danger">Không tìm thấy tài khoản nào.</p>
+                    
                 </c:otherwise>
             </c:choose>
         </div>

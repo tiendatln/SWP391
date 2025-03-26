@@ -68,7 +68,7 @@ public class AccountController extends HttpServlet {
         if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
             accounts = accountDAO.searchAccounts(searchKeyword.trim());
             if (accounts.isEmpty()) {
-                request.setAttribute("message", "Không tìm thấy tài khoản nào.");
+                request.setAttribute("message", "Not Found");
             }
         } else {
             accounts = accountDAO.getAllAccounts();
