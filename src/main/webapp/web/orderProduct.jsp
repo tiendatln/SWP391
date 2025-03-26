@@ -190,10 +190,10 @@
                                     <img src="../link/img/${cartItem.product.proImg}" class="checkout-product-img me-3" alt="product" width="80">
                                     <div>
                                         <h6 class="mb-1">${cartItem.product.productName}</h6>
-                                        <p class="text-muted mb-0">
-                                            $<fmt:formatNumber value="${cartItem.product.proPrice}" type="number" groupingUsed="true"/> 
+                                       <p class="text-muted mb-0">
+                                            <fmt:formatNumber value="${cartItem.product.proPrice}" type="number" groupingUsed="true"/> đ
                                             x ${cartItem.quantity} = 
-                                            $<fmt:formatNumber value="${cartItem.product.proPrice * cartItem.quantity}" type="number" groupingUsed="true"/>
+                                            <fmt:formatNumber value="${cartItem.product.proPrice * cartItem.quantity}" type="number" groupingUsed="true"/> đ
                                         </p>
                                     </div>
                                 </div>
@@ -204,15 +204,15 @@
                             <div class="border-top pt-3">
                                 <div class="d-flex justify-content-between mb-2">
                                     <span>Subtotal</span>
-                                    <span>$<fmt:formatNumber value="${subtotal}" type="number" groupingUsed="true"/></span>
+                                    <span><fmt:formatNumber value="${subtotal}" type="number" groupingUsed="true"/></span>
                                 </div>
                                 <div class="d-flex justify-content-between mb-2">
                                     <span>Discount</span>
-                                    <span>- $<fmt:formatNumber value="${discount}" type="number" groupingUsed="true"/></span>
+                                    <span>- <fmt:formatNumber value="${discount}" type="number" groupingUsed="true"/></span>
                                 </div>
                                 <div class="d-flex justify-content-between pt-3 border-top">
                                     <h5>Total</h5>
-                                    <h5>$<fmt:formatNumber value="${total}" type="number" groupingUsed="true"/></h5>
+                                    <h5><fmt:formatNumber value="${total}" type="number" groupingUsed="true"/></h5>
                                 </div>
                             </div>
                         </div>
@@ -222,8 +222,7 @@
         </div>
                                 <!-- Thêm đoạn script này vào trước thẻ đóng </body> trong file JSP -->
 <script>
-    // Lấy dữ liệu voucher từ sessionScope và chuyển thành JSON
-    const vouchers = [
+        const vouchers = [
         <c:forEach items="${sessionScope.voucher}" var="voucher" varStatus="loop">
             {
                 code: "${voucher.voucherCode}",
@@ -232,44 +231,37 @@
         </c:forEach>
     ];
 
-    // Lấy các element cần thao tác
     const voucherSelect = document.getElementById('checkout-form-label');
     const subtotalElement = document.querySelector('.d-flex.mb-2 span:last-child');
     const discountElement = document.querySelector('.d-flex.mb-2:nth-child(2) span:last-child');
     const totalElement = document.querySelector('.d-flex.pt-3.border-top h5:last-child');
+    const priceTotalInput = document.querySelector('input[name="priceTotal"]');
 
-    // Lấy giá trị subtotal ban đầu
     const subtotalText = "${subtotal}";
-    const subtotal = parseFloat(subtotalText.replace(/[^0-9.-]+/g,""));
+    const subtotal = parseFloat(subtotalText.replace(/[^0-9.-]+/g, "")) || 0;
 
-    // Hàm định dạng số tiền
     function formatNumber(number) {
-        return '$' + number.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+        return new Intl.NumberFormat('vi-VN').format(number) + ' đ';
     }
 
-    // Hàm cập nhật discount và total
     function updatePrice() {
         const selectedVoucherCode = voucherSelect.value;
         const selectedVoucher = vouchers.find(v => v.code === selectedVoucherCode);
         
-        // Tính discount dựa trên percentDiscount của voucher
-        const discountPercent = selectedVoucher ? selectedVoucher.percent / 100 : 0.1; // Mặc định 10% nếu không chọn
+        const discountPercent = selectedVoucher ? selectedVoucher.percent / 100 : 0.1;
         const discount = subtotal * discountPercent;
         const total = subtotal - discount;
 
-        // Cập nhật giá trị lên giao diện
+        subtotalElement.textContent = formatNumber(subtotal);
         discountElement.textContent = '- ' + formatNumber(discount);
         totalElement.textContent = formatNumber(total);
-        
-        // Cập nhật giá trị hidden input để gửi form
-        document.querySelector('input[name="priceTotal"]').value = total;
+        priceTotalInput.value = total;
     }
 
-    // Thêm event listener cho select
-    voucherSelect.addEventListener('change', updatePrice);
-
-    // Gọi hàm lần đầu để hiển thị giá trị ban đầu
-    updatePrice();
+    if (voucherSelect) {
+        voucherSelect.addEventListener('change', updatePrice);
+        updatePrice();
+    }
 </script>
                                     <%@include file="../Footer.jsp" %>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
