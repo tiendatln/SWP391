@@ -101,7 +101,7 @@
                                         <thead>
                                             <tr>
                                                 <th>Order ID</th>
-                                                <th>Image</th>
+                                                <th>Product Name</th>
                                                 <th>Quantity</th>
                                                 <th>Total Price</th>
                                                 <th>Date</th>
@@ -122,9 +122,7 @@
                                                     <form action="/OrderController/UpdateOrder" method="post">
                                                         <input type="hidden" name="orderID" value="${order.orderTotal.orderID}" />
                                                         <td class="searchable">${order.orderTotal.orderID}</td>
-                                                        <td>
-                                                            <img src="/link/img/${order.product.proImg}" width="50" height="50" class="rounded" />
-                                                        </td>
+                                                        <td class="searchable">${order.productNames}</td>
                                                         <td class="searchable">${order.quantity}</td>
                                                         <td class="searchable">${order.orderTotal.totalPrice} đ</td>
                                                         <td class="searchable">${order.orderTotal.date}</td>

@@ -8,8 +8,10 @@ import DAOs.AccountDAO;
 import DAOs.OrderDAO;
 import DAOs.ProductDAO;
 import DAOs.VoucherDao;
+import Model.Account;
 import Model.CartForOrder;
 import Model.Order;
+import Model.OrderProduct;
 import Model.OrderTotal;
 import Model.Product;
 import Model.Voucher;
@@ -76,7 +78,7 @@ public class OrderController extends HttpServlet {
         String path = request.getRequestURI();
         if (path.endsWith("/OrderController/OrderManagement")) {
             // Giả lập danh sách đơn hàng (có thể lấy từ database)
-            List<Order> order = new ArrayList<>();
+            List<OrderProduct> order = new ArrayList<>();
             OrderDAO oDAO = new OrderDAO();
             try {
                 order = oDAO.getAllOrderTotal();
@@ -90,7 +92,7 @@ public class OrderController extends HttpServlet {
             request.getRequestDispatcher("/web/Staff/DisplayOrder.jsp").forward(request, response);
         } else if (path.startsWith("/OrderController/CustomerOrder")) {
             String[] id = path.split("/");
-            List<Order> order = new ArrayList<>();
+            List<OrderProduct> order = new ArrayList<>();
             OrderDAO oDAO = new OrderDAO();
             order = oDAO.getAllOrderTotalByUserID(Integer.parseInt(id[id.length - 1]));
 
@@ -130,7 +132,7 @@ public class OrderController extends HttpServlet {
                 int status = Integer.parseInt(request.getParameter("status"));
                 int id = Integer.parseInt(request.getParameter("orderID"));
 
-                List<Order> order = new ArrayList<>();
+                List<OrderProduct> order = new ArrayList<>();
                 OrderDAO oDAO = new OrderDAO();
                 order = oDAO.UpdateStatusAndGetAllOrder(id, status);
 
@@ -146,29 +148,98 @@ public class OrderController extends HttpServlet {
             ProductDAO proDAO = new ProductDAO();
             OrderDAO oDAO = new OrderDAO();
             VoucherDao vDAO = new VoucherDao();
-            List<Voucher> voucher = new ArrayList<>();
+            List<Voucher> voucherList = new ArrayList<>();
+
             try {
-                voucher = vDAO.getAllVouchers();
-            } catch (ClassNotFoundException ex) {
-                Logger.getLogger(OrderController.class.getName()).log(Level.SEVERE, null, ex);
+                // Lấy tất cả voucher từ database
+                List<Voucher> allVouchers = vDAO.getAllVouchers();
+                if (allVouchers == null) {
+                    allVouchers = new ArrayList<>(); // Đảm bảo không null
+                }
+
+                // Lọc voucher hợp lệ ngay trong controller
+                LocalDate today = LocalDate.now();
+                for (Voucher voucher : allVouchers) {
+                    boolean isDateValid = !today.isBefore(voucher.getStartDate())
+                            && !today.isAfter(voucher.getEndDate());
+                    boolean isQuantityValid = voucher.getQuantity() > voucher.getUsedTime();
+
+                    if (isDateValid && isQuantityValid) {
+                        voucherList.add(voucher);
+                    }
+                }
+            } catch (Exception ex) {
+                Logger.getLogger(OrderController.class.getName()).log(Level.SEVERE, "Error fetching vouchers", ex);
+                request.setAttribute("error", "Không thể tải danh sách voucher.");
             }
-            String[] _productAndQuantity = request.getParameterValues("productId/Quantity");
-            String _userID = request.getParameter("userID");
-            for (int i = 0; i < _productAndQuantity.length; i++) {
-                String[] parts = _productAndQuantity[i].split("/");
-                String _productID = parts[0];
-                String _quantity = parts[1];
-                // Create a new CartForOrder object for each iteration
-                CartForOrder cartFO = new CartForOrder();
-                cartFO.setProduct(proDAO.getProductById(Integer.parseInt(_productID)));
-                cartFO.setQuantity(Integer.parseInt(_quantity));
-                cartFO.setAccount(oDAO.getAccountByID(Integer.parseInt(_userID)));
-                proList.add(cartFO);
+
+            String[] productAndQuantity = request.getParameterValues("productId/Quantity");
+            String userIDStr = request.getParameter("userID");
+
+            // Kiểm tra dữ liệu đầu vào
+            if (productAndQuantity == null || productAndQuantity.length == 0 || userIDStr == null) {
+                request.setAttribute("error", "Dữ liệu giỏ hàng hoặc người dùng không hợp lệ.");
+                request.getRequestDispatcher("/web/error.jsp").forward(request, response);
+                return;
             }
-            HttpSession session = request.getSession();
-            session.setAttribute("cartOrder", proList);
-            session.setAttribute("voucher", voucher);
-            request.getRequestDispatcher("/web/orderProduct.jsp").forward(request, response);
+
+            try {
+                int userID = Integer.parseInt(userIDStr);
+                Account account = oDAO.getAccountByID(userID);
+                if (account == null) {
+                    request.setAttribute("error", "Không tìm thấy thông tin người dùng.");
+                    request.getRequestDispatcher("/web/error.jsp").forward(request, response);
+                    return;
+                }
+
+                for (String item : productAndQuantity) {
+                    String[] parts = item.split("/");
+                    if (parts.length != 2) {
+                        continue; // Bỏ qua nếu định dạng không đúng
+                    }
+
+                    try {
+                        int productID = Integer.parseInt(parts[0]);
+                        int quantity = Integer.parseInt(parts[1]);
+
+                        Product product = proDAO.getProductById(productID);
+                        if (product == null || quantity <= 0) {
+                            continue; // Bỏ qua nếu sản phẩm không tồn tại hoặc số lượng không hợp lệ
+                        }
+
+                        CartForOrder cartFO = new CartForOrder();
+                        cartFO.setProduct(product);
+                        cartFO.setQuantity(quantity);
+                        cartFO.setAccount(account);
+                        proList.add(cartFO);
+                    } catch (NumberFormatException ex) {
+                        Logger.getLogger(OrderController.class.getName()).log(Level.WARNING, "Invalid product ID or quantity", ex);
+                    }
+                }
+
+                if (proList.isEmpty()) {
+                    request.setAttribute("error", "Giỏ hàng trống hoặc không hợp lệ.");
+                    request.getRequestDispatcher("/web/error.jsp").forward(request, response);
+                    return;
+                }
+
+                // Lưu vào session
+                HttpSession session = request.getSession();
+                session.setAttribute("cartOrder", proList);
+                session.setAttribute("voucher", voucherList);
+
+                // Chuyển tiếp đến trang checkout
+                request.getRequestDispatcher("/web/orderProduct.jsp").forward(request, response);
+
+            } catch (NumberFormatException ex) {
+                Logger.getLogger(OrderController.class.getName()).log(Level.SEVERE, "Invalid userID", ex);
+                request.setAttribute("error", "ID người dùng không hợp lệ.");
+                request.getRequestDispatcher("/web/error.jsp").forward(request, response);
+            } catch (Exception ex) {
+                Logger.getLogger(OrderController.class.getName()).log(Level.SEVERE, "Unexpected error", ex);
+                request.setAttribute("error", "Đã xảy ra lỗi hệ thống.");
+                request.getRequestDispatcher("/web/error.jsp").forward(request, response);
+            }
         } else if (path.startsWith("/OrderController/ConfirmOrder")) {
             // Lấy session từ request
 

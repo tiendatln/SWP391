@@ -8,9 +8,11 @@ import DB.DBConnection;
 import Model.Account;
 import Model.Category;
 import Model.Order;
+import Model.OrderProduct;
 import Model.OrderTotal;
 import Model.Product;
 import Model.Voucher;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -37,8 +39,8 @@ public class OrderDAO {
         }
     }
 
-    public List<Order> getAllOrderTotalByUserID(int userID) {
-        List<Order> orderList = new ArrayList<>();
+    public List<OrderProduct> getAllOrderTotalByUserID(int userID) {
+        List<OrderProduct> orderList = new ArrayList<>();
         String query = "SELECT \n"
                 + "    ot.orderID, \n"
                 + "    ot.phoneNumber, \n"
@@ -79,7 +81,7 @@ public class OrderDAO {
                     String productNames = rs.getString("productNames");
 
                     // Tạo Order với danh sách sản phẩm gộp
-                    Order order = new Order(
+                    OrderProduct order = new OrderProduct(
                             ot,
                             productNames, // Danh sách sản phẩm dạng String
                             rs.getInt("totalQuantity"),
@@ -95,8 +97,8 @@ public class OrderDAO {
         return orderList;
     }
 
-    public List<Order> getAllOrderTotal() throws SQLException {
-        List<Order> orderList = new ArrayList<>();
+    public List<OrderProduct> getAllOrderTotal() throws SQLException {
+        List<OrderProduct> orderList = new ArrayList<>();
         String query = "SELECT \n"
                 + "    ot.orderID, \n"
                 + "    ot.phoneNumber, \n"
@@ -133,7 +135,7 @@ public class OrderDAO {
                 String productNames = rs.getString("productNames");
 
                 // Tạo Order với danh sách sản phẩm gộp
-                Order order = new Order(
+                OrderProduct order = new OrderProduct(
                         ot,
                         productNames, // Danh sách sản phẩm dạng String
                         rs.getInt("totalQuantity"),
@@ -206,11 +208,11 @@ public class OrderDAO {
         return orderDetails;
     }
 
-    public List<Order> UpdateStatusAndGetAllOrder(int id, int newStatus) {
+    public List<OrderProduct> UpdateStatusAndGetAllOrder(int id, int newStatus) {
 
         String sql = "UPDATE OrderTotal SET orderState = ? WHERE orderID = ?";
         int rowsUpdated;
-        List<Order> newOrder = new ArrayList<>();
+        List<OrderProduct> newOrder = new ArrayList<>();
         try ( PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, newStatus);
@@ -225,28 +227,36 @@ public class OrderDAO {
         return newOrder;
     }
 
-    public boolean addNewOrder(OrderTotal orderTotal, List<Order> orderDetails) {
+   public boolean addNewOrder(OrderTotal orderTotal, List<Order> orderDetails) {
         PreparedStatement pstmtOrderTotal = null;
         PreparedStatement pstmtOrder = null;
         PreparedStatement pstmtDeleteCart = null;
         ResultSet generatedKeys = null;
 
         try {
+            // Kiểm tra kết nối cơ sở dữ liệu
+            if (conn == null || conn.isClosed()) {
+                throw new SQLException("Kết nối cơ sở dữ liệu không hợp lệ hoặc đã đóng.");
+            }
+
             conn.setAutoCommit(false); // Bắt đầu transaction
 
             // 1. Thêm vào bảng orderTotal
             String insertOrderTotalSQL = "INSERT INTO orderTotal (phoneNumber, [address], note, totalPrice, [date], orderState, voucherID, id) "
                     + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             pstmtOrderTotal = conn.prepareStatement(insertOrderTotalSQL, Statement.RETURN_GENERATED_KEYS);
+
+            // Gán giá trị cho PreparedStatement
             pstmtOrderTotal.setString(1, orderTotal.getPhoneNumber());
             pstmtOrderTotal.setString(2, orderTotal.getAddress());
             pstmtOrderTotal.setString(3, orderTotal.getNote());
-            pstmtOrderTotal.setLong(4, orderTotal.getTotalPrice());
-            pstmtOrderTotal.setTimestamp(5, new java.sql.Timestamp(orderTotal.getDate().getTime()));
+            pstmtOrderTotal.setBigDecimal(4, BigDecimal.valueOf(orderTotal.getTotalPrice())); // Chuyển long thành BigDecimal
+            pstmtOrderTotal.setDate(5, orderTotal.getDate()); // Sử dụng java.sql.Date trực tiếp
             pstmtOrderTotal.setInt(6, orderTotal.getOrderState());
             pstmtOrderTotal.setObject(7, orderTotal.getVoucherCode() == 0 ? null : orderTotal.getVoucherCode(), java.sql.Types.INTEGER);
             pstmtOrderTotal.setInt(8, orderTotal.getAccount().getId());
 
+            // Thực thi và kiểm tra kết quả
             int affectedRows = pstmtOrderTotal.executeUpdate();
             if (affectedRows == 0) {
                 throw new SQLException("Không thể thêm orderTotal.");
@@ -268,13 +278,13 @@ public class OrderDAO {
                 pstmtOrder.setInt(1, order.getProduct().getProductID());
                 pstmtOrder.setInt(2, orderTotal.getOrderID());
                 pstmtOrder.setInt(3, order.getQuantity());
-                pstmtOrder.setLong(4, order.getOrderPrice());
+                pstmtOrder.setBigDecimal(4, BigDecimal.valueOf(order.getOrderPrice())); // Chuyển long thành BigDecimal
                 pstmtOrder.addBatch();
             }
 
             int[] batchResults = pstmtOrder.executeBatch();
             for (int result : batchResults) {
-                if (result < 0) { // Kiểm tra lỗi chính xác hơn
+                if (result < 0 && result != Statement.SUCCESS_NO_INFO) {
                     throw new SQLException("Lỗi khi thêm chi tiết đơn hàng.");
                 }
             }
@@ -291,7 +301,7 @@ public class OrderDAO {
 
             int[] deleteResults = pstmtDeleteCart.executeBatch();
             for (int result : deleteResults) {
-                if (result < 0) {
+                if (result < 0 && result != Statement.SUCCESS_NO_INFO) {
                     throw new SQLException("Lỗi khi xóa giỏ hàng.");
                 }
             }
@@ -302,17 +312,26 @@ public class OrderDAO {
             return true;
 
         } catch (SQLException e) {
+            // Ghi log lỗi chi tiết
+            System.err.println("Lỗi SQL: " + e.getMessage());
+            System.err.println("Mã lỗi: " + e.getErrorCode());
+            System.err.println("SQL State: " + e.getSQLState());
             e.printStackTrace();
+
+            // Rollback transaction nếu có lỗi
             try {
                 if (conn != null) {
                     conn.rollback();
                     System.err.println("Transaction đã bị rollback!");
                 }
             } catch (SQLException rollbackEx) {
+                System.err.println("Lỗi khi rollback: " + rollbackEx.getMessage());
                 rollbackEx.printStackTrace();
             }
             return false;
+
         } finally {
+            // Đóng các tài nguyên
             try {
                 if (generatedKeys != null) {
                     generatedKeys.close();
@@ -331,6 +350,7 @@ public class OrderDAO {
                 }
             } catch (SQLException e) {
                 System.err.println("Lỗi khi đóng tài nguyên: " + e.getMessage());
+                e.printStackTrace();
             }
         }
     }
