@@ -144,7 +144,8 @@ public class LoginController extends HttpServlet {
                     response.sendRedirect("/web/index.jsp");
                 }
             } else {
-                response.sendRedirect("/web/login.jsp?error=invalid");
+                request.setAttribute("message", "Username or Password incorrect.");
+                request.getRequestDispatcher("/web/login.jsp").forward(request, response);
             }
         } else if (path.endsWith("/LoginController/Register")) {
             // Lấy dữ liệu từ form đăng ký

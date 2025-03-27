@@ -120,6 +120,18 @@ public class CommentDAO {
         }
         return success;
     }
+    public boolean deleteCommentByProduct(int productID){
+        String sql = "DELETE FROM comment WHERE productID = ?";
+        try (Connection conn = DBConnection.connect();
+             PreparedStatement ps = conn.prepareStatement(sql))  {
+            ps.setInt(1, productID);
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException |ClassNotFoundException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
     // Phương thức main để kiểm tra
     public static void main(String[] args) {
@@ -157,4 +169,6 @@ public class CommentDAO {
             System.out.println(comment);
         }
     }
+    
+
 }

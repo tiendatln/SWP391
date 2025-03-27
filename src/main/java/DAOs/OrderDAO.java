@@ -97,8 +97,10 @@ public class OrderDAO {
         return orderList;
     }
 
+
     public List<OrderProduct> getAllOrderTotal() throws SQLException {
         List<OrderProduct> orderList = new ArrayList<>();
+
         String query = "SELECT \n"
                 + "    ot.orderID, \n"
                 + "    ot.phoneNumber, \n"
@@ -118,6 +120,7 @@ public class OrderDAO {
                 + "    ot.orderID, ot.phoneNumber, ot.address, ot.note, \n"
                 + "    ot.totalPrice, ot.date, ot.orderState, ot.voucherID;";
 
+
         try ( PreparedStatement ps = conn.prepareStatement(query);  ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 OrderTotal ot = new OrderTotal(
@@ -130,6 +133,7 @@ public class OrderDAO {
                         rs.getInt("orderState"),
                         rs.getInt("voucherID")
                 );
+
 
                 // Lấy danh sách sản phẩm dưới dạng chuỗi
                 String productNames = rs.getString("productNames");
