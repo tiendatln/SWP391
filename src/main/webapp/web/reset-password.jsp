@@ -48,13 +48,27 @@
             margin: 10px 0 5px;
             color: #555;
         }
-        input[type="password"] {
+        input[type="password"], input[type="text"] {
             width: 100%;
             padding: 8px;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
             box-sizing: border-box;
+            /* Tắt biểu tượng con mắt mặc định của trình duyệt */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        /* Đảm bảo không hiển thị nút reveal password của trình duyệt */
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear,
+        input[type="password"]::-webkit-textfield-decoration-container {
+            display: none;
+        }
+        .form-check {
+            text-align: left;
+            margin-bottom: 15px;
         }
         button {
             background-color: #007bff;
@@ -91,11 +105,21 @@
         <form action="/ForgotPasswordController/reset" method="POST">
             <label for="newPassword">New Password:</label>
             <input type="password" id="newPassword" name="newPassword" required>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="showNewPassword">
+                <label class="form-check-label" for="showNewPassword">Show password</label>
+            </div>
+            
             <label for="confirmPassword">Confirm Password:</label>
             <input type="password" id="confirmPassword" name="confirmPassword" required>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="showConfirmPassword">
+                <label class="form-check-label" for="showConfirmPassword">Show password</label>
+            </div>
+            
             <button type="submit">Reset Password</button>
         </form>
-        <a href="/web/login.jsp">Back to Login</a> <!-- Khôi phục đường dẫn -->
+        <a href="/web/login.jsp">Back to Login</a>
     </div>
 
     <!-- Modal thông báo thành công -->
@@ -103,22 +127,39 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="successModalLabel">Thành công</h5>
+                    <h5 class="modal-title" id="successModalLabel">Success</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-success">Mật khẩu của bạn đã được đặt lại thành công!</p>
+                    <p class="text-success">Your password has been reset successfully!</p>
                 </div>
                 <div class="modal-footer">
-                    <a href="/web/login.jsp" class="btn btn-primary">Quay lại Đăng nhập</a> <!-- Khôi phục đường dẫn -->
+                    <a href="/web/login.jsp" class="btn btn-primary">Go back to Login</a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- JavaScript để tự động mở modal khi reset mật khẩu thành công -->
+    <!-- JavaScript xử lý hiển thị/ẩn mật khẩu và modal -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Xử lý hiển thị/ẩn mật khẩu mới
+            const newPasswordInput = document.getElementById('newPassword');
+            const showNewPasswordCheckbox = document.getElementById('showNewPassword');
+            
+            showNewPasswordCheckbox.addEventListener('change', function() {
+                newPasswordInput.type = this.checked ? 'text' : 'password';
+            });
+
+            // Xử lý hiển thị/ẩn xác nhận mật khẩu
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const showConfirmPasswordCheckbox = document.getElementById('showConfirmPassword');
+            
+            showConfirmPasswordCheckbox.addEventListener('change', function() {
+                confirmPasswordInput.type = this.checked ? 'text' : 'password';
+            });
+
+            // Xử lý modal thành công
             <% if (request.getAttribute("message") != null && request.getAttribute("message").equals("Password reset successfully. Please login.")) { %>
                 var successModal = new bootstrap.Modal(document.getElementById('successModal'));
                 successModal.show();

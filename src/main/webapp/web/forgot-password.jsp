@@ -1,9 +1,3 @@
-<%-- 
-    Document   : forgot-password
-    Created on : Mar 20, 2025, 5:12:43 PM
-    Author     : Kim Chi Khang _ CE180324
---%>
-
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <!DOCTYPE html>
 <html>
@@ -12,6 +6,7 @@
     <title>Forgot Password</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Thêm jQuery -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -39,6 +34,12 @@
         }
         .btn:hover {
             background-color: #218838;
+        }
+        .btn-resend {
+            background-color: #007bff;
+        }
+        .btn-resend:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
@@ -72,31 +73,54 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form action="/ForgotPasswordController/verify" method="post">
+                    <form id="otpForm" method="post">
                         <div class="mb-3">
                             <label for="otp" class="form-label">OTP:</label>
                             <input type="text" id="otp" name="otp" class="form-control" required>
                         </div>
                         <button type="submit" class="btn">Verify OTP</button>
                     </form>
-                    <% if (request.getAttribute("error") != null) { %>
-                        <p class="text-danger mt-3"><%= request.getAttribute("error") %></p>
-                    <% } %>
-                    <% if (request.getAttribute("message") != null) { %>
-                        <p class="text-success mt-3"><%= request.getAttribute("message") %></p>
-                    <% } %>
+                    <!-- Thêm nút gửi lại OTP -->
+                    <form action="/ForgotPasswordController/resend" method="post" class="mt-3">
+                        <button type="submit" class="btn btn-resend">Resend OTP</button>
+                    </form>
+                    <div id="otpFeedback" class="mt-3"></div> <!-- Phản hồi từ server -->
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- JavaScript để tự động mở modal khi OTP được gửi thành công hoặc có lỗi -->
+    <!-- JavaScript để xử lý modal và AJAX -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            <% if (request.getAttribute("message") != null || request.getAttribute("error") != null) { %>
+            <% if (request.getAttribute("message") != null && request.getAttribute("error") == null) { %>
                 var otpModal = new bootstrap.Modal(document.getElementById('otpModal'));
                 otpModal.show();
             <% } %>
+
+            // Xử lý gửi form OTP qua AJAX
+            $('#otpForm').on('submit', function (e) {
+                e.preventDefault(); // Ngăn gửi form mặc định
+
+                var otpValue = $('#otp').val();
+                $.ajax({
+                    url: '/ForgotPasswordController/verify',
+                    type: 'POST',
+                    data: { otp: otpValue },
+                    success: function (response) {
+                        if (response.includes('OTP verified successfully')) {
+                            // Nếu OTP đúng, chuyển hướng đến trang reset password
+                            window.location.href = '/ForgotPasswordController/reset';
+                        } else {
+                            // Nếu OTP sai, hiển thị thông báo lỗi trong modal
+                            $('#otpFeedback').html('<p class="text-danger">Invalid OTP. Please try again.</p>');
+                        }
+                    },
+                    error: function () {
+                        $('#otpFeedback').html('<p class="text-danger">An error occurred. Please try again.</p>');
+                    }
+                });
+            });
         });
     </script>
 </body>

@@ -1,4 +1,4 @@
-<%-- 
+<%--
     Document   : Voucher
     Created on : Feb 13, 2025, 3:28:50 PM
     Author     : ADMIN
@@ -6,301 +6,195 @@
 <%@page import="Model.Voucher"%>
 <%@page import="java.util.List"%>
 <%@page contentType="text/html" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Voucher Management</title>
-        <style>
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-                font-family: Arial, sans-serif;
-            }
-            body {
-                display: flex;
-                background-color: #f8f9fa;
-            }
-            .main {
-                flex-grow: 1;
-                padding: 20px;
-                margin-left: 250px;
-            }
-            .content {
-                background: white;
-                padding: 20px;
-                border-radius: 10px;
-                width: 100%;
-            }
-            h2 {
-                text-align: center;
-                margin-bottom: 20px;
-            }
-            .search-box {
-                display: flex;
-                margin-bottom: 20px;
-            }
-            .search-box input {
-                flex: 1;
-                padding: 10px;
-                border: 1px solid #ccc;
-                border-radius: 5px;
-            }
-            .search-box button {
-                padding: 10px;
-                margin-left: 10px;
-                border: none;
-                background-color: #007bff;
-                color: white;
-                border-radius: 5px;
-                cursor: pointer;
-            }
-            .btn-add {
-                padding: 10px 15px;
-                background: green;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                margin-bottom: 20px;
-            }
-            table {
-                width: 100%;
-                border-collapse: collapse;
-            }
-            th, td {
-                border: 1px solid #ccc;
-                padding: 10px;
-                text-align: center;
-            }
-            th {
-                background: #333;
-                color: white;
-            }
-            .btn-edit {
-                background: #ffc107;
-                color: black;
-                padding: 5px 10px;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-            }
-            .btn-delete {
-                background: #dc3545;
-                color: white;
-                padding: 5px 10px;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-            }
-            .modal {
-                display: none;
-                position: fixed;
-                z-index: 1;
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0,0,0,0.4);
-                padding-top: 60px;
-            }
-            .modal-content {
-                background-color: #fefefe;
-                margin: 5% auto;
-                padding: 20px;
-                border: 1px solid #888;
-                width: 80%;
-                max-width: 400px;
-                border-radius: 10px;
-            }
-            .close {
-                color: #aaa;
-                font-size: 28px;
-                font-weight: bold;
-                position: absolute;
-                right: 10px;
-                top: 10px;
-            }
-            .close:hover,
-            .close:focus {
-                color: black;
-                text-decoration: none;
-                cursor: pointer;
-            }
-            .btn-cancel {
-                background: #ccc;
-                color: white;
-                padding: 5px 10px;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-            }
-            .btn-cancel:hover {
-                background-color: #aaa;
-            }
-            .message, .error-message {
-                padding: 10px;
-                margin-bottom: 20px;
-                border-radius: 5px;
-            }
-            .message {
-                background-color: #d4edda;
-                color: #155724;
-            }
-            .error-message {
-                background-color: #f8d7da;
-                color: #721c24;
-            }
-        </style>
-    </head>
-    <body>
-        <%@ include file="../../AdminLayout.jsp" %>
-        <div class="main">
-            <div class="content">
-                <h2>Voucher Management</h2>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voucher Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        body { display: flex; background-color: #f8f9fa; }
+        .content { margin-left: 260px; padding: 20px; width: 85%; }
+        .container-fluid { min-height: 100vh; }
+        .table th, .table td { vertical-align: middle; }
+        .btn-primary, .btn-outline-danger { color: black; }
+        .table thead th { background-color: #e9ecef; color: #000; }
+    </style>
+</head>
+<body class="bg-light sb-nav-fixed">
+    <%@ include file="../../AdminLayout.jsp" %>
+    <div class="content container-fluid px-4">
+        <h2 class="mb-4">Voucher Management</h2>
 
-                <!-- Hiển thị thông báo thành công hoặc lỗi -->
-                <% if (session.getAttribute("message") != null) { %>
-                    <div class="message"><%= session.getAttribute("message") %></div>
-                    <% session.removeAttribute("message"); %>
-                <% } %>
-                <% if (request.getAttribute("error") != null) { %>
-                    <div class="error-message"><%= request.getAttribute("error") %></div>
-                <% } %>
+        <c:if test="${not empty sessionScope.message}">
+            <div class="alert alert-success" id="success-message">${sessionScope.message}</div>
+            <% session.removeAttribute("message"); %>
+        </c:if>
+        <c:if test="${not empty requestScope.error}">
+            <div class="alert alert-danger" id="error-message">${requestScope.error}</div>
+        </c:if>
 
-                <form action="VoucherController" method="get" class="search-box">
-                    <input type="text" name="search" placeholder="Input voucher code..." value="<%= request.getParameter("search") != null ? request.getParameter("search") : ""%>">
-                    <button type="submit">Search</button>
+        <div class="row mb-3">
+            <div class="col-md-9">
+                <form action="VoucherController" method="get" class="d-flex">
+                    <input type="text" name="search" class="form-control me-2" placeholder="Search by voucher code..." value="${requestScope.searchKeyword}">
+                    <button type="submit" class="btn btn-primary">Search</button>
                 </form>
-                <button class="btn-add" onclick="openAddModal()">Add Voucher</button>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Voucher Code</th>
-                            <th>Discount (%)</th>
-                            <th>Start Day</th>
-                            <th>End Day</th>
-                            <th>Total</th>
-                            <th>Used</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <%
-                            List<Voucher> voucherList = (List<Voucher>) request.getAttribute("voucherList");
-                            if (voucherList != null && !voucherList.isEmpty()) {
-                                for (Voucher voucher : voucherList) {
-                        %>
-                        <tr>
-                            <td><%= voucher.getVoucherID() %></td>
-                            <td><%= voucher.getVoucherCode() %></td>
-                            <td><%= voucher.getPercentDiscount() %>%</td>
-                            <td><%= voucher.getStartDate() %></td>
-                            <td><%= voucher.getEndDate() %></td>
-                            <td><%= voucher.getQuantity() %></td>
-                            <td><%= voucher.getUsedTime() %></td>
-                            <td>
-                                <button class="btn-edit" onclick="openEditModal('<%= voucher.getVoucherID() %>', '<%= voucher.getVoucherCode() %>', '<%= voucher.getPercentDiscount() %>', '<%= voucher.getStartDate() %>', '<%= voucher.getEndDate() %>', '<%= voucher.getQuantity() %>', '<%= voucher.getUsedTime() %>')">Sửa</button>
-                                <form action="VoucherController" method="POST" style="display:inline;">
-                                    <input type="hidden" name="deleteVoucherCode" value="<%= voucher.getVoucherCode() %>">
-                                    <button type="submit" class="btn-delete" onclick="return confirm('Are you sure to delete this voucher?')">Delete</button>
-                                </form>
-                            </td>
-                        </tr>
-                        <%
-                            }
-                        } else {
-                        %>
-                        <tr>
-                            <td colspan="8">No voucher data.</td>
-                        </tr>
-                        <% } %>
-                    </tbody>
-                </table>
+            </div>
+            <div class="col-md-3 text-end">
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addVoucherModal">Add New Voucher</button>
             </div>
         </div>
 
-        <!-- Modal Thêm Voucher -->
-        <div id="modal-add-voucher" class="modal">
-            <div class="modal-content">
-                <span class="close" onclick="closeModal('modal-add-voucher')">×</span>
-                <h3>Add New Voucher</h3>
-                <form action="VoucherController" method="post">
-                    <label for="add-voucherCode">Voucher Code:</label>
-                    <input type="text" id="add-voucherCode" name="voucherCode" required><br>
+        <table class="table table-bordered table-hover" id="voucherTable">
+            <thead>
+                <tr>
+                    <th>Voucher ID</th>
+                    <th>Voucher Code</th>
+                    <th>Discount (%)</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Total</th>
+                    <th>Used</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <c:choose>
+                    <c:when test="${not empty voucherList}">
+                        <c:forEach var="voucher" items="${voucherList}">
+                            <tr>
+                                <td>${voucher.voucherID}</td>
+                                <td>${voucher.voucherCode}</td>
+                                <td>${voucher.percentDiscount}%</td>
+                                <td>${voucher.startDate}</td>
+                                <td>${voucher.endDate}</td>
+                                <td>${voucher.quantity}</td>
+                                <td>${voucher.usedTime}</td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editVoucherModal${voucher.voucherID}">Edit</button>
+                                    <button class="btn btn-outline-danger btn-sm" onclick="confirmDelete(${voucher.voucherID})"><i class="fa fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        </c:forEach>
+                    </c:when>
+                    <c:otherwise>
+                        <tr>
+                            <td colspan="8" class="text-center">No voucher data available.</td>
+                        </tr>
+                    </c:otherwise>
+                </c:choose>
+            </tbody>
+        </table>
 
-                    <label for="add-discount">Discount (%):</label>
-                    <input type="number" id="add-discount" name="percentDiscount" min="0" max="100" required><br>
-
-                    <label for="add-startDate">Start Day:</label>
-                    <input type="date" id="add-startDate" name="startDate" required><br>
-
-                    <label for="add-endDate">End Day:</label>
-                    <input type="date" id="add-endDate" name="endDate" required><br>
-
-                    <label for="add-quantity">Total:</label>
-                    <input type="number" id="add-quantity" name="quantity" min="0" required><br>
-
-                    <button type="submit" class="btn-add">Add</button>
-                    <button type="button" class="btn-cancel" onclick="closeModal('modal-add-voucher')">Cancel</button>
-                </form>
+        <!-- Add Voucher Modal -->
+        <div class="modal fade" id="addVoucherModal" tabindex="-1" aria-labelledby="addVoucherLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addVoucherLabel">Add New Voucher</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="VoucherController" method="post">
+                            <div class="mb-3">
+                                <label class="form-label">Voucher Code</label>
+                                <input type="text" class="form-control" name="voucherCode" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Discount (%)</label>
+                                <input type="number" class="form-control" name="percentDiscount" min="0" max="100" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Start Date</label>
+                                <input type="date" class="form-control" name="startDate" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">End Date</label>
+                                <input type="date" class="form-control" name="endDate" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Total</label>
+                                <input type="number" class="form-control" name="quantity" min="0" required>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary">Add</button>
+                                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Modal Chỉnh Sửa Voucher -->
-        <div id="modal-edit-voucher" class="modal">
-            <div class="modal-content">
-                <span class="close" onclick="closeModal('modal-edit-voucher')">×</span>
-                <h3>Edit Voucher</h3>
-                <form action="VoucherController" method="post">
-                    <input type="hidden" id="edit-id" name="id">
-                    <label for="edit-voucherCode">Voucher Code:</label>
-                    <input type="text" id="edit-voucherCode" name="voucherCode" required><br>
-
-                    <label for="edit-discount">Discount (%):</label>
-                    <input type="number" id="edit-discount" name="percentDiscount" min="0" max="100" required><br>
-
-                    <label for="edit-startDate">Start Day:</label>
-                    <input type="date" id="edit-startDate" name="startDate" required><br>
-
-                    <label for="edit-endDate">End Day:</label>
-                    <input type="date" id="edit-endDate" name="endDate" required><br>
-
-                    <label for="edit-quantity">Total:</label>
-                    <input type="number" id="edit-quantity" name="quantity" min="0" required><br>
-
-                    <!-- Trường "Đã Dùng" chỉ hiển thị, không cho sửa -->
-                    <label for="edit-usedTime">Used:</label>
-                    <input type="number" id="edit-usedTime" name="usedTime" readonly><br>
-
-                    <button type="submit" class="btn-add">Edit</button>
-                    <button type="button" class="btn-cancel" onclick="closeModal('modal-edit-voucher')">Cancel</button>
-                </form>
+        <!-- Edit Voucher Modal -->
+        <c:forEach var="voucher" items="${voucherList}">
+            <div class="modal fade" id="editVoucherModal${voucher.voucherID}" tabindex="-1" aria-labelledby="editVoucherLabel${voucher.voucherID}" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editVoucherLabel${voucher.voucherID}">Edit Voucher</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="VoucherController" method="post">
+                                <input type="hidden" name="id" value="${voucher.voucherID}">
+                                <div class="mb-3">
+                                    <label class="form-label">Voucher Code</label>
+                                    <input type="text" class="form-control" name="voucherCode" value="${voucher.voucherCode}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Discount (%)</label>
+                                    <input type="number" class="form-control" name="percentDiscount" min="0" max="100" value="${voucher.percentDiscount}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Start Date</label>
+                                    <input type="date" class="form-control" name="startDate" value="${voucher.startDate}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">End Date</label>
+                                    <input type="date" class="form-control" name="endDate" value="${voucher.endDate}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Total</label>
+                                    <input type="number" class="form-control" name="quantity" min="0" value="${voucher.quantity}" required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </c:forEach>
+    </div>
 
-        <script>
-            function openAddModal() {
-                document.getElementById('modal-add-voucher').style.display = 'block';
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+        function confirmDelete(voucherID) {
+            if (confirm("Are you sure you want to delete this voucher?")) {
+                window.location.href = "VoucherController?deleteVoucherID=" + voucherID;
             }
+        }
 
-            function openEditModal(id, voucherCode, percentDiscount, startDate, endDate, quantity, usedTime) {
-                document.getElementById('edit-id').value = id;
-                document.getElementById('edit-voucherCode').value = voucherCode;
-                document.getElementById('edit-discount').value = percentDiscount;
-                document.getElementById('edit-startDate').value = startDate;
-                document.getElementById('edit-endDate').value = endDate;
-                document.getElementById('edit-quantity').value = quantity;
-                document.getElementById('edit-usedTime').value = usedTime;
-                document.getElementById('modal-edit-voucher').style.display = 'block';
-            }
+        document.addEventListener("DOMContentLoaded", function() {
+            const successMessage = document.querySelector("#success-message");
+            const errorMessage = document.querySelector("#error-message");
 
-            function closeModal(modalId) {
-                document.getElementById(modalId).style.display = 'none';
+            if (successMessage) {
+                setTimeout(function() { successMessage.style.display = "none"; }, 3000);
             }
-        </script>
-    </body>
+            if (errorMessage) {
+                setTimeout(function() { errorMessage.style.display = "none"; }, 3000);
+            }
+        });
+    </script>
+</body>
 </html>
