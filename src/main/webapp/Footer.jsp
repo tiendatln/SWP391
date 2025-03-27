@@ -24,19 +24,19 @@
         <footer class="bg-gray-800 text-white py-6 mt-10">
             <div class="container mx-auto grid grid-cols-3 gap-4 px-6">
                 <div>
-                    <h3 class="font-bold text-lg">Về chúng tôi</h3>
-                    <p class="text-sm mt-2">He thống bán lẻ hàng đầu Việt Nam...</p>
+                    <h3 class="font-bold text-lg">About Us</h3>
+                    <p class="text-sm mt-2">The leading retail system in Vietnam...</p>
                 </div>
                 <div>
-                    <h3 class="font-bold text-lg">Hỗ trợ khách hàng</h3>
+                    <h3 class="font-bold text-lg">Customer Support</h3>
                     <ul class="text-sm mt-2 space-y-1">
-                        <li><a href="#" class="hover:text-yellow-400">Chính sách bảo hành</a></li>
-                        <li><a href="#" class="hover:text-yellow-400">Chính sách đổi trả</a></li>
-                        <li><a href="#" class="hover:text-yellow-400">Hướng dẫn mua hàng</a></li>
+                        <li><a href="#" class="hover:text-yellow-400">Warranty Policy</a></li>
+                        <li><a href="#" class="hover:text-yellow-400">Return Policy</a></li>
+                        <li><a href="#" class="hover:text-yellow-400">Shopping Guide</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h3 class="font-bold text-lg">Liên hệ</h3>
+                    <h3 class="font-bold text-lg">Contact</h3>
                     <p class="text-sm mt-2">Hotline: 1800 1060</p>
                     <p class="text-sm">Email: support@device.com</p>
                 </div>
