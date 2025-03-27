@@ -123,6 +123,8 @@
         <div class="order-container">
             <c:forEach var="order" items="${orderDetails}" varStatus="loop">
                 <c:if test="${loop.first}">
+                    <c:set var="accountId" value="${order.orderTotal.account.id}" scope="request" />
+                    <c:set var="role" value="${order.orderTotal.account.role}" scope="request" />
                     <div class="order-header">
                         <h4 class="d-flex justify-content-between align-items-center">
                             <span>Order #${order.orderTotal.orderID}</span>
@@ -194,8 +196,16 @@
                     </div>
                 </c:if>
             </c:forEach>
+            <c:choose>
+                <c:when test="${role == 'customer'}">
+                    <a href="/OrderController/CustomerOrder/${accountId}" class="btn-back mt-4">Back to Orders</a>
+                </c:when>
+                <c:when test="${role == 'admin'}">
+                    <a href="/OrderController/OrderManagement/" class="btn-back mt-4">Back to Orders</a>
+                </c:when>
+            </c:choose>
 
-            <a href="orderList.jsp" class="btn-back mt-4">Back to Orders</a>
+
         </div>
 
         <!-- Bootstrap JS -->

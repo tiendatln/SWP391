@@ -74,6 +74,9 @@
             <input type="password" id="password" name="password" placeholder="Password" required>
             <button type="submit" class="btn">Login</button>
         </form>
+        <% if (request.getAttribute("message") != null) { %>
+                        <p class="text-success mt-3"><%= request.getAttribute("message") %></p>
+         <% } %>
         <div class="links">
             <a href="/web/forgot-password.jsp">Forgot Password</a> | <a href="/LoginController/Register">Register </a>
         </div>
