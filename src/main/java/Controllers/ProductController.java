@@ -136,6 +136,7 @@ public class ProductController extends HttpServlet {
         if ("deleteProduct".equalsIgnoreCase(action)) {
             CartDAO cartDAO = new CartDAO();
             int productID = Integer.parseInt(request.getParameter("productID")); // Lấy ID sản phẩm cần xóa
+            
 
             try {
                 // Kiểm tra xem sản phẩm có trong giỏ hàng không
@@ -143,6 +144,7 @@ public class ProductController extends HttpServlet {
                     request.getSession().setAttribute("errorMessage", "Cannot delete product because it is in cart!");
                     response.sendRedirect("/ProductController/ProductManagement");
                 } else {
+                    commentDAO.deleteCommentByProduct(productID);//xóa comment liên quan đến sp
                     productDAO.deleteProductDetail(productID); // Xóa chi tiết sản phẩm
                     productDAO.deleteProduct(productID); // Xóa sản phẩm
                     response.sendRedirect("/ProductController/ProductManagement");

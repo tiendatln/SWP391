@@ -117,7 +117,7 @@
                         <p><strong>Product code:</strong> ${product.productID}</p>
                         <p><strong>Status:</strong> 
                             <span class="${product.proState == 1 ? 'text-success' : 'text-danger'}">
-                                <c:out value="${product.proState == 1 ? 'Còn hàng' : 'Hết hàng'}" />
+                                <c:out value="${product.proState == 1 ? 'Available' : 'Out of business'}" />
                             </span>
                         </p>
                         <p><strong>Quantity:</strong> ${product.proQuantity}</p>
@@ -134,7 +134,7 @@
                                     <button type="button" id="addToCartBtn" class="btn btn-success ">
                                         <i class="fas fa-cart-plus"></i> Add to cart
                                     </button>
-                                    <button class="btn btn-primary btn-rounded">Buy Now</button>
+                                    
                                 </div>
                             </form>
                         </c:if>
