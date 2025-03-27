@@ -213,4 +213,28 @@ public class VoucherDao {
         }
         return list;
     }
+    public Voucher getVoucherById(int voucherId) throws SQLException, ClassNotFoundException {
+    String query = "SELECT * FROM voucher WHERE voucherID = ?";
+    try (Connection conn = DBConnection.connect(); 
+         PreparedStatement ps = conn.prepareStatement(query)) {
+        
+        ps.setInt(1, voucherId);
+        ResultSet rs = ps.executeQuery();
+        
+        if (rs.next()) {
+            return new Voucher(
+                    rs.getInt("voucherID"),
+                    rs.getString("voucherCode"),
+                    rs.getDate("startDate").toLocalDate(),
+                    rs.getDate("endDate").toLocalDate(),
+                    rs.getInt("percentDiscount"),
+                    rs.getInt("quantity"),
+                    rs.getInt("usedTime")
+            );
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return null;
+}
 }

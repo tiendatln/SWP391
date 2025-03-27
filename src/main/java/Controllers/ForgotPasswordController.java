@@ -13,7 +13,7 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.mail.*;
 import jakarta.mail.internet.*;
 
-@WebServlet(name = "ForgotPasswordController", urlPatterns = {"/ForgotPasswordController", "/ForgotPasswordController/verify", "/ForgotPasswordController/reset"})
+@WebServlet(name = "ForgotPasswordController", urlPatterns = {"/ForgotPasswordController", "/ForgotPasswordController/verify", "/ForgotPasswordController/reset", "/ForgotPasswordController/resend"})
 public class ForgotPasswordController extends HttpServlet {
 
     private AccountDAO accountDAO;
@@ -32,7 +32,7 @@ public class ForgotPasswordController extends HttpServlet {
         String path = request.getServletPath();
         if (path.equals("/ForgotPasswordController")) {
             request.getRequestDispatcher("/web/forgot-password.jsp").forward(request, response);
-        } else if (path.equals("/ForgotPasswordController/verify")) {
+        } else if (path.equals("/ForgotPasswordController/verify") || path.equals("/ForgotPasswordController/resend")) {
             request.getRequestDispatcher("/web/forgot-password.jsp").forward(request, response);
         } else if (path.equals("/ForgotPasswordController/reset")) {
             request.getRequestDispatcher("/web/reset-password.jsp").forward(request, response);
@@ -42,92 +42,109 @@ public class ForgotPasswordController extends HttpServlet {
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        String path = request.getServletPath();
+protected void doPost(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+    String path = request.getServletPath();
+    HttpSession session = request.getSession();
+    response.setContentType("text/html;charset=UTF-8");
 
-        if (path.equals("/ForgotPasswordController")) {
-            // Bước 1: Kiểm tra email và gửi OTP
-            String email = request.getParameter("email");
+    if (path.equals("/ForgotPasswordController")) {
+        // Bước 1: Kiểm tra email và gửi OTP
+        String email = request.getParameter("email");
 
-            if (accountDAO.checkEmailExists(email)) {
-                String otp = generateOTP();
-                HttpSession session = request.getSession();
-                session.setAttribute("otp", otp);
-                session.setAttribute("email", email);
-                session.setAttribute("otpTimestamp", System.currentTimeMillis());
+        if (accountDAO.checkEmailExists(email)) {
+            String otp = generateOTP();
+            session.setAttribute("otp", otp);
+            session.setAttribute("email", email);
+            session.setAttribute("otpTimestamp", System.currentTimeMillis());
 
-                String emailResult = sendOTPEmail(email, otp);
+            String emailResult = sendOTPEmail(email, otp);
 
-                if (emailResult.equals("success")) {
-                    request.setAttribute("message", "An OTP has been sent to your email.");
-                    request.getRequestDispatcher("/web/forgot-password.jsp").forward(request, response);
-                } else {
-                    request.setAttribute("error", emailResult);
-                    request.getRequestDispatcher("/web/forgot-password.jsp").forward(request, response);
-                }
+            if (emailResult.equals("success")) {
+                request.setAttribute("message", "An OTP has been sent to your email.");
             } else {
-                request.setAttribute("error", "Email not found.");
-                request.getRequestDispatcher("/web/forgot-password.jsp").forward(request, response);
+                request.setAttribute("error", emailResult);
             }
+        } else {
+            request.setAttribute("error", "Email not found.");
+        }
+        request.getRequestDispatcher("/web/forgot-password.jsp").forward(request, response);
 
-        } else if (path.equals("/ForgotPasswordController/verify")) {
-            // Bước 2: Xác thực OTP
-            HttpSession session = request.getSession();
-            String storedOtp = (String) session.getAttribute("otp");
-            Long otpTimestamp = (Long) session.getAttribute("otpTimestamp");
-            String inputOtp = request.getParameter("otp");
+    } else if (path.equals("/ForgotPasswordController/verify")) {
+        // Bước 2: Xác thực OTP
+        String storedOtp = (String) session.getAttribute("otp");
+        Long otpTimestamp = (Long) session.getAttribute("otpTimestamp");
+        String inputOtp = request.getParameter("otp");
 
-            long currentTime = System.currentTimeMillis();
-            long OTP_EXPIRY_TIME = 10 * 60 * 1000; // 10 phút
-            if (otpTimestamp == null || (currentTime - otpTimestamp) > OTP_EXPIRY_TIME) {
-                session.removeAttribute("otp");
-                session.removeAttribute("otpTimestamp");
-                request.setAttribute("error", "OTP has expired. Please request a new one.");
-                request.getRequestDispatcher("/web/forgot-password.jsp").forward(request, response);
-                return;
-            }
+        long currentTime = System.currentTimeMillis();
+        long OTP_EXPIRY_TIME = 10 * 60 * 1000; // 10 phút
+        if (otpTimestamp == null || (currentTime - otpTimestamp) > OTP_EXPIRY_TIME) {
+            session.removeAttribute("otp");
+            session.removeAttribute("otpTimestamp");
+            response.getWriter().write("OTP has expired. Please request a new one.");
+            return;
+        }
 
-            if (inputOtp != null && inputOtp.equals(storedOtp)) {
-                request.setAttribute("message", "OTP verified successfully.");
-                request.getRequestDispatcher("/web/reset-password.jsp").forward(request, response);
-            } else {
-                request.setAttribute("error", "Invalid OTP. Please try again.");
-                request.getRequestDispatcher("/web/forgot-password.jsp").forward(request, response);
-            }
+        if (inputOtp != null && inputOtp.equals(storedOtp)) {
+            response.getWriter().write("OTP verified successfully.");
+        } else {
+            response.getWriter().write("Invalid OTP. Please try again.");
+        }
 
-        } else if (path.equals("/ForgotPasswordController/reset")) {
-            // Bước 3: Cập nhật mật khẩu mới
-            HttpSession session = request.getSession();
-            String email = (String) session.getAttribute("email");
-            String newPassword = request.getParameter("newPassword");
-            String confirmPassword = request.getParameter("confirmPassword");
+    } else if (path.equals("/ForgotPasswordController/resend")) {
+        // Bước gửi lại OTP
+        String email = (String) session.getAttribute("email");
 
-            if (email == null) {
-                request.setAttribute("error", "Session expired. Please start over.");
-                request.getRequestDispatcher("/web/forgot-password.jsp").forward(request, response);
-                return;
-            }
+        if (email == null) {
+            request.setAttribute("error", "Session expired. Please start over.");
+            request.getRequestDispatcher("/web/forgot-password.jsp").forward(request, response);
+            return;
+        }
 
-            if (!newPassword.equals(confirmPassword)) {
-                request.setAttribute("error", "Passwords do not match.");
-                request.getRequestDispatcher("/web/reset-password.jsp").forward(request, response);
-                return;
-            }
+        String newOtp = generateOTP();
+        session.setAttribute("otp", newOtp);
+        session.setAttribute("otpTimestamp", System.currentTimeMillis());
 
-            boolean updated = accountDAO.updatePassword(email, newPassword);
-            if (updated) {
-                session.removeAttribute("otp");
-                session.removeAttribute("email");
-                session.removeAttribute("otpTimestamp");
-                request.setAttribute("message", "Password reset successfully. Please login.");
-                request.getRequestDispatcher("/web/reset-password.jsp").forward(request, response); // Quay lại reset-password.jsp để hiển thị modal
-            } else {
-                request.setAttribute("error", "Failed to reset password. Please try again.");
-                request.getRequestDispatcher("/web/reset-password.jsp").forward(request, response);
-            }
+        String emailResult = sendOTPEmail(email, newOtp);
+
+        if (emailResult.equals("success")) {
+            request.setAttribute("message", "A new OTP has been sent to your email.");
+        } else {
+            request.setAttribute("error", emailResult);
+        }
+        request.getRequestDispatcher("/web/forgot-password.jsp").forward(request, response);
+
+    } else if (path.equals("/ForgotPasswordController/reset")) {
+        // Bước 3: Cập nhật mật khẩu mới
+        String email = (String) session.getAttribute("email");
+        String newPassword = request.getParameter("newPassword");
+        String confirmPassword = request.getParameter("confirmPassword");
+
+        if (email == null) {
+            request.setAttribute("error", "Session expired. Please start over.");
+            request.getRequestDispatcher("/web/forgot-password.jsp").forward(request, response);
+            return;
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            request.setAttribute("error", "Passwords do not match.");
+            request.getRequestDispatcher("/web/reset-password.jsp").forward(request, response);
+            return;
+        }
+
+        boolean updated = accountDAO.updatePassword(email, newPassword);
+        if (updated) {
+            session.removeAttribute("otp");
+            session.removeAttribute("email");
+            session.removeAttribute("otpTimestamp");
+            request.setAttribute("message", "Password reset successfully. Please login.");
+            request.getRequestDispatcher("/web/reset-password.jsp").forward(request, response);
+        } else {
+            request.setAttribute("error", "Failed to reset password. Please try again.");
+            request.getRequestDispatcher("/web/reset-password.jsp").forward(request, response);
         }
     }
+}
 
     private String generateOTP() {
         Random random = new Random();
