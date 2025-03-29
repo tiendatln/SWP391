@@ -261,19 +261,7 @@ public class OrderDAO {
             // 1. Kiểm tra và cập nhật số lượng voucher (nếu có voucher được sử dụng)
             Integer voucherID = orderTotal.getVoucherCode() == 0 ? null : orderTotal.getVoucherCode();
             if (voucherID != null) {
-                // Kiểm tra tính hợp lệ của voucher
-                String checkVoucherSQL = "SELECT quantity, startDate, endDate FROM voucher WHERE voucherID = ? AND quantity > 0 AND startDate <= ? AND endDate >= ?";
-                pstmtUpdateVoucher = conn.prepareStatement(checkVoucherSQL);
-                pstmtUpdateVoucher.setInt(1, voucherID);
-                java.sql.Date currentDate = new java.sql.Date(System.currentTimeMillis());
-                pstmtUpdateVoucher.setDate(2, currentDate);
-                pstmtUpdateVoucher.setDate(3, currentDate);
-                ResultSet rs = pstmtUpdateVoucher.executeQuery();
-
-                if (!rs.next()) {
-                    throw new SQLException("Voucher không hợp lệ, đã hết số lượng hoặc không trong thời gian sử dụng.");
-                }
-                rs.close();
+                
 
                 // Cập nhật số lượng voucher
                 String updateVoucherSQL = "UPDATE voucher SET quantity = quantity - 1 WHERE voucherID = ? AND quantity > 0";
@@ -297,7 +285,7 @@ public class OrderDAO {
             pstmtOrderTotal.setBigDecimal(4, BigDecimal.valueOf(orderTotal.getTotalPrice()));
             pstmtOrderTotal.setDate(5, orderTotal.getDate());
             pstmtOrderTotal.setInt(6, orderTotal.getOrderState());
-            pstmtOrderTotal.setObject(7, voucherID, java.sql.Types.INTEGER);
+            pstmtOrderTotal.setInt(7, voucherID);
             pstmtOrderTotal.setInt(8, orderTotal.getAccount().getId());
 
             // Thực thi và kiểm tra kết quả

@@ -313,16 +313,13 @@ public class OrderController extends HttpServlet {
 
             // Add order and clear cart
             if (oDAO.addNewOrder(ot, orderList)) {
-                session.setAttribute("message1", "Total amount: " + _priceTotal + "$");
-                session.setAttribute("message2", "Transfer note: " + proList.get(0).getAccount().getUsername() + "_Price_" + _priceTotal);
-                request.setAttribute("amount", String.valueOf(_priceTotal));
-                request.setAttribute("description:", proList.get(0).getAccount().getUsername() + "_Price_" + _priceTotal);
-                request.getRequestDispatcher("/generateQR").forward(request, response);
+                session.setAttribute("message1", "https://img.vietqr.io/image/MB-0939303405-print.png?amount=" + String.valueOf(_priceTotal) + "&addInfo=" + proList.get(0).getAccount().getUsername() + "%20Price%20" + _priceTotal + "&accountName=LE%20NGUYEN%20TIEN%20DAT");
+               
+                request.getRequestDispatcher("/payment.jsp").forward(request, response);
             } else {
                 session.setAttribute("message1", "Order placement failed!");
                 request.getRequestDispatcher("/errorPage.jsp").forward(request, response);
             }
-
         }
     }
 

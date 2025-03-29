@@ -24,7 +24,7 @@ public class PaymentServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         // Lấy dữ liệu từ request hoặc session được truyền từ OrderController
-        String account = "070112566455"; // Số tài khoản Sacombank (có thể cấu hình từ file config)
+        String account = "070112566455"; // Số tài khoản Sacombank
         String amount = (String) request.getAttribute("amount"); // Số tiền từ OrderController
         String description = (String) request.getAttribute("description"); // Ghi chú từ OrderController
 
@@ -37,19 +37,13 @@ public class PaymentServlet extends HttpServlet {
             description = "Thanh toán đơn hàng"; // Giá trị mặc định nếu không có ghi chú
         }
 
-        // Chuỗi VietQR cho Sacombank
-        String paymentData = "00020101021238570010A00000072701270006970403" + // BIN Sacombank
-                            "0112" + account + // Số tài khoản
-                            "520400005303704" +
-                            "5406" + String.format("%06d", Long.parseLong(amount)) + // Số tiền (đảm bảo 6 chữ số)
-                            "5802VN" + 
-                            "62" + String.format("%02d", description.length() + 4) + "0802" + description + // Nội dung
-                            "6304A1B2"; // Checksum (giả định, cần tính chính xác nếu dùng thực tế)
+        // Tạo chuỗi VietQR theo chuẩn NAPAS
+        String vietQRData = buildVietQRData(account, amount, description);
 
         // Đường dẫn lưu QR
         String filePath = getServletContext().getRealPath("/") + "sacombank_qr.png";
         try {
-            generateQRCodeImage(paymentData, 250, 250, filePath);
+            generateQRCodeImage(vietQRData, 250, 250, filePath);
         } catch (WriterException e) {
             e.printStackTrace();
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Lỗi khi tạo mã QR!");
@@ -66,6 +60,67 @@ public class PaymentServlet extends HttpServlet {
             throws ServletException, IOException {
         response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, 
                            "This endpoint only supports POST requests. Please use the form at /index.jsp.");
+    }
+
+    private String buildVietQRData(String account, String amount, String description) {
+        // Định dạng chuẩn VietQR theo NAPAS
+        StringBuilder qrData = new StringBuilder();
+        
+        // Header
+        qrData.append("000201"); // Version
+        qrData.append("010212"); // Method: Dynamic QR
+
+        // Thông tin ngân hàng (Sacombank - BIN 970403)
+        qrData.append("38"); // GUID length
+        qrData.append(String.format("%02d", 38)); // Độ dài dữ liệu ngân hàng
+        qrData.append("00").append("10").append("A000000727"); // Global Unique Identifier
+        qrData.append("01"); // Payment info length
+        qrData.append(String.format("%02d", 12 + account.length())); // Độ dài thông tin thanh toán
+        qrData.append("00").append("06").append("970403"); // BIN Sacombank
+        qrData.append("01").append(String.format("%02d", account.length())).append(account); // Số tài khoản
+
+        // Loại giao dịch
+        qrData.append("5204"); // Merchant Category Code
+        qrData.append("0000"); // Default MCC
+
+        // Tiền tệ (VND = 704)
+        qrData.append("5303").append("704");
+
+        // Số tiền
+        qrData.append("54"); // Amount field
+        qrData.append(String.format("%02d", amount.length())).append(amount); // Số tiền
+
+        // Quốc gia
+        qrData.append("5802").append("VN");
+
+        // Nội dung thanh toán
+        qrData.append("62"); // Additional data field
+        qrData.append(String.format("%02d", 8 + description.length())); // Độ dài nội dung
+        qrData.append("08"); // Purpose of transaction
+        qrData.append(String.format("%02d", description.length())).append(description);
+
+        // Checksum (CRC16)
+        qrData.append("6304"); // CRC field
+        String crc = calculateCRC(qrData.toString());
+        qrData.append(crc);
+
+        return qrData.toString();
+    }
+
+    private String calculateCRC(String data) {
+        int crc = 0xFFFF;
+        byte[] bytes = data.getBytes();
+        for (byte b : bytes) {
+            crc ^= (b & 0xFF);
+            for (int i = 0; i < 8; i++) {
+                if ((crc & 0x0001) != 0) {
+                    crc = (crc >> 1) ^ 0x8408;
+                } else {
+                    crc >>= 1;
+                }
+            }
+        }
+        return String.format("%04X", crc).toUpperCase();
     }
 
     private void generateQRCodeImage(String text, int width, int height, String filePath) 
