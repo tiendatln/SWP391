@@ -261,19 +261,7 @@ public class OrderDAO {
             // 1. Kiểm tra và cập nhật số lượng voucher (nếu có voucher được sử dụng)
             Integer voucherID = orderTotal.getVoucherCode() == 0 ? null : orderTotal.getVoucherCode();
             if (voucherID != null) {
-                // Kiểm tra tính hợp lệ của voucher
-                String checkVoucherSQL = "SELECT quantity, startDate, endDate FROM voucher WHERE voucherID = ? AND quantity > 0 AND startDate <= ? AND endDate >= ?";
-                pstmtUpdateVoucher = conn.prepareStatement(checkVoucherSQL);
-                pstmtUpdateVoucher.setInt(1, voucherID);
-                java.sql.Date currentDate = new java.sql.Date(System.currentTimeMillis());
-                pstmtUpdateVoucher.setDate(2, currentDate);
-                pstmtUpdateVoucher.setDate(3, currentDate);
-                ResultSet rs = pstmtUpdateVoucher.executeQuery();
-
-                if (!rs.next()) {
-                    throw new SQLException("Voucher không hợp lệ, đã hết số lượng hoặc không trong thời gian sử dụng.");
-                }
-                rs.close();
+                
 
                 // Cập nhật số lượng voucher
                 String updateVoucherSQL = "UPDATE voucher SET quantity = quantity - 1 WHERE voucherID = ? AND quantity > 0";
@@ -297,7 +285,7 @@ public class OrderDAO {
             pstmtOrderTotal.setBigDecimal(4, BigDecimal.valueOf(orderTotal.getTotalPrice()));
             pstmtOrderTotal.setDate(5, orderTotal.getDate());
             pstmtOrderTotal.setInt(6, orderTotal.getOrderState());
-            pstmtOrderTotal.setObject(7, voucherID, java.sql.Types.INTEGER);
+            pstmtOrderTotal.setInt(7, voucherID);
             pstmtOrderTotal.setInt(8, orderTotal.getAccount().getId());
 
             // Thực thi và kiểm tra kết quả
@@ -464,6 +452,46 @@ public class OrderDAO {
             e.printStackTrace();
         }
         return -1;  // Trả về -1 nếu không tìm thấy
+    }
+    
+    public Account getAccountByOrderID(int orderID) {
+        Account account = null;
+        
+        ResultSet rs = null;
+
+        try {
+            // Get database connection (assuming DBConnection is a utility class)
+
+            // SQL query to join orderTotal and account tables
+            String sql = " SELECT a.id, a.username, a.email, a.password, a.phone_number, a.address, a.role " +
+                         "FROM account a " +
+                         "INNER JOIN orderTotal ot ON a.id = ot.id " +
+                         "WHERE ot.orderID = ? ";
+
+            // Prepare the statement
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, orderID);
+
+            // Execute the query
+            rs = ps.executeQuery();
+
+            // If a record is found, populate the Account object
+            if (rs.next()) {
+                account = new Account();
+                account.setId(rs.getInt("id"));
+                account.setUsername(rs.getString("username"));
+                account.setEmail(rs.getString("email"));
+                account.setPassword(rs.getString("password"));
+                account.setPhoneNumber(rs.getString("phone_number"));
+                account.setAddress(rs.getString("address"));
+                account.setRole(rs.getString("role"));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } 
+
+        return account;
     }
 
 }

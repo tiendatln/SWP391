@@ -32,8 +32,8 @@
                 font-weight: bold;
             }
             img {
-                width: 250px;
-                height: 250px;
+                width: 500px;
+                height: 500px;
                 margin-top: 10px;
                 border: 2px solid #ddd;
                 border-radius: 10px;
@@ -70,10 +70,8 @@
 
             <%-- Display payment information and QR code --%>
             <c:if test="${not empty qrPath}">
-                <p>Please scan the QR code below using the Sacombank app or any app that supports MOMO</p>
-                <p>${sessionScope.message1}</p>
-                <p>${sessionScope.message2}</p>
-                <img src="${pageContext.request.contextPath}/${qrPath}" alt="Sacombank QR Code">
+                <p>Please scan the QR code below using the Sacombank app or any app</p>
+                <img src='${sessionScope.message1}'/>
                 <br><br>
                 <a href="${pageContext.request.contextPath}/web/index.jsp" class="btn success">Confirm Successful Payment</a>
             </c:if>
