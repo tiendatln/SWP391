@@ -136,11 +136,19 @@ public class OrderController extends HttpServlet {
                 List<OrderProduct> order = new ArrayList<>();
                 OrderDAO oDAO = new OrderDAO();
                 order = oDAO.UpdateStatusAndGetAllOrder(id, status);
-
+                
+                Account a = oDAO.getAccountByID(order.get(1).getOrderTotal().getAccount().getId());
+                
+                
                 // Gửi danh sách đơn hàng đến JSP
                 HttpSession session = request.getSession();
                 session.setAttribute("orderList", order);
-                request.getRequestDispatcher("/web/Staff/DisplayOrder.jsp").forward(request, response);
+                if(a.getRole() == "customer"){
+                    request.getRequestDispatcher("/OrderController/CustomerOrder/"+a.getId()).forward(request, response);
+                }else{
+                    request.getRequestDispatcher("/web/Staff/DisplayOrder.jsp").forward(request, response);
+                }
+                
             } catch (Exception e) {
                 response.sendRedirect("/OrderController/OrderManagement");
             }
@@ -319,6 +327,30 @@ public class OrderController extends HttpServlet {
             } else {
                 session.setAttribute("message1", "Order placement failed!");
                 request.getRequestDispatcher("/errorPage.jsp").forward(request, response);
+            }
+        }if (path.endsWith("/CusUpdateOrder")) {
+            try {
+                int status = Integer.parseInt(request.getParameter("status"));
+                int id = Integer.parseInt(request.getParameter("orderID"));
+
+                List<OrderProduct> order = new ArrayList<>();
+                OrderDAO oDAO = new OrderDAO();
+                order = oDAO.UpdateStatusAndGetAllOrder(id, status);
+                
+                Account a = oDAO.getAccountByOrderID(id);
+                
+                
+                // Gửi danh sách đơn hàng đến JSP
+                HttpSession session = request.getSession();
+                session.setAttribute("orderList", order);
+                if(a.getRole().equalsIgnoreCase("customer")){
+                    response.sendRedirect("/OrderController/CustomerOrder/" + a.getId());
+                }else{
+                    request.getRequestDispatcher("/web/Staff/DisplayOrder.jsp").forward(request, response);
+                }
+                
+            } catch (Exception e) {
+                response.sendRedirect("/OrderController/OrderManagement");
             }
         }
     }

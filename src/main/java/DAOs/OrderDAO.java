@@ -453,5 +453,45 @@ public class OrderDAO {
         }
         return -1;  // Trả về -1 nếu không tìm thấy
     }
+    
+    public Account getAccountByOrderID(int orderID) {
+        Account account = null;
+        
+        ResultSet rs = null;
+
+        try {
+            // Get database connection (assuming DBConnection is a utility class)
+
+            // SQL query to join orderTotal and account tables
+            String sql = " SELECT a.id, a.username, a.email, a.password, a.phone_number, a.address, a.role " +
+                         "FROM account a " +
+                         "INNER JOIN orderTotal ot ON a.id = ot.id " +
+                         "WHERE ot.orderID = ? ";
+
+            // Prepare the statement
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, orderID);
+
+            // Execute the query
+            rs = ps.executeQuery();
+
+            // If a record is found, populate the Account object
+            if (rs.next()) {
+                account = new Account();
+                account.setId(rs.getInt("id"));
+                account.setUsername(rs.getString("username"));
+                account.setEmail(rs.getString("email"));
+                account.setPassword(rs.getString("password"));
+                account.setPhoneNumber(rs.getString("phone_number"));
+                account.setAddress(rs.getString("address"));
+                account.setRole(rs.getString("role"));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } 
+
+        return account;
+    }
 
 }
