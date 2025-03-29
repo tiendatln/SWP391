@@ -113,7 +113,7 @@ public class OrderController extends HttpServlet {
                 response.sendRedirect("/OrderController/OrderManagement");
             }
         }
-        
+
     }
 
     /**
@@ -151,6 +151,7 @@ public class OrderController extends HttpServlet {
             VoucherDao vDAO = new VoucherDao();
             List<Voucher> voucherList = new ArrayList<>();
 
+            // Xử lý voucher
             try {
                 // Lấy tất cả voucher từ database
                 List<Voucher> allVouchers = vDAO.getAllVouchers();
@@ -158,22 +159,29 @@ public class OrderController extends HttpServlet {
                     allVouchers = new ArrayList<>(); // Đảm bảo không null
                 }
 
-                // Lọc voucher hợp lệ ngay trong controller
+                // Lọc voucher hợp lệ
                 LocalDate today = LocalDate.now();
                 for (Voucher voucher : allVouchers) {
                     boolean isDateValid = !today.isBefore(voucher.getStartDate())
                             && !today.isAfter(voucher.getEndDate());
-                    boolean isQuantityValid = voucher.getQuantity() > voucher.getUsedTime();
+                    boolean isQuantityValid = voucher.getQuantity() > voucher.getUsedTime(); // Chỉ hiển thị nếu còn số lượng
 
                     if (isDateValid && isQuantityValid) {
-                        voucherList.add(voucher);
+                        voucherList.add(voucher); // Chỉ thêm voucher nếu hợp lệ
                     }
                 }
+
+                // Thông báo nếu không có voucher hợp lệ (tùy chọn)
+                if (voucherList.isEmpty()) {
+                    request.setAttribute("message", "Không có voucher khả dụng.");
+                }
+
             } catch (Exception ex) {
                 Logger.getLogger(OrderController.class.getName()).log(Level.SEVERE, "Error fetching vouchers", ex);
                 request.setAttribute("error", "Không thể tải danh sách voucher.");
             }
 
+            // Lấy dữ liệu từ request
             String[] productAndQuantity = request.getParameterValues("productId/Quantity");
             String userIDStr = request.getParameter("userID");
 
@@ -185,6 +193,7 @@ public class OrderController extends HttpServlet {
             }
 
             try {
+                // Chuyển đổi userID và lấy thông tin tài khoản
                 int userID = Integer.parseInt(userIDStr);
                 Account account = oDAO.getAccountByID(userID);
                 if (account == null) {
@@ -193,9 +202,11 @@ public class OrderController extends HttpServlet {
                     return;
                 }
 
+                // Xử lý giỏ hàng
                 for (String item : productAndQuantity) {
                     String[] parts = item.split("/");
                     if (parts.length != 2) {
+                        Logger.getLogger(OrderController.class.getName()).log(Level.WARNING, "Invalid productId/Quantity format: " + item);
                         continue; // Bỏ qua nếu định dạng không đúng
                     }
 
@@ -205,6 +216,7 @@ public class OrderController extends HttpServlet {
 
                         Product product = proDAO.getProductById(productID);
                         if (product == null || quantity <= 0) {
+                            Logger.getLogger(OrderController.class.getName()).log(Level.WARNING, "Invalid product or quantity: " + item);
                             continue; // Bỏ qua nếu sản phẩm không tồn tại hoặc số lượng không hợp lệ
                         }
 
@@ -214,10 +226,11 @@ public class OrderController extends HttpServlet {
                         cartFO.setAccount(account);
                         proList.add(cartFO);
                     } catch (NumberFormatException ex) {
-                        Logger.getLogger(OrderController.class.getName()).log(Level.WARNING, "Invalid product ID or quantity", ex);
+                        Logger.getLogger(OrderController.class.getName()).log(Level.WARNING, "Invalid product ID or quantity: " + item, ex);
                     }
                 }
 
+                // Kiểm tra giỏ hàng
                 if (proList.isEmpty()) {
                     request.setAttribute("error", "Giỏ hàng trống hoặc không hợp lệ.");
                     request.getRequestDispatcher("/web/error.jsp").forward(request, response);
@@ -233,7 +246,7 @@ public class OrderController extends HttpServlet {
                 request.getRequestDispatcher("/web/orderProduct.jsp").forward(request, response);
 
             } catch (NumberFormatException ex) {
-                Logger.getLogger(OrderController.class.getName()).log(Level.SEVERE, "Invalid userID", ex);
+                Logger.getLogger(OrderController.class.getName()).log(Level.SEVERE, "Invalid userID: " + userIDStr, ex);
                 request.setAttribute("error", "ID người dùng không hợp lệ.");
                 request.getRequestDispatcher("/web/error.jsp").forward(request, response);
             } catch (Exception ex) {
