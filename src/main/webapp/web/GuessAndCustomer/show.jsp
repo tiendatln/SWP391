@@ -165,7 +165,7 @@
                             <c:otherwise>
                                 <div class="order-container">
                                     <c:forEach var="order" items="${sessionScope.orderList}" varStatus="status">
-                                        <form action="/generateQR" method="post" class="order-item">
+                                        <form action="/OrderController/UpdateOrder" method="post" class="order-item">
                                             <input type="hidden" name="orderID" value="${order.orderTotal.orderID}" />
                                             <div class="mb-2"><strong>Order ID:</strong> ${order.orderTotal.orderID}</div>
                                             <div class="mb-2">
@@ -184,6 +184,7 @@
                                                 <c:choose>
                                                     <c:when test="${order.orderTotal.orderState == 0}">
                                                         <span class="badge bg-warning">Pending</span>
+                                                        <input type="hidden" name="status" value="2" />
                                                         <button type="submit" class="btn btn-danger mt-2">Cancel</button>
                                                     </c:when>
                                                     <c:when test="${order.orderTotal.orderState == 1}">

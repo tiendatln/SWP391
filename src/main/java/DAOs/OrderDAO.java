@@ -97,7 +97,6 @@ public class OrderDAO {
         return orderList;
     }
 
-
     public List<OrderProduct> getAllOrderTotal() throws SQLException {
         List<OrderProduct> orderList = new ArrayList<>();
 
@@ -120,7 +119,6 @@ public class OrderDAO {
                 + "    ot.orderID, ot.phoneNumber, ot.address, ot.note, \n"
                 + "    ot.totalPrice, ot.date, ot.orderState, ot.voucherID;";
 
-
         try ( PreparedStatement ps = conn.prepareStatement(query);  ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 OrderTotal ot = new OrderTotal(
@@ -133,7 +131,6 @@ public class OrderDAO {
                         rs.getInt("orderState"),
                         rs.getInt("voucherID")
                 );
-
 
                 // Lấy danh sách sản phẩm dưới dạng chuỗi
                 String productNames = rs.getString("productNames");
@@ -224,6 +221,20 @@ public class OrderDAO {
 
             rowsUpdated = stmt.executeUpdate();
             newOrder = rowsUpdated > 0 ? getAllOrderTotal() : null;
+
+            //
+            if (newStatus == 2) {
+                List<Order> add = new ArrayList<>();
+                add = getOrderDetails(id);
+                for (int i = 0; i < add.size(); i++) {
+                    PreparedStatement ps = conn.prepareStatement("UPDATE product SET proQuantity = proQuantity + ? WHERE productID = ?");
+                    ps.setInt(1, add.get(i).getQuantity());
+                    ps.setInt(2, add.get(i).getProduct().getProductID());
+
+                    ps.executeUpdate();
+                }
+            }
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -231,9 +242,11 @@ public class OrderDAO {
         return newOrder;
     }
 
-   public boolean addNewOrder(OrderTotal orderTotal, List<Order> orderDetails) {
+    public boolean addNewOrder(OrderTotal orderTotal, List<Order> orderDetails) {
         PreparedStatement pstmtOrderTotal = null;
         PreparedStatement pstmtOrder = null;
+        PreparedStatement pstmtUpdateProduct = null;
+        PreparedStatement pstmtUpdateVoucher = null; // New PreparedStatement for updating voucher quantity
         PreparedStatement pstmtDeleteCart = null;
         ResultSet generatedKeys = null;
 
@@ -245,7 +258,34 @@ public class OrderDAO {
 
             conn.setAutoCommit(false); // Bắt đầu transaction
 
-            // 1. Thêm vào bảng orderTotal
+            // 1. Kiểm tra và cập nhật số lượng voucher (nếu có voucher được sử dụng)
+            Integer voucherID = orderTotal.getVoucherCode() == 0 ? null : orderTotal.getVoucherCode();
+            if (voucherID != null) {
+                // Kiểm tra tính hợp lệ của voucher
+                String checkVoucherSQL = "SELECT quantity, startDate, endDate FROM voucher WHERE voucherID = ? AND quantity > 0 AND startDate <= ? AND endDate >= ?";
+                pstmtUpdateVoucher = conn.prepareStatement(checkVoucherSQL);
+                pstmtUpdateVoucher.setInt(1, voucherID);
+                java.sql.Date currentDate = new java.sql.Date(System.currentTimeMillis());
+                pstmtUpdateVoucher.setDate(2, currentDate);
+                pstmtUpdateVoucher.setDate(3, currentDate);
+                ResultSet rs = pstmtUpdateVoucher.executeQuery();
+
+                if (!rs.next()) {
+                    throw new SQLException("Voucher không hợp lệ, đã hết số lượng hoặc không trong thời gian sử dụng.");
+                }
+                rs.close();
+
+                // Cập nhật số lượng voucher
+                String updateVoucherSQL = "UPDATE voucher SET quantity = quantity - 1 WHERE voucherID = ? AND quantity > 0";
+                pstmtUpdateVoucher = conn.prepareStatement(updateVoucherSQL);
+                pstmtUpdateVoucher.setInt(1, voucherID);
+                int voucherUpdated = pstmtUpdateVoucher.executeUpdate();
+                if (voucherUpdated == 0) {
+                    throw new SQLException("Không thể cập nhật số lượng voucher, có thể voucher đã hết.");
+                }
+            }
+
+            // 2. Thêm vào bảng orderTotal
             String insertOrderTotalSQL = "INSERT INTO orderTotal (phoneNumber, [address], note, totalPrice, [date], orderState, voucherID, id) "
                     + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             pstmtOrderTotal = conn.prepareStatement(insertOrderTotalSQL, Statement.RETURN_GENERATED_KEYS);
@@ -254,10 +294,10 @@ public class OrderDAO {
             pstmtOrderTotal.setString(1, orderTotal.getPhoneNumber());
             pstmtOrderTotal.setString(2, orderTotal.getAddress());
             pstmtOrderTotal.setString(3, orderTotal.getNote());
-            pstmtOrderTotal.setBigDecimal(4, BigDecimal.valueOf(orderTotal.getTotalPrice())); // Chuyển long thành BigDecimal
-            pstmtOrderTotal.setDate(5, orderTotal.getDate()); // Sử dụng java.sql.Date trực tiếp
+            pstmtOrderTotal.setBigDecimal(4, BigDecimal.valueOf(orderTotal.getTotalPrice()));
+            pstmtOrderTotal.setDate(5, orderTotal.getDate());
             pstmtOrderTotal.setInt(6, orderTotal.getOrderState());
-            pstmtOrderTotal.setObject(7, orderTotal.getVoucherCode() == 0 ? null : orderTotal.getVoucherCode(), java.sql.Types.INTEGER);
+            pstmtOrderTotal.setObject(7, voucherID, java.sql.Types.INTEGER);
             pstmtOrderTotal.setInt(8, orderTotal.getAccount().getId());
 
             // Thực thi và kiểm tra kết quả
@@ -274,7 +314,7 @@ public class OrderDAO {
             int orderID = generatedKeys.getInt(1);
             orderTotal.setOrderID(orderID);
 
-            // 2. Thêm chi tiết đơn hàng vào bảng order
+            // 3. Thêm chi tiết đơn hàng vào bảng order
             String insertOrderSQL = "INSERT INTO [order] (productID, orderID, orderQuantity, orderPrice) VALUES (?, ?, ?, ?)";
             pstmtOrder = conn.prepareStatement(insertOrderSQL);
 
@@ -282,7 +322,7 @@ public class OrderDAO {
                 pstmtOrder.setInt(1, order.getProduct().getProductID());
                 pstmtOrder.setInt(2, orderTotal.getOrderID());
                 pstmtOrder.setInt(3, order.getQuantity());
-                pstmtOrder.setBigDecimal(4, BigDecimal.valueOf(order.getOrderPrice())); // Chuyển long thành BigDecimal
+                pstmtOrder.setBigDecimal(4, BigDecimal.valueOf(order.getOrderPrice()));
                 pstmtOrder.addBatch();
             }
 
@@ -293,7 +333,31 @@ public class OrderDAO {
                 }
             }
 
-            // 3. Xóa sản phẩm khỏi giỏ hàng
+            // 4. Cập nhật số lượng sản phẩm trong bảng product
+            String updateProductSQL = "UPDATE product SET proQuantity = proQuantity - ? WHERE productID = ? AND proQuantity >= ?";
+            pstmtUpdateProduct = conn.prepareStatement(updateProductSQL);
+
+            for (Order order : orderDetails) {
+                int quantityOrdered = order.getQuantity();
+                int productID = order.getProduct().getProductID();
+
+                pstmtUpdateProduct.setInt(1, quantityOrdered);
+                pstmtUpdateProduct.setInt(2, productID);
+                pstmtUpdateProduct.setInt(3, quantityOrdered);
+                pstmtUpdateProduct.addBatch();
+            }
+
+            int[] updateResults = pstmtUpdateProduct.executeBatch();
+            for (int i = 0; i < updateResults.length; i++) {
+                if (updateResults[i] == 0) {
+                    throw new SQLException("Số lượng tồn kho không đủ hoặc sản phẩm không tồn tại cho productID: " + orderDetails.get(i).getProduct().getProductID());
+                }
+                if (updateResults[i] < 0 && updateResults[i] != Statement.SUCCESS_NO_INFO) {
+                    throw new SQLException("Lỗi khi cập nhật số lượng sản phẩm.");
+                }
+            }
+
+            // 5. Xóa sản phẩm khỏi giỏ hàng
             String deleteCartSQL = "DELETE FROM cart WHERE id = ? AND productID = ?";
             pstmtDeleteCart = conn.prepareStatement(deleteCartSQL);
 
@@ -312,7 +376,7 @@ public class OrderDAO {
 
             // Commit transaction nếu mọi thứ thành công
             conn.commit();
-            System.out.println("Thêm đơn hàng mới thành công và xóa giỏ hàng!");
+            System.out.println("Thêm đơn hàng mới thành công, cập nhật số lượng voucher, sản phẩm và xóa giỏ hàng!");
             return true;
 
         } catch (SQLException e) {
@@ -345,6 +409,12 @@ public class OrderDAO {
                 }
                 if (pstmtOrder != null) {
                     pstmtOrder.close();
+                }
+                if (pstmtUpdateProduct != null) {
+                    pstmtUpdateProduct.close();
+                }
+                if (pstmtUpdateVoucher != null) {
+                    pstmtUpdateVoucher.close();
                 }
                 if (pstmtDeleteCart != null) {
                     pstmtDeleteCart.close();
