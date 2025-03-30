@@ -493,5 +493,18 @@ public class OrderDAO {
 
         return account;
     }
-
+public boolean hasUserPurchasedProduct(int userID, int productID) throws SQLException {
+    String query = "SELECT COUNT(*) FROM orderTotal ot " +
+                  "JOIN [order] o ON ot.orderID = o.orderID " +
+                  "WHERE ot.id = ? AND o.productID = ? AND ot.orderState = 1"; // orderState = 1 là đơn hàng hoàn thành
+    try (PreparedStatement ps = conn.prepareStatement(query)) {
+        ps.setInt(1, userID);
+        ps.setInt(2, productID);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            return rs.getInt(1) > 0; // Trả về true nếu người dùng đã mua sản phẩm
+        }
+    }
+    return false;
+}
 }

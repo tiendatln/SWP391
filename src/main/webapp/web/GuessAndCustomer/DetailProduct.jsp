@@ -91,9 +91,16 @@
             pointer-events: auto !important; /* Đảm bảo nút có thể bấm */
             cursor: pointer !important; /* Hiển thị con trỏ tay */
         }
+        /* Thêm CSS cho trung bình sao */
+        .average-rating .star {
+            font-size: 1.2rem;
+            color: #ccc;
+        }
+        .average-rating .star.selected {
+            color: #f1c40f;
+        }
     </style>
 </head>
-
 
 <body>
     <jsp:include page="/Header.jsp" />
@@ -215,71 +222,96 @@
                 </table>
             </div>
         </div>
-<!-- Comment Section -->
-        <div class="comment-section">
-            <h3 class="text-center mb-4" style="color: #2c3e50;">Bình luận & Đánh giá</h3>
-
-            <!-- Form thêm bình luận -->
-            <form action="${pageContext.request.contextPath}/ProductController" method="post">
-                <div class="user-info mb-3">
-                    <img src="/link/img/cat.jpg" alt="User Avatar" class="user-avatar">
-                    <span class="user-name fw-bold">${sessionScope.user != null ? sessionScope.user.username : 'Người dùng'}</span>
-                </div>
-                <div class="rating mb-3">
-                    <span class="star" data-value="1">★</span>
-                    <span class="star" data-value="2">★</span>
-                    <span class="star" data-value="3">★</span>
-                    <span class="star" data-value="4">★</span>
-                    <span class="star" data-value="5">★</span>
-                </div>
-                <input type="hidden" name="rate" id="ratingValue" value="0">
-                <textarea name="comment" class="form-control mb-3" placeholder="Viết bình luận của bạn..." rows="3" required></textarea>
-                <input type="hidden" name="productId" value="${productId != null ? productId : param.productId}" />
-                <input type="hidden" name="id" value="${sessionScope.user.id}" />
-                <button type="submit" class="btn btn-primary btn-custom" ${sessionScope.user == null ? 'disabled' : ''}>
-                    <i class="fas fa-paper-plane"></i> Gửi bình luận
-                </button>
-                <c:if test="${sessionScope.user == null}">
-                    <p class="text-danger mt-2">Vui lòng <a href="${pageContext.request.contextPath}/LoginController/Login">đăng nhập</a> để bình luận.</p>
-                </c:if>
-            </form>
-           <!-- Danh sách bình luận -->
-            <div class="mt-4 comment-container">
-                <h5 class="fw-bold">Bình luận:</h5>
+        <!-- Thêm hiển thị trung bình sao -->
+        <div class="average-rating mb-3">
+            <h4>Đánh giá trung bình: 
                 <c:choose>
-                    <c:when test="${empty comments || comments == null}">
-                        <p>Chưa có bình luận nào.</p>
+                    <c:when test="${averageRating > 0}">
+                        <fmt:formatNumber value="${averageRating}" maxFractionDigits="1"/> / 5
+                        <span class="stars">
+                            <c:forEach var="i" begin="1" end="5">
+                                <span class="star ${i <= averageRating ? 'selected' : ''}">★</span>
+                            </c:forEach>
+                        </span>
                     </c:when>
                     <c:otherwise>
-                        <c:forEach var="comment" items="${comments}" varStatus="loop">
-                            <div class="comment-box" id="comment-${comment.commentID}">
-                                <div class="user-info">
-                                    <img src="/link/img/cat.jpg" alt="User Avatar" class="user-avatar">
-                                    <span class="user-name fw-bold">${sessionScope.user != null && sessionScope.user.id == comment.id ? sessionScope.user.username : 'Người dùng'}</span>
-                                </div>
-                                <div class="rating">
-                                    <c:forEach var="i" begin="1" end="5">
-                                        <span class="star ${i <= comment.rate ? 'selected' : ''}">★</span>
-                                    </c:forEach>
-                                </div>
-                                <p class="mt-2">${comment.comment}</p>
-                                <c:if test="${sessionScope.user != null && sessionScope.user.id == comment.id}">
-                                    <button class="btn btn-sm btn-warning edit-comment-btn" data-bs-toggle="modal" data-bs-target="#editCommentModal" 
-                                            data-comment-id="${comment.commentID}" data-rate="${comment.rate}" data-content="${comment.comment}">Sửa</button>
-                                    <form action="${pageContext.request.contextPath}/ProductController" method="post" style="display: inline;">
-                                        <input type="hidden" name="action" value="deleteComment">
-                                        <input type="hidden" name="commentID" value="${comment.commentID}">
-                                        <input type="hidden" name="productId" value="${productId}">
-                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa bình luận này?')">Xóa</button>
-                                    </form>
-                                </c:if>
-                            </div>
-                        </c:forEach>
+                        Chưa có đánh giá
                     </c:otherwise>
                 </c:choose>
-            </div>
+            </h4>
         </div>
+<!-- Comment Section -->
+<div class="comment-section">
+    <h3 class="text-center mb-4" style="color: #2c3e50;">Bình luận & Đánh giá</h3>
+
+    <!-- Form thêm bình luận -->
+    <form action="${pageContext.request.contextPath}/ProductController" method="post">
+        <div class="user-info mb-3">
+            <img src="/link/img/cat.jpg" alt="User Avatar" class="user-avatar">
+            <span class="user-name fw-bold">${sessionScope.user != null ? sessionScope.user.username : 'Người dùng'}</span>
+        </div>
+        <div class="rating mb-3">
+            <span class="star" data-value="1">★</span>
+            <span class="star" data-value="2">★</span>
+            <span class="star" data-value="3">★</span>
+            <span class="star" data-value="4">★</span>
+            <span class="star" data-value="5">★</span>
+        </div>
+        <input type="hidden" name="rate" id="ratingValue" value="0">
+        <textarea name="comment" class="form-control mb-3" placeholder="Viết bình luận của bạn..." rows="3" required
+                  ${sessionScope.user == null || !canComment ? 'disabled' : ''}></textarea>
+        <input type="hidden" name="productId" value="${productId != null ? productId : param.productId}" />
+        <input type="hidden" name="id" value="${sessionScope.user != null ? sessionScope.user.id : ''}" />
+        <button type="submit" class="btn btn-primary btn-custom"
+                ${sessionScope.user == null || !canComment ? 'disabled' : ''}>
+            <i class="fas fa-paper-plane"></i> Gửi bình luận
+        </button>
+        <c:choose>
+            <c:when test="${sessionScope.user == null}">
+                <p class="text-danger mt-2">Vui lòng <a href="${pageContext.request.contextPath}/LoginController/Login">đăng nhập</a> để bình luận.</p>
+            </c:when>
+            <c:when test="${sessionScope.user != null && !canComment}">
+                <p class="text-danger mt-2">Bạn chỉ có thể bình luận về sản phẩm đã mua.</p>
+            </c:when>
+        </c:choose>
+    </form>
+
+    <!-- Danh sách bình luận -->
+    <div class="mt-4 comment-container">
+        <h5 class="fw-bold">Bình luận:</h5>
+        <c:choose>
+            <c:when test="${empty comments || comments == null}">
+                <p>Chưa có bình luận nào.</p>
+            </c:when>
+            <c:otherwise>
+                <c:forEach var="comment" items="${comments}" varStatus="loop">
+                    <div class="comment-box" id="comment-${comment.commentID}">
+                        <div class="user-info">
+                            <img src="/link/img/cat.jpg" alt="User Avatar" class="user-avatar">
+                            <span class="user-name fw-bold">${sessionScope.user != null && sessionScope.user.id == comment.id ? sessionScope.user.username : 'Người dùng'}</span>
+                        </div>
+                        <div class="rating">
+                            <c:forEach var="i" begin="1" end="5">
+                                <span class="star ${i <= comment.rate ? 'selected' : ''}">★</span>
+                            </c:forEach>
+                        </div>
+                        <p class="mt-2">${comment.comment}</p>
+                        <c:if test="${sessionScope.user != null && sessionScope.user.id == comment.id}">
+                            <button class="btn btn-sm btn-warning edit-comment-btn" data-bs-toggle="modal" data-bs-target="#editCommentModal" 
+                                    data-comment-id="${comment.commentID}" data-rate="${comment.rate}" data-content="${comment.comment}">Sửa</button>
+                            <form action="${pageContext.request.contextPath}/ProductController" method="post" style="display: inline;">
+                                <input type="hidden" name="action" value="deleteComment">
+                                <input type="hidden" name="commentID" value="${comment.commentID}">
+                                <input type="hidden" name="productId" value="${productId}">
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa bình luận này?')">Xóa</button>
+                            </form>
+                        </c:if>
+                    </div>
+                </c:forEach>
+            </c:otherwise>
+        </c:choose>
     </div>
+</div>
     <!-- Modal chỉnh sửa bình luận -->
     <div class="modal fade" id="editCommentModal" tabindex="-1" aria-labelledby="editCommentModalLabel" aria-hidden="true">
         <div class="modal-dialog">

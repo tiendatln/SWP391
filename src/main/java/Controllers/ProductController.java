@@ -7,7 +7,9 @@ package Controllers;
 import DAOs.CartDAO;
 import DAOs.CategoryDAO;
 import DAOs.CommentDAO;
+import DAOs.OrderDAO; // Thêm import cho OrderDAO
 import DAOs.ProductDAO;
+import Model.Account; // Thêm import cho Account
 import Model.Category;
 import Model.Comment;
 import Model.Product;
@@ -19,13 +21,17 @@ import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession; // Thêm import cho HttpSession
 import jakarta.servlet.http.Part;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.SQLException; // Thêm import cho SQLException
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level; // Thêm import cho logging
+import java.util.logging.Logger; // Thêm import cho Logger
 
 /**
  * Servlet xử lý các yêu cầu liên quan đến sản phẩm, bao gồm hiển thị chi tiết sản phẩm,
@@ -70,92 +76,120 @@ public class ProductController extends HttpServlet {
      * @throws ServletException if a servlet-specific error occurs
      * @throws IOException if an I/O error occurs
      */
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        String path = request.getRequestURI(); // Đường dẫn URI của yêu cầu
-        String action = request.getParameter("action"); // Tham số action từ query string
+   @Override
+protected void doGet(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+    String path = request.getRequestURI(); // Đường dẫn URI của yêu cầu
+    String action = request.getParameter("action"); // Tham số action từ query string
 
-        // Ghi log để debug yêu cầu GET
-        System.out.println("Received GET request for URI: " + request.getRequestURI() + ", Query: " + request.getQueryString());
+    // Ghi log để debug yêu cầu GET
+    System.out.println("Received GET request for URI: " + request.getRequestURI() + ", Query: " + request.getQueryString());
 
-        // Khởi tạo các DAO để tương tác với cơ sở dữ liệu
-        ProductDAO productDAO = new ProductDAO();
-        CategoryDAO categoryDAO = new CategoryDAO();
-        CommentDAO commentDAO = new CommentDAO();
+    // Khởi tạo các DAO để tương tác với cơ sở dữ liệu
+    ProductDAO productDAO = new ProductDAO();
+    CategoryDAO categoryDAO = new CategoryDAO();
+    CommentDAO commentDAO = new CommentDAO();
+    OrderDAO orderDAO = new OrderDAO(); // Thêm OrderDAO
 
-        // Xử lý yêu cầu hiển thị chi tiết sản phẩm cho khách hàng
-        if (path.startsWith("/ProductController/DetailProductCustomer")) {
-            int id;
-            try {
-                id = Integer.parseInt(request.getParameter("id")); // Lấy ID sản phẩm từ tham số
-            } catch (NumberFormatException e) {
-                request.setAttribute("errorMessage", "ID sản phẩm không hợp lệ: " + e.getMessage());
-                request.getRequestDispatcher("/web/GuessAndCustomer/DetailProduct.jsp").forward(request, response);
-                return;
-            }
-
-            // Lấy thông tin sản phẩm, chi tiết sản phẩm và danh sách bình luận
-            Product product = productDAO.getProductById(id);
-            ProductDetail productDetail = productDAO.getProductDetailById(id);
-            List<Comment> comments = commentDAO.getCommentsByProductID(id);
-            System.out.println("Danh sách bình luận cho productID " + id + ": " + comments);
-
-            // Kiểm tra nếu sản phẩm không tồn tại
-            if (product == null) {
-                request.setAttribute("errorMessage", "Sản phẩm không tồn tại cho ID: " + id);
-                request.getRequestDispatcher("/web/GuessAndCustomer/DetailProduct.jsp").forward(request, response);
-                return;
-            }
-
-            // Nếu không có bình luận, khởi tạo danh sách rỗng
-            if (comments == null) {
-                comments = new ArrayList<>();
-            }
-
-            // Đặt các thuộc tính để truyền sang JSP
-            request.setAttribute("product", product);
-            request.setAttribute("productDetail", productDetail);
-            request.setAttribute("productId", id);
-            request.setAttribute("comments", comments);
-            System.out.println("Forwarding to DetailProduct.jsp with productId: " + id + ", comments size: " + comments.size());
+    // Xử lý yêu cầu hiển thị chi tiết sản phẩm cho khách hàng
+    if (path.startsWith("/ProductController/DetailProductCustomer")) {
+        int id;
+        try {
+            id = Integer.parseInt(request.getParameter("id")); // Lấy ID sản phẩm từ tham số
+        } catch (NumberFormatException e) {
+            request.setAttribute("errorMessage", "ID sản phẩm không hợp lệ: " + e.getMessage());
             request.getRequestDispatcher("/web/GuessAndCustomer/DetailProduct.jsp").forward(request, response);
-
-        // Xử lý yêu cầu hiển thị trang quản lý sản phẩm
-        } else if (path.endsWith("/ProductManagement")) {
-            List<Product> productList = productDAO.getAllProducts(); // Lấy danh sách tất cả sản phẩm
-            List<Category> category = categoryDAO.getAllCategories(); // Lấy danh sách danh mục
-            request.setAttribute("productList", productList);
-            request.setAttribute("category", category);
-            request.getRequestDispatcher("/web/Staff/productManagement.jsp").forward(request, response);
-
-        // Xử lý yêu cầu hiển thị trang cập nhật số lượng sản phẩm
+            return;
         }
 
-        // Xử lý yêu cầu xóa sản phẩm
-        if ("deleteProduct".equalsIgnoreCase(action)) {
-            CartDAO cartDAO = new CartDAO();
-            int productID = Integer.parseInt(request.getParameter("productID")); // Lấy ID sản phẩm cần xóa
-            
+        // Lấy thông tin sản phẩm, chi tiết sản phẩm và danh sách bình luận
+        Product product = productDAO.getProductById(id);
+        ProductDetail productDetail = productDAO.getProductDetailById(id);
+        List<Comment> comments = commentDAO.getCommentsByProductID(id);
+        System.out.println("Danh sách bình luận cho productID " + id + ": " + comments);
 
+        // Kiểm tra nếu sản phẩm không tồn tại
+        if (product == null) {
+            request.setAttribute("errorMessage", "Sản phẩm không tồn tại cho ID: " + id);
+            request.getRequestDispatcher("/web/GuessAndCustomer/DetailProduct.jsp").forward(request, response);
+            return;
+        }
+
+        // Nếu không có bình luận, khởi tạo danh sách rỗng
+        if (comments == null) {
+            comments = new ArrayList<>();
+        }
+
+        // Thêm kiểm tra quyền bình luận
+        boolean canComment = false;
+        HttpSession session = request.getSession();
+        Account user = (Account) session.getAttribute("user");
+        if (user != null) {
             try {
-                // Kiểm tra xem sản phẩm có trong giỏ hàng không
-                if (cartDAO.checkProductInCart(productID)) {
-                    request.getSession().setAttribute("errorMessage", "Cannot delete product because it is in cart!");
-                    response.sendRedirect("/ProductController/ProductManagement");
-                } else {
-                    commentDAO.deleteCommentByProduct(productID);//xóa comment liên quan đến sp
-                    productDAO.deleteProductDetail(productID); // Xóa chi tiết sản phẩm
-                    productDAO.deleteProduct(productID); // Xóa sản phẩm
-                    response.sendRedirect("/ProductController/ProductManagement");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                request.setAttribute("errorMessage", "Error while deleting product: " + e.getMessage());
-                request.getRequestDispatcher("/ProductController/ProductManagement").forward(request, response);
+                canComment = orderDAO.hasUserPurchasedProduct(user.getId(), id);
+            } catch (SQLException e) {
+                Logger.getLogger(ProductController.class.getName()).log(Level.SEVERE, "Lỗi khi kiểm tra quyền bình luận", e);
             }
+        }
+
+        // Thêm tính trung bình sao
+        double averageRating = 0.0;
+        if (!comments.isEmpty()) {
+            int totalRating = 0;
+            for (Comment comment : comments) {
+                totalRating += comment.getRate();
+            }
+            averageRating = (double) totalRating / comments.size();
+        }
+
+        // Thêm tổng số bình luận mà không thay đổi logic hiện tại
+        int totalComments = comments.size(); // Tính tổng số bình luận từ danh sách comments
+
+        // Đặt các thuộc tính để truyền sang JSP
+        request.setAttribute("product", product);
+        request.setAttribute("productDetail", productDetail);
+        request.setAttribute("productId", id);
+        request.setAttribute("comments", comments);
+        request.setAttribute("canComment", canComment); // Thêm canComment
+        request.setAttribute("averageRating", averageRating); // Thêm averageRating
+        request.setAttribute("totalComments", totalComments); // Thêm totalComments
+        System.out.println("Forwarding to DetailProduct.jsp with productId: " + id + ", comments size: " + comments.size());
+        request.getRequestDispatcher("/web/GuessAndCustomer/DetailProduct.jsp").forward(request, response);
+
+    // Xử lý yêu cầu hiển thị trang quản lý sản phẩm
+    } else if (path.endsWith("/ProductManagement")) {
+        List<Product> productList = productDAO.getAllProducts(); // Lấy danh sách tất cả sản phẩm
+        List<Category> category = categoryDAO.getAllCategories(); // Lấy danh sách danh mục
+        request.setAttribute("productList", productList);
+        request.setAttribute("category", category);
+        request.getRequestDispatcher("/web/Staff/productManagement.jsp").forward(request, response);
+
+    // Xử lý yêu cầu hiển thị trang cập nhật số lượng sản phẩm
+    }
+
+    // Xử lý yêu cầu xóa sản phẩm
+    if ("deleteProduct".equalsIgnoreCase(action)) {
+        CartDAO cartDAO = new CartDAO();
+        int productID = Integer.parseInt(request.getParameter("productID")); // Lấy ID sản phẩm cần xóa
+        
+        try {
+            // Kiểm tra xem sản phẩm có trong giỏ hàng không
+            if (cartDAO.checkProductInCart(productID)) {
+                request.getSession().setAttribute("errorMessage", "Cannot delete product because it is in cart!");
+                response.sendRedirect("/ProductController/ProductManagement");
+            } else {
+                commentDAO.deleteCommentByProduct(productID);//xóa comment liên quan đến sp
+                productDAO.deleteProductDetail(productID); // Xóa chi tiết sản phẩm
+                productDAO.deleteProduct(productID); // Xóa sản phẩm
+                response.sendRedirect("/ProductController/ProductManagement");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("errorMessage", "Error while deleting product: " + e.getMessage());
+            request.getRequestDispatcher("/ProductController/ProductManagement").forward(request, response);
         }
     }
+}
 
     /**
      * Handles the HTTP <code>POST</code> method. Xử lý các yêu cầu thêm, sửa, xóa sản phẩm,
@@ -185,6 +219,8 @@ public class ProductController extends HttpServlet {
             }
         }
         String action = request.getParameter("action"); // Lấy tham số action từ request
+
+        OrderDAO orderDAO = new OrderDAO(); // Thêm OrderDAO
 
         // Xử lý yêu cầu thêm sản phẩm mới
         if ("addProduct".equalsIgnoreCase(action)) {
@@ -332,6 +368,13 @@ public class ProductController extends HttpServlet {
                 }
 
                 int userID = Integer.parseInt(userIDParam);
+
+                // Thêm kiểm tra xem người dùng đã mua sản phẩm chưa
+                if (!orderDAO.hasUserPurchasedProduct(userID, productID)) {
+                    request.setAttribute("errorMessage", "Bạn chỉ có thể bình luận về sản phẩm đã mua.");
+                    request.getRequestDispatcher("/ProductController/DetailProductCustomer?id=" + productID).forward(request, response);
+                    return;
+                }
 
                 // Kiểm tra dữ liệu đầu vào
                 if (rate < 1 || rate > 5) {
