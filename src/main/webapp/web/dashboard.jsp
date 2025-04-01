@@ -4,71 +4,44 @@
 <html>
 <head>
     <title>Dashboard</title>
-    <%@ include file="../AdminLayout.jsp" %> <!-- Sidebar Layout Integration -->
+    <%@ include file="../AdminLayout.jsp" %> <!-- Sidebar Integration -->
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
         google.charts.load('current', {'packages':['corechart']});
-        google.charts.setOnLoadCallback(drawCharts);
+        google.charts.setOnLoadCallback(fetchAndDrawCharts);
 
-        function drawCharts() {
-            // Bar Chart for Product Data
-            var productData = google.visualization.arrayToDataTable([
-                ['Category', 'Total Quantity'],
+        function fetchAndDrawCharts() {
+            drawOrderChart();
+            drawProductChart();
+            drawAccountChart();
+        }
+
+        // Draw Order Chart
+        function drawOrderChart() {
+            var orderData = google.visualization.arrayToDataTable([
+                ['Order State', 'Count'],
                 <%  
                     String dbURL = "jdbc:sqlserver://localhost:1433;databaseName=SWP391;encrypt=true;trustServerCertificate=true;";
                     String dbUser = "sa";
                     String dbPassword = "123";
                     Connection conn = null;
+
                     try {
                         Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
                         conn = DriverManager.getConnection(dbURL, dbUser, dbPassword);
 
-                        Statement productStmt = conn.createStatement();
-                        String productQuery = "SELECT type, SUM(proQuantity) AS totalQuantity FROM category " +
-                                              "INNER JOIN product ON category.categoryID = product.categoryID GROUP BY type";
-                        ResultSet productRs = productStmt.executeQuery(productQuery);
-                        while (productRs.next()) {
-                            String categoryType = productRs.getString("type");
-                            int totalQuantity = productRs.getInt("totalQuantity");
-                %>
-                ['<%= categoryType %>', <%= totalQuantity %>],
-                <% 
-                        }
-                    } catch (Exception e) {
-                        out.println("<p>Error: " + e.getMessage() + "</p>");
-                    } finally {
-                        if (conn != null) {
-                            try {
-                                conn.close();
-                            } catch (SQLException e) {
-                                out.println("<p>Error closing connection: " + e.getMessage() + "</p>");
-                            }
-                        }
-                    }
-                %>
-            ]);
+                        String orderQuery = "SELECT orderState, COUNT(orderID) AS orderCount " +
+                                            "FROM orderTotal WHERE YEAR([date]) = ? " +
+                                            "GROUP BY orderState";
 
-            var productOptions = {
-                title: 'Product Quantities by Category',
-                hAxis: {title: 'Category'},
-                vAxis: {title: 'Quantity'},
-                legend: 'none',
-                colors: ['#4CAF50']
-            };
+                        PreparedStatement orderStmt = conn.prepareStatement(orderQuery);
+                        int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+                        String selectedYearParam = request.getParameter("selectedYear");
+                        int selectedYear = (selectedYearParam != null) ? Integer.parseInt(selectedYearParam) : currentYear;
+                        orderStmt.setInt(1, selectedYear);
 
-            var productChart = new google.visualization.ColumnChart(document.getElementById('DashboardProductChartDiv'));
-            productChart.draw(productData, productOptions);
+                        ResultSet orderRs = orderStmt.executeQuery();
 
-            // Pie Chart for Order Data
-            var orderData = google.visualization.arrayToDataTable([
-                ['Order State', 'Count'],
-                <% 
-                    try {
-                        conn = DriverManager.getConnection(dbURL, dbUser, dbPassword);
-
-                        Statement orderStmt = conn.createStatement();
-                        String orderQuery = "SELECT orderState, COUNT(orderID) AS orderCount FROM orderTotal GROUP BY orderState";
-                        ResultSet orderRs = orderStmt.executeQuery(orderQuery);
                         while (orderRs.next()) {
                             int orderState = orderRs.getInt("orderState");
                             int orderCount = orderRs.getInt("orderCount");
@@ -99,29 +72,80 @@
             ]);
 
             var orderOptions = {
-                title: 'Order States Distribution',
+                title: `Order States Distribution`,
                 pieHole: 0.4,
                 colors: ['#FFD700', '#FF5733', '#2980B9']
             };
 
             var orderChart = new google.visualization.PieChart(document.getElementById('DashboardOrderChartDiv'));
             orderChart.draw(orderData, orderOptions);
+        }
 
-            // Bar Chart for Account Data
-            var accountData = google.visualization.arrayToDataTable([
-                ['Role', 'Count'],
-                <% 
+        // Draw Product Chart
+        function drawProductChart() {
+            var productData = google.visualization.arrayToDataTable([
+                ['Category', 'Total Quantity'],
+                <%  
                     try {
                         conn = DriverManager.getConnection(dbURL, dbUser, dbPassword);
 
-                        Statement accountStmt = conn.createStatement();
+                        String productQuery = "SELECT type, SUM(proQuantity) AS totalQuantity FROM category " +
+                                              "INNER JOIN product ON category.categoryID = product.categoryID GROUP BY type";
+
+                        Statement productStmt = conn.createStatement();
+                        ResultSet productRs = productStmt.executeQuery(productQuery);
+
+                        while (productRs.next()) {
+                            String type = productRs.getString("type");
+                            int totalQuantity = productRs.getInt("totalQuantity");
+                %>
+                ['<%= type %>', <%= totalQuantity %>],
+                <% 
+                        }
+                    } catch (Exception e) {
+                        out.println("<p>Error: " + e.getMessage() + "</p>");
+                    } finally {
+                        if (conn != null) {
+                            try {
+                                conn.close();
+                            } catch (SQLException e) {
+                                out.println("<p>Error closing connection: " + e.getMessage() + "</p>");
+                            }
+                        }
+                    }
+                %>
+            ]);
+
+            var productOptions = {
+                title: 'Product Quantities by Category',
+                hAxis: {title: 'Category'},
+                vAxis: {title: 'Quantity'},
+                legend: 'none',
+                colors: ['#4CAF50']
+            };
+
+            var productChart = new google.visualization.ColumnChart(document.getElementById('DashboardProductChartDiv'));
+            productChart.draw(productData, productOptions);
+        }
+
+        // Draw Account Chart
+        function drawAccountChart() {
+            var accountData = google.visualization.arrayToDataTable([
+                ['Role', 'Count'],
+                <%  
+                    try {
+                        conn = DriverManager.getConnection(dbURL, dbUser, dbPassword);
+
                         String accountQuery = "SELECT role, COUNT(id) AS accountCount FROM account GROUP BY role";
+
+                        Statement accountStmt = conn.createStatement();
                         ResultSet accountRs = accountStmt.executeQuery(accountQuery);
+
                         while (accountRs.next()) {
                             String role = accountRs.getString("role");
-                            int accountCount = accountRs.getInt("accountCount");
+                            int count = accountRs.getInt("accountCount");
                 %>
-                ['<%= role %>', <%= accountCount %>],
+                ['<%= role %>', <%= count %>],
                 <% 
                         }
                     } catch (Exception e) {
@@ -151,14 +175,14 @@
         }
     </script>
     <style>
-        /* Dashboard-specific CSS */
+        /* CSS for Dashboard */
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
             background-color: #f4f4f9;
         }
         .DashboardContent {
-            margin-left: 270px; /* For sidebar */
+            margin-left: 20%; /* For sidebar */
             padding: 20px;
         }
         .DashboardContent h1 {
@@ -166,31 +190,53 @@
             font-size: 24px;
             margin-bottom: 20px;
         }
-        #DashboardProductChartDiv, #DashboardOrderChartDiv, #DashboardAccountChartDiv {
-            margin-bottom: 40px;
-            margin-left: 20px; /* Shift charts slightly to the right */
+        .DashboardFilters {
+            margin-bottom: 20px;
         }
-        .DashboardChartTitle {
-            font-weight: bold;
-            color: #666666;
-            margin-bottom: 10px;
+        #DashboardYearDropdown {
+            padding: 5px;
+            font-size: 16px;
+        }
+        #DashboardOrderChartDiv,
+        #DashboardProductChartDiv,
+        #DashboardAccountChartDiv {
+            margin-left: 20px; /* Align charts to the right */
+            width: 800px;
+            height: 500px;
         }
     </style>
 </head>
 <body>
     <div class="DashboardContent">
         <h1>Dashboard</h1>
+        <form method="GET" action="dashboard.jsp">
+            <div class="DashboardFilters">
+                <label for="DashboardYearDropdown"><strong>Select Year:</strong></label>
+                <select id="DashboardYearDropdown" name="selectedYear" onchange="this.form.submit()">
+                    <%
+                        int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+                        String selectedYearParam = request.getParameter("selectedYear");
+                        int selectedYear = (selectedYearParam != null) ? Integer.parseInt(selectedYearParam) : currentYear;
+
+                        for (int year = currentYear; year >= 2000; year--) {
+                    %>
+                    <option value="<%= year %>" <%= (year == selectedYear) ? "selected" : "" %>><%= year %></option>
+                    <% } %>
+                </select>
+            </div>
+        </form>
+
         <div class="DashboardChartContainer">
-            <h3 class="DashboardChartTitle">Product Quantities by Category</h3>
-            <div id="DashboardProductChartDiv" style="width: 800px; height: 500px;"></div>
+            <h3>Order States Distribution</h3>
+            <div id="DashboardOrderChartDiv"></div>
         </div>
         <div class="DashboardChartContainer">
-            <h3 class="DashboardChartTitle">Order States Distribution</h3>
-            <div id="DashboardOrderChartDiv" style="width: 800px; height: 500px;"></div>
+            <h3>Product Quantities by Category</h3>
+            <div id="DashboardProductChartDiv"></div>
         </div>
         <div class="DashboardChartContainer">
-            <h3 class="DashboardChartTitle">Account Roles Distribution</h3>
-            <div id="DashboardAccountChartDiv" style="width: 800px; height: 500px;"></div>
+            <h3>Account Roles Distribution</h3>
+            <div id="DashboardAccountChartDiv"></div>
         </div>
     </div>
 </body>
