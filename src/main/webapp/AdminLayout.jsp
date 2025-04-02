@@ -80,7 +80,7 @@
     </head>
     <body>
         <div class="sidebar">
-            <div class="dashboard">Dashboard</div>
+            <div class="dashboard"><a href="/web/dashboard.jsp">Dashboard</a></div>
             <ul>
                 <li><a href="/AccountController/AccountList" class="btn">Account</a></li>
                 <li><a href="/OrderController/OrderManagement" class="btn">Order</a></li>

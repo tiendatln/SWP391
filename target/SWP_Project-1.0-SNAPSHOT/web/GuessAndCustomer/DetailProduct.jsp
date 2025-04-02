@@ -2,11 +2,11 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chi tiết sản phẩm</title>
+    <title>Product Detail</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -88,16 +88,33 @@
             resize: none;
         }
         .edit-comment-btn {
-            pointer-events: auto !important; /* Đảm bảo nút có thể bấm */
-            cursor: pointer !important; /* Hiển thị con trỏ tay */
+            pointer-events: auto !important; /* Ensure the button is clickable */
+            cursor: pointer !important; /* Show hand cursor */
         }
-        /* Thêm CSS cho trung bình sao */
+        /* Add CSS for average rating */
+        .average-rating {
+            display: flex;
+            flex-direction: column; /* Stack elements vertically */
+            gap: 4px; /* Small gap between lines */
+        }
+        .rating-score {
+            display: flex;
+            align-items: center;
+            gap: 8px; /* Space between rating number and stars */
+            font-size: 2rem; /* Larger font size for the rating number */
+            font-weight: bold;
+            color: #2c3e50; /* Dark color for rating */
+        }
         .average-rating .star {
-            font-size: 1.2rem;
-            color: #ccc;
+            font-size: 1.8rem; /* Larger font size for stars */
+            color: #ccc; /* Default color for unselected stars */
         }
         .average-rating .star.selected {
-            color: #f1c40f;
+            color: #2c3e50; /* Dark color for filled stars */
+        }
+        .rating-info {
+            font-size: 1.5rem; /* Larger font size for the number of ratings */
+            color: #6c757d; /* Lighter gray color */
         }
     </style>
 </head>
@@ -117,7 +134,7 @@
                         <p class="price">
                             <c:choose>
                                 <c:when test="${not empty product.proPrice}">
-                                    <fmt:formatNumber value="${product.proPrice}" type="number" groupingUsed="true" /> VNĐ
+                                    <fmt:formatNumber value="${product.proPrice}" type="number" groupingUsed="true" /> VND
                                 </c:when>                                
                             </c:choose>
                         </p>
@@ -134,14 +151,13 @@
                             <form id="addToCartForm" class="align-items-center gap-3">
                                 <input type="hidden" name="productID" id="productID" value="${product.productID}">
                                 <div class="d-flex">
-                                    <label for="quantity" class="fw-bold">Số lượng:</label>
+                                    <label for="quantity" class="fw-bold">Quantity:</label>
                                     <input type="number" name="quantity" id="quantity" min="1" max="${product.proQuantity}" value="1" class="form-control w-25">
                                 </div>
                                 <div style="margin-top: 5px;">
                                     <button type="button" id="addToCartBtn" class="btn btn-success ">
                                         <i class="fas fa-cart-plus"></i> Add to cart
                                     </button>
-                                    
                                 </div>
                             </form>
                         </c:if>
@@ -222,33 +238,40 @@
                 </table>
             </div>
         </div>
-        <!-- Thêm hiển thị trung bình sao -->
-        <div class="average-rating mb-3">
-            <h4>Đánh giá trung bình: 
-                <c:choose>
-                    <c:when test="${averageRating > 0}">
-                        <fmt:formatNumber value="${averageRating}" maxFractionDigits="1"/> / 5
-                        <span class="stars">
-                            <c:forEach var="i" begin="1" end="5">
-                                <span class="star ${i <= averageRating ? 'selected' : ''}">★</span>
-                            </c:forEach>
-                        </span>
-                    </c:when>
-                    <c:otherwise>
-                        Chưa có đánh giá
-                    </c:otherwise>
-                </c:choose>
-            </h4>
-        </div>
+        
 <!-- Comment Section -->
 <div class="comment-section">
-    <h3 class="text-center mb-4" style="color: #2c3e50;">Bình luận & Đánh giá</h3>
+    <h3 class="text-center mb-4" style="color: #2c3e50;">Comments & Ratings</h3>
+    <!-- Display average rating -->
+    <div class="average-rating mb-3">
+        <div class="rating-score">
+            <c:choose>
+                <c:when test="${averageRating > 0}">
+                    <fmt:setLocale value="vi_VN"/> <!-- Ensure Vietnamese locale for comma -->
+                    <fmt:formatNumber value="${averageRating}" maxFractionDigits="1"/> / 5
+                </c:when>
+                <c:otherwise>
+                    No ratings yet
+                </c:otherwise>
+            </c:choose>
+            <span class="stars">
+                <c:forEach var="i" begin="1" end="5">
+                    <span class="star ${i <= averageRating ? 'selected' : ''}"> ★</span> <!-- Added   for spacing -->
+                </c:forEach>
+            </span>
+        </div>
+        <c:if test="${averageRating > 0}">
+            <span class="rating-info">
+                ${totalComments} ratings
+            </span>
+        </c:if>
+    </div>
 
-    <!-- Form thêm bình luận -->
+    <!-- Form to add a comment -->
     <form action="${pageContext.request.contextPath}/ProductController" method="post">
         <div class="user-info mb-3">
             <img src="/link/img/cat.jpg" alt="User Avatar" class="user-avatar">
-            <span class="user-name fw-bold">${sessionScope.user != null ? sessionScope.user.username : 'Người dùng'}</span>
+            <span class="user-name fw-bold">${sessionScope.user != null ? sessionScope.user.username : 'User'}</span>
         </div>
         <div class="rating mb-3">
             <span class="star" data-value="1">★</span>
@@ -258,37 +281,37 @@
             <span class="star" data-value="5">★</span>
         </div>
         <input type="hidden" name="rate" id="ratingValue" value="0">
-        <textarea name="comment" class="form-control mb-3" placeholder="Viết bình luận của bạn..." rows="3" required
+        <textarea name="comment" class="form-control mb-3" placeholder="Write your comment..." rows="3" required
                   ${sessionScope.user == null || !canComment ? 'disabled' : ''}></textarea>
         <input type="hidden" name="productId" value="${productId != null ? productId : param.productId}" />
         <input type="hidden" name="id" value="${sessionScope.user != null ? sessionScope.user.id : ''}" />
         <button type="submit" class="btn btn-primary btn-custom"
                 ${sessionScope.user == null || !canComment ? 'disabled' : ''}>
-            <i class="fas fa-paper-plane"></i> Gửi bình luận
+            <i class="fas fa-paper-plane"></i> Submit Comment
         </button>
         <c:choose>
             <c:when test="${sessionScope.user == null}">
-                <p class="text-danger mt-2">Vui lòng <a href="${pageContext.request.contextPath}/LoginController/Login">đăng nhập</a> để bình luận.</p>
+                <p class="text-danger mt-2">Please <a href="${pageContext.request.contextPath}/LoginController/Login">log in</a> to comment.</p>
             </c:when>
             <c:when test="${sessionScope.user != null && !canComment}">
-                <p class="text-danger mt-2">Bạn chỉ có thể bình luận về sản phẩm đã mua.</p>
+                <p class="text-danger mt-2">You can only comment on products you have purchased.</p>
             </c:when>
         </c:choose>
     </form>
 
-    <!-- Danh sách bình luận -->
+    <!-- List of comments -->
     <div class="mt-4 comment-container">
-        <h5 class="fw-bold">Bình luận:</h5>
+        <h5 class="fw-bold">Comments:</h5>
         <c:choose>
             <c:when test="${empty comments || comments == null}">
-                <p>Chưa có bình luận nào.</p>
+                <p>No comments yet.</p>
             </c:when>
             <c:otherwise>
                 <c:forEach var="comment" items="${comments}" varStatus="loop">
                     <div class="comment-box" id="comment-${comment.commentID}">
                         <div class="user-info">
                             <img src="/link/img/cat.jpg" alt="User Avatar" class="user-avatar">
-                            <span class="user-name fw-bold">${sessionScope.user != null && sessionScope.user.id == comment.id ? sessionScope.user.username : 'Người dùng'}</span>
+                            <span class="user-name fw-bold">${sessionScope.user != null && sessionScope.user.id == comment.id ? sessionScope.user.username : 'User'}</span>
                         </div>
                         <div class="rating">
                             <c:forEach var="i" begin="1" end="5">
@@ -298,12 +321,12 @@
                         <p class="mt-2">${comment.comment}</p>
                         <c:if test="${sessionScope.user != null && sessionScope.user.id == comment.id}">
                             <button class="btn btn-sm btn-warning edit-comment-btn" data-bs-toggle="modal" data-bs-target="#editCommentModal" 
-                                    data-comment-id="${comment.commentID}" data-rate="${comment.rate}" data-content="${comment.comment}">Sửa</button>
+                                    data-comment-id="${comment.commentID}" data-rate="${comment.rate}" data-content="${comment.comment}">Edit</button>
                             <form action="${pageContext.request.contextPath}/ProductController" method="post" style="display: inline;">
                                 <input type="hidden" name="action" value="deleteComment">
                                 <input type="hidden" name="commentID" value="${comment.commentID}">
                                 <input type="hidden" name="productId" value="${productId}">
-                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa bình luận này?')">Xóa</button>
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this comment?')">Delete</button>
                             </form>
                         </c:if>
                     </div>
@@ -312,12 +335,12 @@
         </c:choose>
     </div>
 </div>
-    <!-- Modal chỉnh sửa bình luận -->
+    <!-- Modal to edit comment -->
     <div class="modal fade" id="editCommentModal" tabindex="-1" aria-labelledby="editCommentModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="editCommentModalLabel">Chỉnh sửa bình luận</h5>
+                    <h5 class="modal-title" id="editCommentModalLabel">Edit Comment</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -326,7 +349,7 @@
                         <input type="hidden" name="commentID" id="editCommentID">
                         <input type="hidden" name="productId" value="${productId}">
                         <div class="mb-3">
-                            <label class="fw-bold">Đánh giá:</label>
+                            <label class="fw-bold">Rating:</label>
                             <div class="rating" id="editRating">
                                 <span class="star" data-value="1">★</span>
                                 <span class="star" data-value="2">★</span>
@@ -337,12 +360,12 @@
                             <input type="hidden" name="rate" id="editRatingValue" value="0">
                         </div>
                         <div class="mb-3">
-                            <label for="editCommentContent" class="fw-bold">Nội dung bình luận:</label>
+                            <label for="editCommentContent" class="fw-bold">Comment Content:</label>
                             <textarea name="comment" id="editCommentContent" class="form-control" rows="3" required></textarea>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                            <button type="submit" class="btn btn-primary">Lưu</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save</button>
                         </div>
                     </form>
                 </div>
@@ -353,21 +376,21 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // Xử lý nút sửa bình luận để điền dữ liệu vào modal
+    // Handle edit comment button to populate modal
     document.querySelectorAll('.edit-comment-btn').forEach(button => {
         button.addEventListener('click', function () {
             const commentId = this.getAttribute('data-comment-id');
             const rate = this.getAttribute('data-rate');
             const content = this.getAttribute('data-content');
 
-            console.log('Đã bấm nút Sửa cho commentID: ' + commentId);
+            console.log('Edit button clicked for commentID: ' + commentId);
 
-            // Điền dữ liệu vào modal
+            // Populate modal with data
             document.getElementById('editCommentID').value = commentId;
             document.getElementById('editRatingValue').value = rate;
             document.getElementById('editCommentContent').value = content;
 
-            // Cập nhật sao đánh giá trong modal
+            // Update rating stars in modal
             const ratingStars = document.querySelectorAll('#editRating .star');
             ratingStars.forEach(star => {
                 star.classList.remove('selected');
@@ -377,7 +400,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     });
-    // Xử lý rating sao trong modal
+    // Handle rating stars in modal
     document.querySelectorAll('#editRating .star').forEach(star => {
         star.addEventListener('click', function () {
             const value = this.getAttribute('data-value');
@@ -390,7 +413,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     });
-    // Xử lý AJAX thêm vào giỏ hàng
+    // Handle AJAX for adding to cart
     document.getElementById("addToCartBtn")?.addEventListener("click", function () {
         let productID = document.getElementById("productID").value;
         let quantity = document.getElementById("quantity").value;
@@ -410,22 +433,22 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 alertBox.className = "alert alert-danger alert-box";
                 alertBox.innerText = result.message;
-                if (result.message.includes("đăng nhập")) {
+                if (result.message.includes("log in")) {
                     setTimeout(() => window.location.href = "${pageContext.request.contextPath}/LoginController/Login", 1000);
                 }
             }
             setTimeout(() => alertBox.style.display = "none", 2000);
         })
         .catch(error => {
-            console.error("Lỗi:", error);
+            console.error("Error:", error);
             let alertBox = document.getElementById("alertBox");
             alertBox.className = "alert alert-danger alert-box";
-            alertBox.innerText = "Có lỗi xảy ra khi thêm vào giỏ hàng!";
+            alertBox.innerText = "An error occurred while adding to cart!";
             alertBox.style.display = "block";
             setTimeout(() => alertBox.style.display = "none", 3000);
         });
     });
-    // Xử lý rating sao cho thêm bình luận
+    // Handle rating stars for adding a comment
     document.querySelectorAll('.comment-section > form .rating .star').forEach(star => {
         star.addEventListener('click', function () {
             const value = this.getAttribute('data-value');
