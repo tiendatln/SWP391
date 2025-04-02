@@ -1,5 +1,6 @@
 DAOs\CategoryDAO.class
 Controllers\ProfileController.class
+Model\RevenueReport.class
 Controllers\ForgotPasswordController$1.class
 Controllers\LoginAPIController$UserServlet.class
 Controllers\ProductController.class
@@ -9,6 +10,8 @@ Model\Category.class
 Model\Order.class
 Model\OrderTotal.class
 Controllers\LoginController.class
+DAOs\RevenueDAO.class
+Controllers\RevenueServlet.class
 DAOs\CommentDAO.class
 DAOs\CartDAO.class
 Controllers\ForgotPasswordController.class
@@ -17,6 +20,7 @@ Model\Cart.class
 Model\Product.class
 PaymentServlet.class
 Model\CartItem.class
+DashboardDAO.class
 DAOs\ProfileDAO.class
 Model\Account.class
 DAOs\AccountDAO.class
