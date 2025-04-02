@@ -15,42 +15,44 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Servlet xử lý các yêu cầu liên quan đến quản lý voucher: hiển thị, thêm, cập nhật, xóa.
+ * Servlet to handle voucher management requests: display, add, update, and delete.
  * @author tiend
  */
 public class VoucherController extends HttpServlet {
 
-    /**
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code> methods.
-     * Chuyển hướng đến doGet để hiển thị danh sách voucher.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         response.sendRedirect(request.getContextPath() + "/VoucherController");
     }
 
-    /**
-     * Handles the HTTP <code>GET</code> method. Hiển thị danh sách voucher dựa trên từ khóa tìm kiếm.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
             String searchKeyword = request.getParameter("search");
+            String deleteVoucherCode = request.getParameter("deleteVoucherCode");
             VoucherDao voucherDao = new VoucherDao();
-            List<Voucher> voucherList;
 
+            // Handle voucher deletion
+            if (deleteVoucherCode != null && !deleteVoucherCode.isEmpty()) {
+                Voucher voucherToDelete = voucherDao.getVoucherByCode(deleteVoucherCode);
+                if (voucherToDelete != null) {
+                    boolean result = voucherDao.deleteVoucher(voucherToDelete);
+                    if (result) {
+                        request.getSession().setAttribute("message", "Voucher deleted successfully!");
+                    } else {
+                        request.setAttribute("error", "Error deleting voucher.");
+                    }
+                } else {
+                    request.setAttribute("error", "Voucher not found for deletion.");
+                }
+                response.sendRedirect(request.getContextPath() + "/VoucherController");
+                return;
+            }
+
+            // Handle voucher list display
+            List<Voucher> voucherList;
             if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
                 voucherList = voucherDao.searchVouchers(searchKeyword.trim());
             } else {
@@ -61,19 +63,11 @@ public class VoucherController extends HttpServlet {
             request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
         } catch (Exception e) {
             e.printStackTrace();
-            request.setAttribute("error", "Lỗi khi tải danh sách voucher: " + e.getMessage());
+            request.setAttribute("error", "Error loading voucher list: " + e.getMessage());
             request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
         }
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method. Xử lý thêm, cập nhật và xóa voucher.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -83,117 +77,135 @@ public class VoucherController extends HttpServlet {
             String endDateStr = request.getParameter("endDate");
             String percentDiscountStr = request.getParameter("percentDiscount");
             String quantityStr = request.getParameter("quantity");
-            String deleteVoucherCode = request.getParameter("deleteVoucherCode");
             String idParam = request.getParameter("id");
 
             VoucherDao voucherDao = new VoucherDao();
 
-            // Xử lý xóa voucher
-            if (deleteVoucherCode != null && !deleteVoucherCode.isEmpty()) {
-                Voucher voucherToDelete = voucherDao.getVoucherByCode(deleteVoucherCode);
-                if (voucherToDelete != null) {
-                    boolean result = voucherDao.deleteVoucher(voucherToDelete);
-                    if (result) {
-                        request.getSession().setAttribute("message", "Xóa voucher thành công!");
-                    } else {
-                        request.setAttribute("error", "Lỗi khi xóa voucher.");
-                    }
-                } else {
-                    request.setAttribute("error", "Không tìm thấy voucher để xóa.");
-                }
-                response.sendRedirect(request.getContextPath() + "/VoucherController");
-                return;
-            }
-
-            // Kiểm tra dữ liệu đầu vào
+            // Validate input data and set error fields for modal
             if (voucherCode == null || voucherCode.trim().isEmpty() || 
                 startDateStr == null || startDateStr.isEmpty() || 
                 endDateStr == null || endDateStr.isEmpty() || 
                 percentDiscountStr == null || percentDiscountStr.isEmpty() || 
                 quantityStr == null || quantityStr.isEmpty()) {
-                request.setAttribute("error", "Vui lòng điền đầy đủ các trường.");
+                request.setAttribute("modalError", "Please fill in all fields.");
+                setInvalidFields(request, voucherCode, startDateStr, endDateStr, percentDiscountStr, quantityStr);
                 request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
                 return;
             }
 
-            // Chuyển đổi dữ liệu
+            // Convert data
             LocalDate startDate = LocalDate.parse(startDateStr);
             LocalDate endDate = LocalDate.parse(endDateStr);
             int percentDiscount = Integer.parseInt(percentDiscountStr);
             int quantity = Integer.parseInt(quantityStr);
+            LocalDate currentDate = LocalDate.now();
 
-            // Kiểm tra logic nghiệp vụ
+            // Business logic validation with modal errors
             if (startDate.isAfter(endDate)) {
-                request.setAttribute("error", "Ngày bắt đầu phải trước ngày hết hạn.");
+                request.setAttribute("modalError", "Start date must be before end date.");
+                request.setAttribute("invalidStartDate", true);
+                request.setAttribute("invalidEndDate", true);
                 request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
                 return;
             }
             if (percentDiscount < 0 || percentDiscount > 100) {
-                request.setAttribute("error", "Phần trăm giảm giá phải từ 0 đến 100.");
+                request.setAttribute("modalError", "Discount percentage must be between 0 and 100.");
+                request.setAttribute("invalidPercentDiscount", true);
                 request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
                 return;
             }
+            if (idParam == null || idParam.isEmpty()) { // Only check for new vouchers
+                if (startDate.isBefore(currentDate)) {
+                    request.setAttribute("modalError", "Start date cannot be in the past.");
+                    request.setAttribute("invalidStartDate", true);
+                    request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
+                    return;
+                }
+            }
 
-            Voucher voucher = new Voucher(voucherCode, startDate, endDate, percentDiscount, quantity, 0); // Mặc định usedTime là 0 khi thêm mới
+            Voucher voucher = new Voucher(voucherCode, startDate, endDate, percentDiscount, quantity, 0);
             boolean result;
 
             if (idParam != null && !idParam.isEmpty()) {
-                // Cập nhật voucher
+                // Update voucher
                 int voucherId = Integer.parseInt(idParam);
-                Voucher existingVoucher = voucherDao.getVoucherByCode(voucherCode); // Lấy thông tin hiện tại từ DB
+                Voucher existingVoucher = voucherDao.getVoucherByCode(voucherCode);
                 if (existingVoucher != null && existingVoucher.getVoucherID() == voucherId) {
                     voucher.setVoucherID(voucherId);
-                    voucher.setUsedTime(existingVoucher.getUsedTime()); // Giữ nguyên usedTime từ DB
+                    voucher.setUsedTime(existingVoucher.getUsedTime());
                     if (quantity < existingVoucher.getUsedTime()) {
-                        request.setAttribute("error", "Số lượng phải lớn hơn hoặc bằng số lần đã dùng (" + existingVoucher.getUsedTime() + ").");
+                        request.setAttribute("modalError", "Quantity must be greater than or equal to the number of times used (" + existingVoucher.getUsedTime() + ").");
+                        request.setAttribute("invalidQuantity", true);
                         request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
                         return;
                     }
                     result = voucherDao.updateVoucher(voucher);
                     if (result) {
-                        request.getSession().setAttribute("message", "Cập nhật voucher thành công!");
+                        request.getSession().setAttribute("message", "Voucher updated successfully!");
                     } else {
-                        request.setAttribute("error", "Lỗi khi cập nhật voucher.");
+                        request.setAttribute("modalError", "Error updating voucher.");
                     }
                 } else {
-                    request.setAttribute("error", "Voucher không tồn tại hoặc mã không khớp.");
+                    request.setAttribute("modalError", "Voucher does not exist or code does not match.");
+                    request.setAttribute("invalidVoucherCode", true);
                     request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
                     return;
                 }
             } else {
-                // Thêm voucher mới
+                // Add new voucher
                 if (voucherDao.getVoucherByCode(voucherCode) != null) {
-                    request.setAttribute("error", "Mã voucher đã tồn tại.");
+                    request.setAttribute("modalError", "Voucher code already exists.");
+                    request.setAttribute("invalidVoucherCode", true);
                     request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
                     return;
                 }
                 result = voucherDao.insertVoucher(voucher);
                 if (result) {
-                    request.getSession().setAttribute("message", "Thêm voucher thành công!");
+                    request.getSession().setAttribute("message", "Voucher added successfully!");
                 } else {
-                    request.setAttribute("error", "Lỗi khi thêm voucher.");
+                    request.setAttribute("modalError", "Error adding voucher.");
                 }
             }
 
             response.sendRedirect(request.getContextPath() + "/VoucherController");
         } catch (NumberFormatException e) {
             e.printStackTrace();
-            request.setAttribute("error", "Dữ liệu số không hợp lệ: " + e.getMessage());
+            request.setAttribute("modalError", "Invalid numeric data: " + e.getMessage());
+            setInvalidNumericFields(request, request.getParameter("percentDiscount"), request.getParameter("quantity"));
             request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
         } catch (Exception e) {
             e.printStackTrace();
-            request.setAttribute("error", "Lỗi hệ thống: " + e.getMessage());
+            request.setAttribute("error", "System error: " + e.getMessage());
             request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
         }
     }
 
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
+    // Helper method to set invalid fields for empty inputs
+    private void setInvalidFields(HttpServletRequest request, String voucherCode, String startDate, String endDate, 
+                                  String percentDiscount, String quantity) {
+        if (voucherCode == null || voucherCode.trim().isEmpty()) request.setAttribute("invalidVoucherCode", true);
+        if (startDate == null || startDate.isEmpty()) request.setAttribute("invalidStartDate", true);
+        if (endDate == null || endDate.isEmpty()) request.setAttribute("invalidEndDate", true);
+        if (percentDiscount == null || percentDiscount.isEmpty()) request.setAttribute("invalidPercentDiscount", true);
+        if (quantity == null || quantity.isEmpty()) request.setAttribute("invalidQuantity", true);
+    }
+
+    // Helper method to set invalid fields for numeric errors
+    private void setInvalidNumericFields(HttpServletRequest request, String percentDiscount, String quantity) {
+        try {
+            Integer.parseInt(percentDiscount);
+        } catch (NumberFormatException e) {
+            request.setAttribute("invalidPercentDiscount", true);
+        }
+        try {
+            Integer.parseInt(quantity);
+        } catch (NumberFormatException e) {
+            request.setAttribute("invalidQuantity", true);
+        }
+    }
+
     @Override
     public String getServletInfo() {
-        return "Servlet quản lý voucher cho nhân viên.";
+        return "Servlet for managing vouchers for staff.";
     }
 }

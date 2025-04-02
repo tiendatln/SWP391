@@ -173,7 +173,7 @@ public class CartController extends HttpServlet {
             CartDAO dao = new CartDAO();
             if ("add".equals(action)) {
                 if (userId == null) {
-                    jsonResponse.put("status", "error").put("message", "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!");
+                    jsonResponse.put("status", "error").put("message", "Please login to add products to cart!");
                 } else {
                     if (cart == null) {
                         cart = new Cart(userId);
