@@ -17,14 +17,31 @@
     <title>Cart</title> <!-- Translated from "Giỏ hàng" -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <style>
-        /* Keep your original CSS */
-        body {
-            background-color: #f5f5f5;
-            font-family: 'Arial', sans-serif;
+        /* CSS để đảm bảo footer nằm cuối trang */
+        html, body {
+            height: 100%;
             margin: 0;
             padding: 0;
         }
 
+        body {
+            background-color: #f5f5f5;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh; /* Đảm bảo body chiếm toàn bộ chiều cao viewport */
+        }
+
+        .content-wrapper {
+            flex: 1 0 auto; /* Phần nội dung chính sẽ mở rộng để đẩy footer xuống dưới */
+        }
+
+        .footer-wrapper {
+            flex-shrink: 0; /* Footer không bị co lại */
+            background-color: rgb(31, 41, 55);
+        }
+
+        /* CSS hiện có */
         .cart-container {
             max-width: 1200px;
             margin: 40px auto;
@@ -172,74 +189,76 @@
     </style>
 </head>
 <body>
-    <jsp:include page="../../Header.jsp" />
-    <div class="cart-container" id="cartContainer">
-        <h2 class="cart-title">
-            Your Cart <!-- Translated from "Giỏ hàng của bạn" -->
-        </h2>
+    <div class="content-wrapper">
+        <jsp:include page="../../Header.jsp" />
+        <div class="cart-container" id="cartContainer">
+            <h2 class="cart-title">
+                Your Cart <!-- Translated from "Giỏ hàng của bạn" -->
+            </h2>
 
-        <c:set var="cart" value="${sessionScope.cart}" />
-        <c:choose>
-            <c:when test="${not empty cart and not empty cart.cartItems}">
-                <form id="checkoutForm" method="post" action="/OrderController/PrepareOrder">
-                    <input type="text" name="userID" value="${sessionScope.userId}" hidden="true" >
-                    <table class="cart-table">
-                        <thead>
-                            <tr>
-                                <th>Select</th>
-                                <th>Product Name</th> <!-- Translated from "Tên sản phẩm" -->
-                                <th>Image</th> <!-- Translated from "Hình ảnh" -->
-                                <th>Quantity</th> <!-- Translated from "Số lượng" -->
-                                <th>Price</th> <!-- Translated from "Giá" -->
-                                <th>Total</th> <!-- Translated from "Tổng" -->
-                                <th>Action</th> <!-- Translated from "Hành động" -->
-                            </tr>
-                        </thead>
-                        <tbody id="cartItems">
-                            <c:forEach var="item" items="${cart.cartItems}">
-                                <tr data-product-id="${item.product.productID}">
-                                    <td>
-                                        <input type="checkbox" class="cart-custom-checkbox cart-select-item" 
-                                               id="select-${item.product.productID}" 
-                                               name="productId/Quantity" value="${item.product.productID}/${item.quantity}"
-                                               data-product-id="${item.product.productID}">
-                                        <label for="select-${item.product.productID}" class="cart-custom-checkbox-label"></label>
-                                    </td>
-                                    <td>${item.product.productName}</td>
-                                    <td><img src="${pageContext.request.contextPath}/link/img/${item.product.proImg}" alt="${item.product.productName}" width="100px" height="100px"></td>
-                                    <td>
-                                        <input type="number" class="cart-quantity-input" 
-                                               name="quantityShow" value="${item.quantity}" min="1" 
-                                               data-product-id="${item.product.productID}">
-                                    </td>
-                                    <td class="cart-item-price"><fmt:formatNumber value="${item.product.proPrice}" type="number" groupingUsed="true"/> đ</td>
-                                    <td class="cart-item-total"><fmt:formatNumber value="${item.totalPrice}" type="number" groupingUsed="true"/> đ</td>
-                                    <td>
-                                        <button type="button" class="cart-delete-btn" 
-                                                data-product-id="${item.product.productID}">Delete</button> <!-- Translated from "Xóa" -->
-                                    </td>
+            <c:set var="cart" value="${sessionScope.cart}" />
+            <c:choose>
+                <c:when test="${not empty cart and not empty cart.cartItems}">
+                    <form id="checkoutForm" method="post" action="/OrderController/PrepareOrder">
+                        <input type="text" name="userID" value="${sessionScope.userId}" hidden="true" >
+                        <table class="cart-table">
+                            <thead>
+                                <tr>
+                                    <th>Select</th>
+                                    <th>Product Name</th> <!-- Translated from "Tên sản phẩm" -->
+                                    <th>Image</th> <!-- Translated from "Hình ảnh" -->
+                                    <th>Quantity</th> <!-- Translated from "Số lượng" -->
+                                    <th>Price</th> <!-- Translated from "Giá" -->
+                                    <th>Total</th> <!-- Translated from "Tổng" -->
+                                    <th>Action</th> <!-- Translated from "Hành động" -->
                                 </tr>
-                            </c:forEach>
-                        </tbody>
-                    </table>
-                    <div class="cart-text-end">
-                        <div class="cart-text-start">
-                            <input type="checkbox" id="selectAll" class="cart-custom-checkbox">
-                            <label for="selectAll" class="cart-custom-checkbox-label"></label> Select All <!-- Translated from "Chọn tất cả" -->
+                            </thead>
+                            <tbody id="cartItems">
+                                <c:forEach var="item" items="${cart.cartItems}">
+                                    <tr data-product-id="${item.product.productID}">
+                                        <td>
+                                            <input type="checkbox" class="cart-custom-checkbox cart-select-item" 
+                                                   id="select-${item.product.productID}" 
+                                                   name="productId/Quantity" value="${item.product.productID}/${item.quantity}"
+                                                   data-product-id="${item.product.productID}">
+                                            <label for="select-${item.product.productID}" class="cart-custom-checkbox-label"></label>
+                                        </td>
+                                        <td>${item.product.productName}</td>
+                                        <td><img src="${pageContext.request.contextPath}/link/img/${item.product.proImg}" alt="${item.product.productName}" width="100px" height="100px"></td>
+                                        <td>
+                                            <input type="number" class="cart-quantity-input" 
+                                                   name="quantityShow" value="${item.quantity}" min="1" 
+                                                   data-product-id="${item.product.productID}">
+                                        </td>
+                                        <td class="cart-item-price"><fmt:formatNumber value="${item.product.proPrice}" type="number" groupingUsed="true"/> đ</td>
+                                        <td class="cart-item-total"><fmt:formatNumber value="${item.totalPrice}" type="number" groupingUsed="true"/> đ</td>
+                                        <td>
+                                            <button type="button" class="cart-delete-btn" 
+                                                    data-product-id="${item.product.productID}">Delete</button> <!-- Translated from "Xóa" -->
+                                        </td>
+                                    </tr>
+                                </c:forEach>
+                            </tbody>
+                        </table>
+                        <div class="cart-text-end">
+                            <div class="cart-text-start">
+                                <input type="checkbox" id="selectAll" class="cart-custom-checkbox">
+                                <label for="selectAll" class="cart-custom-checkbox-label"></label> Select All <!-- Translated from "Chọn tất cả" -->
+                            </div>
+                            <h4>Total Amount: <!-- Translated from "Tổng tiền:" -->
+                                <strong id="cartTotal"><fmt:formatNumber value="0" type="number" groupingUsed="true"/> đ</strong>
+                            </h4>
+                            <button type="submit" class="cart-btn-success" id="checkoutBtn">Checkout</button> <!-- Translated from "Thanh toán" -->
                         </div>
-                        <h4>Total Amount: <!-- Translated from "Tổng tiền:" -->
-                            <strong id="cartTotal"><fmt:formatNumber value="0" type="number" groupingUsed="true"/> đ</strong>
-                        </h4>
-                        <button type="submit" class="cart-btn-success" id="checkoutBtn">Checkout</button> <!-- Translated from "Thanh toán" -->
-                    </div>
-                </form>
-            </c:when>
-            <c:otherwise>
-                <p class="cart-alert-warning">Your cart is empty!</p> <!-- Translated from "Giỏ hàng của bạn đang trống!" -->
-            </c:otherwise>
-        </c:choose>
+                    </form>
+                </c:when>
+                <c:otherwise>
+                    <p class="cart-alert-warning">Your cart is empty!</p> <!-- Translated from "Giỏ hàng của bạn đang trống!" -->
+                </c:otherwise>
+            </c:choose>
+        </div>
     </div>
-    <div style="background-color: rgb(31, 41, 55)">
+    <div class="footer-wrapper">
         <jsp:include page="../../Footer.jsp" />
     </div>
 
@@ -250,9 +269,9 @@
             return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " đ";
         }
 
-        // Update quantity
-        document.querySelectorAll('.cart-quantity-input').forEach(input => { // Translated comment from "Cập nhật số lượng"
-            input.addEventListener('change', function () {
+        // Update quantity and reload page on blur
+        document.querySelectorAll('.cart-quantity-input').forEach(input => { // Translated comment from "Cập nhật số lượng và reload trang khi click ra ngoài"
+            input.addEventListener('blur', function () {
                 const productId = this.getAttribute('data-product-id');
                 const quantity = this.value;
 
@@ -266,12 +285,8 @@
                 .then(response => response.json())
                 .then(result => {
                     if (result.status === 'success') {
-                        const row = this.closest('tr');
-                        const priceText = row.querySelector('.cart-item-price').textContent.replace(/[^0-9]/g, '');
-                        const price = parseFloat(priceText);
-                        const newTotal = price * quantity;
-                        row.querySelector('.cart-item-total').textContent = formatNumber(newTotal);
-                        updateCartTotal();
+                        // Reload trang sau khi cập nhật thành công
+                        window.location.reload();
                     }
                 })
                 .catch(error => console.error('Error:', error)); // Translated from "Lỗi:"

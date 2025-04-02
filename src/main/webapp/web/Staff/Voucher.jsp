@@ -146,7 +146,7 @@
                                                required>
                                     </div>
                                     <div class="form-group mb-3">
-                                        <label>Total Quantity</label>
+                                        <label>Quantity</label>
                                         <input class="form-control <%= request.getAttribute("invalidQuantity") != null ? "is-invalid" : "" %>" 
                                                type="number" name="quantity" min="0" 
                                                value="<%= request.getAttribute("invalidQuantity") == null && request.getParameter("quantity") != null ? request.getParameter("quantity") : "" %>" 
