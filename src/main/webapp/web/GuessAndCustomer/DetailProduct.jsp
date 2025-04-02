@@ -120,14 +120,14 @@
                                 <c:out value="${product.proState == 1 ? 'Available' : 'Out of business'}" />
                             </span>
                         </p>
-                        <p><strong>Quantity:</strong> ${product.proQuantity}</p>
+                        <p><strong>In Stock:</strong> ${product.proQuantity}</p>
                         <div id="alertBox" class="alert alert-success alert-box"></div>
 
                         <c:if test="${product.proState == 1 && product.proQuantity > 0}">
                             <form id="addToCartForm" class="align-items-center gap-3">
                                 <input type="hidden" name="productID" id="productID" value="${product.productID}">
                                 <div class="d-flex">
-                                    <label for="quantity" class="fw-bold">Số lượng:</label>
+                                    <label for="quantity" class="fw-bold">Quantity: </label>
                                     <input type="number" name="quantity" id="quantity" min="1" max="${product.proQuantity}" value="1" class="form-control w-25">
                                 </div>
                                 <div style="margin-top: 5px;">
@@ -217,13 +217,13 @@
         </div>
 <!-- Comment Section -->
         <div class="comment-section">
-            <h3 class="text-center mb-4" style="color: #2c3e50;">Bình luận & Đánh giá</h3>
+            <h3 class="text-center mb-4" style="color: #2c3e50;">Comments and Ratings</h3>
 
             <!-- Form thêm bình luận -->
             <form action="${pageContext.request.contextPath}/ProductController" method="post">
                 <div class="user-info mb-3">
                     <img src="/link/img/cat.jpg" alt="User Avatar" class="user-avatar">
-                    <span class="user-name fw-bold">${sessionScope.user != null ? sessionScope.user.username : 'Người dùng'}</span>
+                    <span class="user-name fw-bold">${sessionScope.user != null ? sessionScope.user.username : 'Customer'}</span>
                 </div>
                 <div class="rating mb-3">
                     <span class="star" data-value="1">★</span>
@@ -233,29 +233,29 @@
                     <span class="star" data-value="5">★</span>
                 </div>
                 <input type="hidden" name="rate" id="ratingValue" value="0">
-                <textarea name="comment" class="form-control mb-3" placeholder="Viết bình luận của bạn..." rows="3" required></textarea>
+                <textarea name="comment" class="form-control mb-3" placeholder="Write your comment..." rows="3" required></textarea>
                 <input type="hidden" name="productId" value="${productId != null ? productId : param.productId}" />
                 <input type="hidden" name="id" value="${sessionScope.user.id}" />
                 <button type="submit" class="btn btn-primary btn-custom" ${sessionScope.user == null ? 'disabled' : ''}>
-                    <i class="fas fa-paper-plane"></i> Gửi bình luận
+                    <i class="fas fa-paper-plane"></i> Send Comment
                 </button>
                 <c:if test="${sessionScope.user == null}">
-                    <p class="text-danger mt-2">Vui lòng <a href="${pageContext.request.contextPath}/LoginController/Login">đăng nhập</a> để bình luận.</p>
+                    <p class="text-danger mt-2">Please <a href="${pageContext.request.contextPath}/LoginController/Login">login</a> to comment.</p>
                 </c:if>
             </form>
            <!-- Danh sách bình luận -->
             <div class="mt-4 comment-container">
-                <h5 class="fw-bold">Bình luận:</h5>
+                <h5 class="fw-bold">Comment:</h5>
                 <c:choose>
                     <c:when test="${empty comments || comments == null}">
-                        <p>Chưa có bình luận nào.</p>
+                        <p>No comment available.</p>
                     </c:when>
                     <c:otherwise>
                         <c:forEach var="comment" items="${comments}" varStatus="loop">
                             <div class="comment-box" id="comment-${comment.commentID}">
                                 <div class="user-info">
                                     <img src="/link/img/cat.jpg" alt="User Avatar" class="user-avatar">
-                                    <span class="user-name fw-bold">${sessionScope.user != null && sessionScope.user.id == comment.id ? sessionScope.user.username : 'Người dùng'}</span>
+                                    <span class="user-name fw-bold">${sessionScope.user != null && sessionScope.user.id == comment.id ? sessionScope.user.username : 'Customer'}</span>
                                 </div>
                                 <div class="rating">
                                     <c:forEach var="i" begin="1" end="5">
@@ -265,12 +265,12 @@
                                 <p class="mt-2">${comment.comment}</p>
                                 <c:if test="${sessionScope.user != null && sessionScope.user.id == comment.id}">
                                     <button class="btn btn-sm btn-warning edit-comment-btn" data-bs-toggle="modal" data-bs-target="#editCommentModal" 
-                                            data-comment-id="${comment.commentID}" data-rate="${comment.rate}" data-content="${comment.comment}">Sửa</button>
+                                            data-comment-id="${comment.commentID}" data-rate="${comment.rate}" data-content="${comment.comment}">Edit</button>
                                     <form action="${pageContext.request.contextPath}/ProductController" method="post" style="display: inline;">
                                         <input type="hidden" name="action" value="deleteComment">
                                         <input type="hidden" name="commentID" value="${comment.commentID}">
                                         <input type="hidden" name="productId" value="${productId}">
-                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa bình luận này?')">Xóa</button>
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you certain to delete this comment?')">Delete</button>
                                     </form>
                                 </c:if>
                             </div>

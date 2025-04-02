@@ -203,7 +203,8 @@
                             <td><%= voucher.getQuantity() %></td>
                             <td><%= voucher.getUsedTime() %></td>
                             <td>
-                                <button class="btn-edit" onclick="openEditModal('<%= voucher.getVoucherID() %>', '<%= voucher.getVoucherCode() %>', '<%= voucher.getPercentDiscount() %>', '<%= voucher.getStartDate() %>', '<%= voucher.getEndDate() %>', '<%= voucher.getQuantity() %>', '<%= voucher.getUsedTime() %>')">Sửa</button>
+                                <button class="btn-edit" onclick="openEditModal('<%= voucher.getVoucherID() %>', '<%= voucher.getVoucherCode() %>', '<%= voucher.getPercentDiscount() %>', 
+                                            '<%= voucher.getStartDate() %>', '<%= voucher.getEndDate() %>', '<%= voucher.getQuantity() %>', '<%= voucher.getUsedTime() %>')">Edit</button>
                                 <form action="VoucherController" method="POST" style="display:inline;">
                                     <input type="hidden" name="deleteVoucherCode" value="<%= voucher.getVoucherCode() %>">
                                     <button type="submit" class="btn-delete" onclick="return confirm('Are you sure to delete this voucher?')">Delete</button>

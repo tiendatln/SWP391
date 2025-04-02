@@ -98,7 +98,10 @@
                         <tr>
                             <td><img src="/link/img/${product.proImg}" alt="${product.productName}" width="50"></td>
                             <td>${product.productName}</td>
-                            <td class="price"><fmt:formatNumber value="${product.proPrice}" type="currency" currencySymbol="đ"/></td>
+                            <td class="price">
+                                <fmt:formatNumber value="${product.proPrice}" type="currency" currencySymbol=""/>
+                                <span>đ</span>
+                            </td>
                             <td>${product.proQuantity}</td>
                             <td>
                                 <c:choose>
