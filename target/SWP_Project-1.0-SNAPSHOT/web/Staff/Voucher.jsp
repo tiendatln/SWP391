@@ -6,302 +6,277 @@
 <%@page import="Model.Voucher"%>
 <%@page import="java.util.List"%>
 <%@page contentType="text/html" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Voucher Management</title>
-        <style>
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-                font-family: Arial, sans-serif;
-            }
-            body {
-                display: flex;
-                background-color: #f8f9fa;
-            }
-            .main {
-                flex-grow: 1;
-                padding: 20px;
-                margin-left: 250px;
-            }
-            .content {
-                background: white;
-                padding: 20px;
-                border-radius: 10px;
-                width: 100%;
-            }
-            h2 {
-                text-align: center;
-                margin-bottom: 20px;
-            }
-            .search-box {
-                display: flex;
-                margin-bottom: 20px;
-            }
-            .search-box input {
-                flex: 1;
-                padding: 10px;
-                border: 1px solid #ccc;
-                border-radius: 5px;
-            }
-            .search-box button {
-                padding: 10px;
-                margin-left: 10px;
-                border: none;
-                background-color: #007bff;
-                color: white;
-                border-radius: 5px;
-                cursor: pointer;
-            }
-            .btn-add {
-                padding: 10px 15px;
-                background: green;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                margin-bottom: 20px;
-            }
-            table {
-                width: 100%;
-                border-collapse: collapse;
-            }
-            th, td {
-                border: 1px solid #ccc;
-                padding: 10px;
-                text-align: center;
-            }
-            th {
-                background: #333;
-                color: white;
-            }
-            .btn-edit {
-                background: #ffc107;
-                color: black;
-                padding: 5px 10px;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-            }
-            .btn-delete {
-                background: #dc3545;
-                color: white;
-                padding: 5px 10px;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-            }
-            .modal {
-                display: none;
-                position: fixed;
-                z-index: 1;
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0,0,0,0.4);
-                padding-top: 60px;
-            }
-            .modal-content {
-                background-color: #fefefe;
-                margin: 5% auto;
-                padding: 20px;
-                border: 1px solid #888;
-                width: 80%;
-                max-width: 400px;
-                border-radius: 10px;
-            }
-            .close {
-                color: #aaa;
-                font-size: 28px;
-                font-weight: bold;
-                position: absolute;
-                right: 10px;
-                top: 10px;
-            }
-            .close:hover,
-            .close:focus {
-                color: black;
-                text-decoration: none;
-                cursor: pointer;
-            }
-            .btn-cancel {
-                background: #ccc;
-                color: white;
-                padding: 5px 10px;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-            }
-            .btn-cancel:hover {
-                background-color: #aaa;
-            }
-            .message, .error-message {
-                padding: 10px;
-                margin-bottom: 20px;
-                border-radius: 5px;
-            }
-            .message {
-                background-color: #d4edda;
-                color: #155724;
-            }
-            .error-message {
-                background-color: #f8d7da;
-                color: #721c24;
-            }
-        </style>
-    </head>
-    <body>
-        <%@ include file="../../AdminLayout.jsp" %>
-        <div class="main">
-            <div class="content">
-                <h2>Voucher Management</h2>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voucher Management</title>
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">       
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        .container {
+            min-height: 100vh;
+        }
+        body {
+            display: flex;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #FFCC00;
+            height: 100vh;
+            position: fixed;
+            padding-top: 20px;
+        }
+        .content {
+            margin-left: 260px;
+            padding: 20px;
+            width: 85%;
+        }
+        .discount {
+            font-size: 18px;
+            font-weight: bold;
+            color: red;
+        }
+    </style>
+</head>
+<body class="bg-light sb-nav-fixed">
+    <%@ include file="../../AdminLayout.jsp" %>
+    <div class="content container-fluid px-4">
+        <h2>Voucher Management</h2>
 
-                <!-- Hiển thị thông báo thành công hoặc lỗi -->
-                <% if (session.getAttribute("message") != null) { %>
-                    <div class="message"><%= session.getAttribute("message") %></div>
-                    <% session.removeAttribute("message"); %>
-                <% } %>
-                <% if (request.getAttribute("error") != null) { %>
-                    <div class="error-message"><%= request.getAttribute("error") %></div>
-                <% } %>
+        <!-- Hiển thị thông báo thành công hoặc lỗi (không có modal) -->
+        <% if (session.getAttribute("message") != null) { %>
+            <div class="alert alert-success"><%= session.getAttribute("message") %></div>
+            <% session.removeAttribute("message"); %>
+        <% } %>
+        <% if (request.getAttribute("error") != null) { %>
+            <div class="alert alert-danger"><%= request.getAttribute("error") %></div>
+        <% } %>
 
-                <form action="VoucherController" method="get" class="search-box">
-                    <input type="text" name="search" placeholder="Input voucher code..." value="<%= request.getParameter("search") != null ? request.getParameter("search") : ""%>">
-                    <button type="submit">Search</button>
-                </form>
-                <button class="btn-add" onclick="openAddModal()">Add Voucher</button>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Voucher Code</th>
-                            <th>Discount (%)</th>
-                            <th>Start Day</th>
-                            <th>End Day</th>
-                            <th>Total</th>
-                            <th>Used</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <%
-                            List<Voucher> voucherList = (List<Voucher>) request.getAttribute("voucherList");
-                            if (voucherList != null && !voucherList.isEmpty()) {
-                                for (Voucher voucher : voucherList) {
-                        %>
-                        <tr>
-                            <td><%= voucher.getVoucherID() %></td>
-                            <td><%= voucher.getVoucherCode() %></td>
-                            <td><%= voucher.getPercentDiscount() %>%</td>
-                            <td><%= voucher.getStartDate() %></td>
-                            <td><%= voucher.getEndDate() %></td>
-                            <td><%= voucher.getQuantity() %></td>
-                            <td><%= voucher.getUsedTime() %></td>
-                            <td>
-                                <button class="btn-edit" onclick="openEditModal('<%= voucher.getVoucherID() %>', '<%= voucher.getVoucherCode() %>', '<%= voucher.getPercentDiscount() %>', 
-                                            '<%= voucher.getStartDate() %>', '<%= voucher.getEndDate() %>', '<%= voucher.getQuantity() %>', '<%= voucher.getUsedTime() %>')">Edit</button>
-                                <form action="VoucherController" method="POST" style="display:inline;">
-                                    <input type="hidden" name="deleteVoucherCode" value="<%= voucher.getVoucherCode() %>">
-                                    <button type="submit" class="btn-delete" onclick="return confirm('Are you sure to delete this voucher?')">Delete</button>
-                                </form>
-                            </td>
-                        </tr>
-                        <%
-                            }
-                        } else {
-                        %>
-                        <tr>
-                            <td colspan="8">No voucher data.</td>
-                        </tr>
-                        <% } %>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addVoucherModal">Add New Voucher</button>
+        <input type="text" id="searchInput" placeholder="Search voucher..." class="form-control mb-3" onkeyup="searchVouchers()">
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Voucher Code</th>
+                    <th>Discount (%)</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Quantity</th> <!-- Đổi từ "Total" thành "Quantity" -->
+                    <th>Used</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <%
+                    List<Voucher> voucherList = (List<Voucher>) request.getAttribute("voucherList");
+                    if (voucherList != null && !voucherList.isEmpty()) {
+                        for (Voucher voucher : voucherList) {
+                %>
+                <tr>
+                    <td><%= voucher.getVoucherID() %></td>
+                    <td><%= voucher.getVoucherCode() %></td>
+                    <td class="discount"><%= voucher.getPercentDiscount() %>%</td>
+                    <td><%= voucher.getStartDate() %></td>
+                    <td><%= voucher.getEndDate() %></td>
+                    <td><%= voucher.getQuantity() %></td>
+                    <td><%= voucher.getUsedTime() %></td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editVoucherModal<%= voucher.getVoucherID() %>">Edit</button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="confirmDelete('<%= voucher.getVoucherCode() %>')"><i class="fa fa-trash"></i></button>
+                    </td>
+                </tr>
+                <%
+                        }
+                    } else {
+                %>
+                <tr>
+                    <td colspan="8">No voucher data.</td>
+                </tr>
+                <% } %>
+            </tbody>
+        </table>
 
         <!-- Modal Thêm Voucher -->
-        <div id="modal-add-voucher" class="modal">
-            <div class="modal-content">
-                <span class="close" onclick="closeModal('modal-add-voucher')">×</span>
-                <h3>Add New Voucher</h3>
-                <form action="VoucherController" method="post">
-                    <label for="add-voucherCode">Voucher Code:</label>
-                    <input type="text" id="add-voucherCode" name="voucherCode" required><br>
-
-                    <label for="add-discount">Discount (%):</label>
-                    <input type="number" id="add-discount" name="percentDiscount" min="0" max="100" required><br>
-
-                    <label for="add-startDate">Start Day:</label>
-                    <input type="date" id="add-startDate" name="startDate" required><br>
-
-                    <label for="add-endDate">End Day:</label>
-                    <input type="date" id="add-endDate" name="endDate" required><br>
-
-                    <label for="add-quantity">Total:</label>
-                    <input type="number" id="add-quantity" name="quantity" min="0" required><br>
-
-                    <button type="submit" class="btn-add">Add</button>
-                    <button type="button" class="btn-cancel" onclick="closeModal('modal-add-voucher')">Cancel</button>
-                </form>
+        <div class="modal fade" id="addVoucherModal" tabindex="-1" aria-labelledby="addVoucherModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addVoucherModalLabel">Add New Voucher</h5>
+                    </div>
+                    <div class="modal-body">
+                        <% if (request.getAttribute("modalError") != null) { %>
+                            <div class="alert alert-danger"><%= request.getAttribute("modalError") %></div>
+                        <% } %>
+                        <form action="VoucherController" method="post">
+                            <div class="row">
+                                <div class="col">
+                                    <div class="form-group mb-3">
+                                        <label>Voucher Code</label>
+                                        <input class="form-control <%= request.getAttribute("invalidVoucherCode") != null ? "is-invalid" : "" %>" 
+                                               type="text" name="voucherCode" 
+                                               value="<%= request.getAttribute("invalidVoucherCode") == null && request.getParameter("voucherCode") != null ? request.getParameter("voucherCode") : "" %>" 
+                                               placeholder="Enter voucher code" required>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label>Discount (%)</label>
+                                        <input class="form-control <%= request.getAttribute("invalidPercentDiscount") != null ? "is-invalid" : "" %>" 
+                                               type="number" name="percentDiscount" min="0" max="100" 
+                                               value="<%= request.getAttribute("invalidPercentDiscount") == null && request.getParameter("percentDiscount") != null ? request.getParameter("percentDiscount") : "" %>" 
+                                               placeholder="Enter discount percentage" required>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label>Start Date</label>
+                                        <input class="form-control <%= request.getAttribute("invalidStartDate") != null ? "is-invalid" : "" %>" 
+                                               type="date" name="startDate" 
+                                               value="<%= request.getAttribute("invalidStartDate") == null && request.getParameter("startDate") != null ? request.getParameter("startDate") : "" %>" 
+                                               required>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label>End Date</label>
+                                        <input class="form-control <%= request.getAttribute("invalidEndDate") != null ? "is-invalid" : "" %>" 
+                                               type="date" name="endDate" 
+                                               value="<%= request.getAttribute("invalidEndDate") == null && request.getParameter("endDate") != null ? request.getParameter("endDate") : "" %>" 
+                                               required>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label>Quantity</label>
+                                        <input class="form-control <%= request.getAttribute("invalidQuantity") != null ? "is-invalid" : "" %>" 
+                                               type="number" name="quantity" min="0" 
+                                               value="<%= request.getAttribute("invalidQuantity") == null && request.getParameter("quantity") != null ? request.getParameter("quantity") : "" %>" 
+                                               placeholder="Enter total quantity" required>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col d-flex justify-content-end">
+                                            <button class="btn btn-primary" type="submit">Add Voucher</button>
+                                            <a class="btn btn-danger" data-bs-dismiss="modal" href="#" style="margin-left: 15px;">Cancel</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Modal Chỉnh Sửa Voucher -->
-        <div id="modal-edit-voucher" class="modal">
-            <div class="modal-content">
-                <span class="close" onclick="closeModal('modal-edit-voucher')">×</span>
-                <h3>Edit Voucher</h3>
-                <form action="VoucherController" method="post">
-                    <input type="hidden" id="edit-id" name="id">
-                    <label for="edit-voucherCode">Voucher Code:</label>
-                    <input type="text" id="edit-voucherCode" name="voucherCode" required><br>
-
-                    <label for="edit-discount">Discount (%):</label>
-                    <input type="number" id="edit-discount" name="percentDiscount" min="0" max="100" required><br>
-
-                    <label for="edit-startDate">Start Day:</label>
-                    <input type="date" id="edit-startDate" name="startDate" required><br>
-
-                    <label for="edit-endDate">End Day:</label>
-                    <input type="date" id="edit-endDate" name="endDate" required><br>
-
-                    <label for="edit-quantity">Total:</label>
-                    <input type="number" id="edit-quantity" name="quantity" min="0" required><br>
-
-                    <!-- Trường "Đã Dùng" chỉ hiển thị, không cho sửa -->
-                    <label for="edit-usedTime">Used:</label>
-                    <input type="number" id="edit-usedTime" name="usedTime" readonly><br>
-
-                    <button type="submit" class="btn-add">Edit</button>
-                    <button type="button" class="btn-cancel" onclick="closeModal('modal-edit-voucher')">Cancel</button>
-                </form>
+        <%
+            if (voucherList != null && !voucherList.isEmpty()) {
+                for (Voucher voucher : voucherList) {
+                    String submittedId = request.getParameter("id");
+                    boolean isCurrentVoucher = submittedId != null && submittedId.equals(String.valueOf(voucher.getVoucherID()));
+        %>
+        <div class="modal fade" id="editVoucherModal<%= voucher.getVoucherID() %>" tabindex="-1" aria-labelledby="editVoucherModalLabel<%= voucher.getVoucherID() %>" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editVoucherModalLabel<%= voucher.getVoucherID() %>">Edit Voucher</h5>
+                    </div>
+                    <div class="modal-body">
+                        <% if (isCurrentVoucher && request.getAttribute("modalError") != null) { %>
+                            <div class="alert alert-danger"><%= request.getAttribute("modalError") %></div>
+                        <% } %>
+                        <form action="VoucherController" method="post">
+                            <input type="hidden" name="id" value="<%= voucher.getVoucherID() %>">
+                            <div class="row">
+                                <div class="col">
+                                    <div class="form-group mb-3">
+                                        <label>Voucher Code</label>
+                                        <input class="form-control <%= isCurrentVoucher && request.getAttribute("invalidVoucherCode") != null ? "is-invalid" : "" %>" 
+                                               type="text" name="voucherCode" 
+                                               value="<%= isCurrentVoucher && request.getAttribute("invalidVoucherCode") == null && request.getParameter("voucherCode") != null ? request.getParameter("voucherCode") : voucher.getVoucherCode() %>" 
+                                               required>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label>Discount (%)</label>
+                                        <input class="form-control <%= isCurrentVoucher && request.getAttribute("invalidPercentDiscount") != null ? "is-invalid" : "" %>" 
+                                               type="number" name="percentDiscount" min="0" max="100" 
+                                               value="<%= isCurrentVoucher && request.getAttribute("invalidPercentDiscount") == null && request.getParameter("percentDiscount") != null ? request.getParameter("percentDiscount") : voucher.getPercentDiscount() %>" 
+                                               required>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label>Start Date</label>
+                                        <input class="form-control <%= isCurrentVoucher && request.getAttribute("invalidStartDate") != null ? "is-invalid" : "" %>" 
+                                               type="date" name="startDate" 
+                                               value="<%= isCurrentVoucher && request.getAttribute("invalidStartDate") == null && request.getParameter("startDate") != null ? request.getParameter("startDate") : voucher.getStartDate() %>" 
+                                               required>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label>End Date</label>
+                                        <input class="form-control <%= isCurrentVoucher && request.getAttribute("invalidEndDate") != null ? "is-invalid" : "" %>" 
+                                               type="date" name="endDate" 
+                                               value="<%= isCurrentVoucher && request.getAttribute("invalidEndDate") == null && request.getParameter("endDate") != null ? request.getParameter("endDate") : voucher.getEndDate() %>" 
+                                               required>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label>Quantity</label>
+                                        <input class="form-control <%= isCurrentVoucher && request.getAttribute("invalidQuantity") != null ? "is-invalid" : "" %>" 
+                                               type="number" name="quantity" min="0" 
+                                               value="<%= isCurrentVoucher && request.getAttribute("invalidQuantity") == null && request.getParameter("quantity") != null ? request.getParameter("quantity") : voucher.getQuantity() %>" 
+                                               required>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col d-flex justify-content-end">
+                                            <button class="btn btn-primary" type="submit">Save Changes</button>
+                                            <a class="btn btn-danger" data-bs-dismiss="modal" href="#" style="margin-left: 15px;">Cancel</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <script>
-            function openAddModal() {
-                document.getElementById('modal-add-voucher').style.display = 'block';
+        <%
+                }
             }
+        %>
+    </div>
 
-            function openEditModal(id, voucherCode, percentDiscount, startDate, endDate, quantity, usedTime) {
-                document.getElementById('edit-id').value = id;
-                document.getElementById('edit-voucherCode').value = voucherCode;
-                document.getElementById('edit-discount').value = percentDiscount;
-                document.getElementById('edit-startDate').value = startDate;
-                document.getElementById('edit-endDate').value = endDate;
-                document.getElementById('edit-quantity').value = quantity;
-                document.getElementById('edit-usedTime').value = usedTime;
-                document.getElementById('modal-edit-voucher').style.display = 'block';
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+        function confirmDelete(voucherCode) {
+            if (confirm("Are you sure you want to delete this voucher?")) {
+                window.location.href = "VoucherController?deleteVoucherCode=" + voucherCode;
             }
+        }
 
-            function closeModal(modalId) {
-                document.getElementById(modalId).style.display = 'none';
+        function searchVouchers() {
+            let input = document.getElementById("searchInput").value.toLowerCase();
+            let table = document.querySelector("table tbody");
+            let rows = table.getElementsByTagName("tr");
+
+            for (let i = 0; i < rows.length; i++) {
+                let cols = rows[i].getElementsByTagName("td");
+                let match = false;
+
+                for (let j = 0; j < cols.length; j++) {
+                    if (cols[j].textContent.toLowerCase().includes(input)) {
+                        match = true;
+                        break;
+                    }
+                }
+
+                rows[i].style.display = match ? "" : "none";
             }
-        </script>
-    </body>
+        }
+
+        // Show modals if there’s an error
+        <% if (request.getAttribute("modalError") != null) { %>
+            <% if (request.getParameter("id") != null) { %>
+                new bootstrap.Modal(document.getElementById('editVoucherModal<%= request.getParameter("id") %>')).show();
+            <% } else { %>
+                new bootstrap.Modal(document.getElementById('addVoucherModal')).show();
+            <% } %>
+        <% } %>
+    </script>
+</body>
 </html>
