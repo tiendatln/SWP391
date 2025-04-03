@@ -270,7 +270,7 @@
             <form action="${pageContext.request.contextPath}/ProductController" method="post">
                 <div class="user-info mb-3">
                     <img src="/link/img/cat.jpg" alt="User Avatar" class="user-avatar">
-                    <span class="user-name fw-bold">${sessionScope.user != null ? sessionScope.user.username : 'Customer'}</span>
+                    <span class="user-name fw-bold">${sessionScope.user != null ? sessionScope.user.username : 'User'}</span>
                 </div>
                 <div class="rating mb-3">
                     <span class="star" data-value="1">★</span>
@@ -310,7 +310,7 @@
                             <div class="comment-box" id="comment-${comment.commentID}">
                                 <div class="user-info">
                                     <img src="/link/img/cat.jpg" alt="User Avatar" class="user-avatar">
-                                    <span class="user-name fw-bold">${sessionScope.user != null && sessionScope.user.id == comment.id ? sessionScope.user.username : 'Customer'}</span>
+                                    <span class="user-name fw-bold">${sessionScope.user != null && sessionScope.user.id == comment.id ? sessionScope.user.username : 'User'}</span>
                                 </div>
                                 <div class="rating">
                                     <c:forEach var="i" begin="1" end="5">

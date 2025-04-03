@@ -172,7 +172,7 @@ public class OrderController extends HttpServlet {
                 for (Voucher voucher : allVouchers) {
                     boolean isDateValid = !today.isBefore(voucher.getStartDate())
                             && !today.isAfter(voucher.getEndDate());
-                    boolean isQuantityValid = voucher.getQuantity() > voucher.getUsedTime(); // Chỉ hiển thị nếu còn số lượng
+                    boolean isQuantityValid = voucher.getUsedTime() < voucher.getQuantity(); // Thay đổi điều kiện kiểm tra
 
                     if (isDateValid && isQuantityValid) {
                         voucherList.add(voucher); // Chỉ thêm voucher nếu hợp lệ
@@ -264,7 +264,6 @@ public class OrderController extends HttpServlet {
             }
         } else if (path.startsWith("/OrderController/ConfirmOrder")) {
             // Lấy session từ request
-
             HttpSession session = request.getSession();
 
             // Xử lý logic của ConfirmOrder
@@ -290,6 +289,15 @@ public class OrderController extends HttpServlet {
                     request.getRequestDispatcher("/checkout.jsp").forward(request, response);
                     return;
                 }
+
+                // Kiểm tra xem voucher còn sử dụng được không
+                Voucher voucher = vDAO.getVoucherByCode(_voucherCode);
+                if (voucher != null && voucher.getUsedTime() >= voucher.getQuantity()) {
+                    session.setAttribute("message1", "Voucher đã được sử dụng hết số lần cho phép!");
+                    request.getRequestDispatcher("/checkout.jsp").forward(request, response);
+                    return;
+                }
+
             } catch (SQLException | ClassNotFoundException ex) {
                 Logger.getLogger(OrderController.class.getName()).log(Level.SEVERE, null, ex);
                 session.setAttribute("message1", "Lỗi hệ thống khi kiểm tra voucher!");
@@ -322,13 +330,12 @@ public class OrderController extends HttpServlet {
             // Add order and clear cart
             if (oDAO.addNewOrder(ot, orderList)) {
                 session.setAttribute("message1", "https://img.vietqr.io/image/MB-0939303405-print.png?amount=" + String.valueOf(_priceTotal) + "&addInfo=" + proList.get(0).getAccount().getUsername() + "%20Price%20" + _priceTotal + "&accountName=LE%20NGUYEN%20TIEN%20DAT");
-               
                 request.getRequestDispatcher("/payment.jsp").forward(request, response);
             } else {
                 session.setAttribute("message1", "Order placement failed!");
                 request.getRequestDispatcher("/errorPage.jsp").forward(request, response);
             }
-        }if (path.endsWith("/CusUpdateOrder")) {
+        } else if (path.endsWith("/CusUpdateOrder")) {
             try {
                 int status = Integer.parseInt(request.getParameter("status"));
                 int id = Integer.parseInt(request.getParameter("orderID"));
@@ -338,7 +345,6 @@ public class OrderController extends HttpServlet {
                 order = oDAO.UpdateStatusAndGetAllOrder(id, status);
                 
                 Account a = oDAO.getAccountByOrderID(id);
-                
                 
                 // Gửi danh sách đơn hàng đến JSP
                 HttpSession session = request.getSession();
