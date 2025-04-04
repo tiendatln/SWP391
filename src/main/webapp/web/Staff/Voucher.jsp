@@ -41,6 +41,13 @@
             font-weight: bold;
             color: red;
         }
+        .expired {
+            color: gray;
+            font-style: italic;
+        }
+        .alert {
+            transition: opacity 0.5s ease-out;
+        }
     </style>
 </head>
 <body class="bg-light sb-nav-fixed">
@@ -48,13 +55,13 @@
     <div class="content container-fluid px-4">
         <h2>Voucher Management</h2>
 
-        <!-- Hiển thị thông báo thành công hoặc lỗi (không có modal) -->
+        <!-- Hiển thị thông báo thành công hoặc lỗi chung -->
         <% if (session.getAttribute("message") != null) { %>
-            <div class="alert alert-success"><%= session.getAttribute("message") %></div>
+            <div class="alert alert-success alert-temp" id="successAlert"><%= session.getAttribute("message") %></div>
             <% session.removeAttribute("message"); %>
         <% } %>
         <% if (request.getAttribute("error") != null) { %>
-            <div class="alert alert-danger"><%= request.getAttribute("error") %></div>
+            <div class="alert alert-danger alert-temp" id="errorAlert"><%= request.getAttribute("error") %></div>
         <% } %>
 
         <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addVoucherModal">Add New Voucher</button>
@@ -68,7 +75,7 @@
                     <th>Discount (%)</th>
                     <th>Start Date</th>
                     <th>End Date</th>
-                    <th>Quantity</th> <!-- Đổi từ "Total" thành "Quantity" -->
+                    <th>Quantity</th>
                     <th>Used</th>
                     <th>Actions</th>
                 </tr>
@@ -76,10 +83,12 @@
             <tbody>
                 <%
                     List<Voucher> voucherList = (List<Voucher>) request.getAttribute("voucherList");
+                    java.time.LocalDate currentDate = java.time.LocalDate.now();
                     if (voucherList != null && !voucherList.isEmpty()) {
                         for (Voucher voucher : voucherList) {
+                            boolean isExpired = voucher.getEndDate().isBefore(currentDate);
                 %>
-                <tr>
+                <tr class="<%= isExpired ? "expired" : "" %>">
                     <td><%= voucher.getVoucherID() %></td>
                     <td><%= voucher.getVoucherCode() %></td>
                     <td class="discount"><%= voucher.getPercentDiscount() %>%</td>
@@ -109,10 +118,11 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="addVoucherModalLabel">Add New Voucher</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <% if (request.getAttribute("modalError") != null) { %>
-                            <div class="alert alert-danger"><%= request.getAttribute("modalError") %></div>
+                            <div class="alert alert-danger alert-temp" id="addVoucherAlert"><%= request.getAttribute("modalError") %></div>
                         <% } %>
                         <form action="VoucherController" method="post">
                             <div class="row">
@@ -178,10 +188,13 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="editVoucherModalLabel<%= voucher.getVoucherID() %>">Edit Voucher</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <% if (isCurrentVoucher && request.getAttribute("modalError") != null) { %>
-                            <div class="alert alert-danger"><%= request.getAttribute("modalError") %></div>
+                            <div class="alert
+
+ alert-danger alert-temp" id="editVoucherAlert<%= voucher.getVoucherID() %>"><%= request.getAttribute("modalError") %></div>
                         <% } %>
                         <form action="VoucherController" method="post">
                             <input type="hidden" name="id" value="<%= voucher.getVoucherID() %>">
@@ -269,14 +282,58 @@
             }
         }
 
-        // Show modals if there’s an error
-        <% if (request.getAttribute("modalError") != null) { %>
-            <% if (request.getParameter("id") != null) { %>
-                new bootstrap.Modal(document.getElementById('editVoucherModal<%= request.getParameter("id") %>')).show();
-            <% } else { %>
-                new bootstrap.Modal(document.getElementById('addVoucherModal')).show();
+        // Function to hide alerts after a timeout
+        function hideAlert(alertElement) {
+            if (alertElement) {
+                setTimeout(() => {
+                    alertElement.style.opacity = '0';
+                    setTimeout(() => alertElement.style.display = 'none', 500); // Match transition duration
+                }, 5000); // Hide after 5 seconds
+            }
+        }
+
+        // Function to hide alert and remove red borders when typing in modal
+        function setupInputListeners(modalId) {
+            const modal = document.getElementById(modalId);
+            const alert = modal.querySelector('.alert-temp');
+            const inputs = modal.querySelectorAll('input');
+
+            if (alert) {
+                hideAlert(alert); // Start the timeout for auto-hiding
+            }
+
+            inputs.forEach(input => {
+                input.addEventListener('input', () => {
+                    // Hide alert
+                    if (alert) {
+                        alert.style.display = 'none';
+                    }
+                    // Remove red border (is-invalid class)
+                    if (input.classList.contains('is-invalid')) {
+                        input.classList.remove('is-invalid');
+                    }
+                });
+            });
+        }
+
+        // Show modals and set up listeners if there’s an error
+        document.addEventListener('DOMContentLoaded', () => {
+            // Hide success/error alerts on main page
+            hideAlert(document.getElementById('successAlert'));
+            hideAlert(document.getElementById('errorAlert'));
+
+            <% if (request.getAttribute("modalError") != null) { %>
+                <% if (request.getParameter("id") != null) { %>
+                    const editModal = new bootstrap.Modal(document.getElementById('editVoucherModal<%= request.getParameter("id") %>'));
+                    editModal.show();
+                    setupInputListeners('editVoucherModal<%= request.getParameter("id") %>');
+                <% } else { %>
+                    const addModal = new bootstrap.Modal(document.getElementById('addVoucherModal'));
+                    addModal.show();
+                    setupInputListeners('addVoucherModal');
+                <% } %>
             <% } %>
-        <% } %>
+        });
     </script>
 </body>
 </html>

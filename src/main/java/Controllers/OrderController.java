@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
 package Controllers;
 
 import DAOs.AccountDAO;
@@ -37,20 +33,10 @@ import java.util.logging.Logger;
  */
 public class OrderController extends HttpServlet {
 
-    /**
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
-     * methods.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        try ( PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
+        try (PrintWriter out = response.getWriter()) {
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
@@ -63,30 +49,20 @@ public class OrderController extends HttpServlet {
         }
     }
 
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String path = request.getRequestURI();
         if (path.endsWith("/OrderController/OrderManagement")) {
-            // Giả lập danh sách đơn hàng (có thể lấy từ database)
             List<OrderProduct> order = new ArrayList<>();
             OrderDAO oDAO = new OrderDAO();
             try {
                 order = oDAO.getAllOrderTotal();
             } catch (SQLException ex) {
                 Logger.getLogger(OrderController.class.getName()).log(Level.SEVERE, null, ex);
+                request.setAttribute("error", "Error loading order list: " + ex.getMessage());
             }
 
-            // Gửi danh sách đơn hàng đến JSP
             HttpSession session = request.getSession();
             session.setAttribute("orderList", order);
             request.getRequestDispatcher("/web/Staff/DisplayOrder.jsp").forward(request, response);
@@ -96,7 +72,6 @@ public class OrderController extends HttpServlet {
             OrderDAO oDAO = new OrderDAO();
             order = oDAO.getAllOrderTotalByUserID(Integer.parseInt(id[id.length - 1]));
 
-            // Gửi danh sách đơn hàng đến JSP
             HttpSession session = request.getSession();
             session.setAttribute("orderList", order);
             request.getRequestDispatcher("/web/GuessAndCustomer/show.jsp").forward(request, response);
@@ -113,17 +88,8 @@ public class OrderController extends HttpServlet {
                 response.sendRedirect("/OrderController/OrderManagement");
             }
         }
-
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -137,19 +103,24 @@ public class OrderController extends HttpServlet {
                 OrderDAO oDAO = new OrderDAO();
                 order = oDAO.UpdateStatusAndGetAllOrder(id, status);
                 
-                Account a = oDAO.getAccountByID(order.get(1).getOrderTotal().getAccount().getId());
+                if (order == null) {
+                    request.setAttribute("error", "Failed to update order status.");
+                } else {
+                    request.setAttribute("message", "Order status updated successfully!");
+                }
+
+                Account a = oDAO.getAccountByID(order.get(0).getOrderTotal().getAccount().getId());
                 
-                
-                // Gửi danh sách đơn hàng đến JSP
                 HttpSession session = request.getSession();
                 session.setAttribute("orderList", order);
-                if(a.getRole() == "customer"){
-                    request.getRequestDispatcher("/OrderController/CustomerOrder/"+a.getId()).forward(request, response);
-                }else{
+                if (a.getRole().equalsIgnoreCase("customer")) {
+                    request.getRequestDispatcher("/OrderController/CustomerOrder/" + a.getId()).forward(request, response);
+                } else {
                     request.getRequestDispatcher("/web/Staff/DisplayOrder.jsp").forward(request, response);
                 }
                 
             } catch (Exception e) {
+                request.setAttribute("error", "Error updating order status: " + e.getMessage());
                 response.sendRedirect("/OrderController/OrderManagement");
             }
         } else if (path.startsWith("/OrderController/PrepareOrder")) {
@@ -159,63 +130,55 @@ public class OrderController extends HttpServlet {
             VoucherDao vDAO = new VoucherDao();
             List<Voucher> voucherList = new ArrayList<>();
 
-            // Xử lý voucher
             try {
-                // Lấy tất cả voucher từ database
                 List<Voucher> allVouchers = vDAO.getAllVouchers();
                 if (allVouchers == null) {
-                    allVouchers = new ArrayList<>(); // Đảm bảo không null
+                    allVouchers = new ArrayList<>();
                 }
 
-                // Lọc voucher hợp lệ
                 LocalDate today = LocalDate.now();
                 for (Voucher voucher : allVouchers) {
                     boolean isDateValid = !today.isBefore(voucher.getStartDate())
                             && !today.isAfter(voucher.getEndDate());
-                    boolean isQuantityValid = voucher.getQuantity() > voucher.getUsedTime(); // Chỉ hiển thị nếu còn số lượng
+                    boolean isQuantityValid = voucher.getUsedTime() < voucher.getQuantity();
 
                     if (isDateValid && isQuantityValid) {
-                        voucherList.add(voucher); // Chỉ thêm voucher nếu hợp lệ
+                        voucherList.add(voucher);
                     }
                 }
 
-                // Thông báo nếu không có voucher hợp lệ (tùy chọn)
                 if (voucherList.isEmpty()) {
-                    request.setAttribute("message", "Không có voucher khả dụng.");
+                    request.setAttribute("message", "No valid vouchers available.");
                 }
 
             } catch (Exception ex) {
                 Logger.getLogger(OrderController.class.getName()).log(Level.SEVERE, "Error fetching vouchers", ex);
-                request.setAttribute("error", "Không thể tải danh sách voucher.");
+                request.setAttribute("error", "Unable to load voucher list.");
             }
 
-            // Lấy dữ liệu từ request
             String[] productAndQuantity = request.getParameterValues("productId/Quantity");
             String userIDStr = request.getParameter("userID");
 
-            // Kiểm tra dữ liệu đầu vào
             if (productAndQuantity == null || productAndQuantity.length == 0 || userIDStr == null) {
-                request.setAttribute("error", "Dữ liệu giỏ hàng hoặc người dùng không hợp lệ.");
+                request.setAttribute("error", "Invalid cart or user data.");
                 request.getRequestDispatcher("/web/error.jsp").forward(request, response);
                 return;
             }
 
             try {
-                // Chuyển đổi userID và lấy thông tin tài khoản
                 int userID = Integer.parseInt(userIDStr);
                 Account account = oDAO.getAccountByID(userID);
                 if (account == null) {
-                    request.setAttribute("error", "Không tìm thấy thông tin người dùng.");
+                    request.setAttribute("error", "User not found.");
                     request.getRequestDispatcher("/web/error.jsp").forward(request, response);
                     return;
                 }
 
-                // Xử lý giỏ hàng
                 for (String item : productAndQuantity) {
                     String[] parts = item.split("/");
                     if (parts.length != 2) {
                         Logger.getLogger(OrderController.class.getName()).log(Level.WARNING, "Invalid productId/Quantity format: " + item);
-                        continue; // Bỏ qua nếu định dạng không đúng
+                        continue;
                     }
 
                     try {
@@ -225,7 +188,7 @@ public class OrderController extends HttpServlet {
                         Product product = proDAO.getProductById(productID);
                         if (product == null || quantity <= 0) {
                             Logger.getLogger(OrderController.class.getName()).log(Level.WARNING, "Invalid product or quantity: " + item);
-                            continue; // Bỏ qua nếu sản phẩm không tồn tại hoặc số lượng không hợp lệ
+                            continue;
                         }
 
                         CartForOrder cartFO = new CartForOrder();
@@ -238,42 +201,33 @@ public class OrderController extends HttpServlet {
                     }
                 }
 
-                // Kiểm tra giỏ hàng
                 if (proList.isEmpty()) {
-                    request.setAttribute("error", "Giỏ hàng trống hoặc không hợp lệ.");
+                    request.setAttribute("error", "Cart is empty or invalid.");
                     request.getRequestDispatcher("/web/error.jsp").forward(request, response);
                     return;
                 }
 
-                // Lưu vào session
                 HttpSession session = request.getSession();
                 session.setAttribute("cartOrder", proList);
                 session.setAttribute("voucher", voucherList);
 
-                // Chuyển tiếp đến trang checkout
                 request.getRequestDispatcher("/web/orderProduct.jsp").forward(request, response);
 
             } catch (NumberFormatException ex) {
                 Logger.getLogger(OrderController.class.getName()).log(Level.SEVERE, "Invalid userID: " + userIDStr, ex);
-                request.setAttribute("error", "ID người dùng không hợp lệ.");
+                request.setAttribute("error", "Invalid user ID.");
                 request.getRequestDispatcher("/web/error.jsp").forward(request, response);
             } catch (Exception ex) {
                 Logger.getLogger(OrderController.class.getName()).log(Level.SEVERE, "Unexpected error", ex);
-                request.setAttribute("error", "Đã xảy ra lỗi hệ thống.");
+                request.setAttribute("error", "System error occurred.");
                 request.getRequestDispatcher("/web/error.jsp").forward(request, response);
             }
         } else if (path.startsWith("/OrderController/ConfirmOrder")) {
-            // Lấy session từ request
-
             HttpSession session = request.getSession();
+            List<CartForOrder> proList = (List<CartForOrder>) session.getAttribute("cartOrder");
 
-            // Xử lý logic của ConfirmOrder
-            List<CartForOrder> proList = new ArrayList<>();
-            proList = (List<CartForOrder>) session.getAttribute("cartOrder");
-
-            // Kiểm tra giỏ hàng rỗng
             if (proList == null || proList.isEmpty()) {
-                session.setAttribute("message1", "Giỏ hàng trống!");
+                session.setAttribute("message1", "Cart is empty!");
                 request.getRequestDispatcher("/errorPage.jsp").forward(request, response);
                 return;
             }
@@ -285,50 +239,66 @@ public class OrderController extends HttpServlet {
             VoucherDao vDAO = new VoucherDao();
 
             try {
-                if (!vDAO.voucherExists(_voucherCode)) {
-                    session.setAttribute("message1", "Mã voucher không hợp lệ!");
-                    request.getRequestDispatcher("/checkout.jsp").forward(request, response);
-                    return;
+                int voucherID = 0;
+                if (_voucherCode != null && !_voucherCode.isEmpty()) {
+                    Voucher voucher = vDAO.getVoucherByCode(_voucherCode);
+                    if (voucher == null) {
+                        session.setAttribute("message1", "Invalid voucher code!");
+                        request.getRequestDispatcher("/web/orderProduct.jsp").forward(request, response);
+                        return;
+                    }
+
+                    LocalDate today = LocalDate.now();
+                    boolean isDateValid = !today.isBefore(voucher.getStartDate()) && !today.isAfter(voucher.getEndDate());
+                    boolean isQuantityValid = voucher.getUsedTime() < voucher.getQuantity();
+
+                    if (!isDateValid) {
+                        session.setAttribute("message1", "Voucher is not valid for the current date!");
+                        request.getRequestDispatcher("/web/orderProduct.jsp").forward(request, response);
+                        return;
+                    }
+                    if (!isQuantityValid) {
+                        session.setAttribute("message1", "Voucher has been used up!");
+                        request.getRequestDispatcher("/web/orderProduct.jsp").forward(request, response);
+                        return;
+                    }
+                    voucherID = voucher.getVoucherID();
                 }
+
+                String price = request.getParameter("priceTotal");
+                int _priceTotal = 0;
+                if (price.contains(".")) {
+                    double value = Double.parseDouble(price);
+                    _priceTotal = (int) value;
+                } else {
+                    _priceTotal = Integer.parseInt(price);
+                }
+
+                OrderDAO oDAO = new OrderDAO();
+                java.util.Date today = new java.util.Date();
+                java.sql.Date sqlDate = new java.sql.Date(today.getTime());
+                OrderTotal ot = new OrderTotal(_phone, _address, _note, _priceTotal, sqlDate, 0, voucherID, proList.get(0).getAccount());
+                List<Order> orderList = new ArrayList<>();
+
+                for (CartForOrder cartItem : proList) {
+                    Order o = new Order(cartItem.getProduct(), ot, cartItem.getQuantity(), cartItem.getProduct().getProPrice());
+                    orderList.add(o);
+                }
+
+                if (oDAO.addNewOrder(ot, orderList)) {
+                    session.setAttribute("message1", "https://img.vietqr.io/image/MB-0939303405-print.png?amount=" + String.valueOf(_priceTotal) + "&addInfo=" + proList.get(0).getAccount().getUsername() + "%20Price%20" + _priceTotal + "&accountName=LE%20NGUYEN%20TIEN%20DAT");
+                    request.getRequestDispatcher("/payment.jsp").forward(request, response);
+                } else {
+                    session.setAttribute("message1", "Order placement failed! Please check product availability or voucher validity.");
+                    request.getRequestDispatcher("/errorPage.jsp").forward(request, response);
+                }
+
             } catch (SQLException | ClassNotFoundException ex) {
                 Logger.getLogger(OrderController.class.getName()).log(Level.SEVERE, null, ex);
-                session.setAttribute("message1", "Lỗi hệ thống khi kiểm tra voucher!");
-                request.getRequestDispatcher("/errorPage.jsp").forward(request, response);
-                return;
-            }
-
-            String price = request.getParameter("priceTotal");
-            int _priceTotal = 0;
-            if (price.contains(".")) {
-                double value = Double.parseDouble(price);
-                _priceTotal = (int) value; // Hoặc Math.round(value) nếu muốn làm tròn
-            } else {
-                _priceTotal = Integer.parseInt(price);
-            }
-
-            OrderDAO oDAO = new OrderDAO();
-            java.util.Date today = new java.util.Date();
-            java.sql.Date sqlDate = new java.sql.Date(today.getTime());
-            int voucherID = oDAO.getVoucherID(_voucherCode);
-            OrderTotal ot = new OrderTotal(_phone, _address, _note, _priceTotal, sqlDate, 0, voucherID, proList.get(0).getAccount());
-            List<Order> orderList = new ArrayList<>();
-
-            // Tạo danh sách các Order
-            for (CartForOrder cartItem : proList) {
-                Order o = new Order(cartItem.getProduct(), ot, cartItem.getQuantity(), cartItem.getProduct().getProPrice());
-                orderList.add(o);
-            }
-
-            // Add order and clear cart
-            if (oDAO.addNewOrder(ot, orderList)) {
-                session.setAttribute("message1", "https://img.vietqr.io/image/MB-0939303405-print.png?amount=" + String.valueOf(_priceTotal) + "&addInfo=" + proList.get(0).getAccount().getUsername() + "%20Price%20" + _priceTotal + "&accountName=LE%20NGUYEN%20TIEN%20DAT");
-               
-                request.getRequestDispatcher("/payment.jsp").forward(request, response);
-            } else {
-                session.setAttribute("message1", "Order placement failed!");
+                session.setAttribute("message1", "System error while processing order: " + ex.getMessage());
                 request.getRequestDispatcher("/errorPage.jsp").forward(request, response);
             }
-        }if (path.endsWith("/CusUpdateOrder")) {
+        } else if (path.endsWith("/CusUpdateOrder")) {
             try {
                 int status = Integer.parseInt(request.getParameter("status"));
                 int id = Integer.parseInt(request.getParameter("orderID"));
@@ -337,32 +307,31 @@ public class OrderController extends HttpServlet {
                 OrderDAO oDAO = new OrderDAO();
                 order = oDAO.UpdateStatusAndGetAllOrder(id, status);
                 
+                if (order == null) {
+                    request.setAttribute("error", "Failed to update order status.");
+                } else {
+                    request.setAttribute("message", "Order status updated successfully!");
+                }
+
                 Account a = oDAO.getAccountByOrderID(id);
                 
-                
-                // Gửi danh sách đơn hàng đến JSP
                 HttpSession session = request.getSession();
                 session.setAttribute("orderList", order);
-                if(a.getRole().equalsIgnoreCase("customer")){
+                if (a.getRole().equalsIgnoreCase("customer")) {
                     response.sendRedirect("/OrderController/CustomerOrder/" + a.getId());
-                }else{
+                } else {
                     request.getRequestDispatcher("/web/Staff/DisplayOrder.jsp").forward(request, response);
                 }
                 
             } catch (Exception e) {
+                request.setAttribute("error", "Error updating order status: " + e.getMessage());
                 response.sendRedirect("/OrderController/OrderManagement");
             }
         }
     }
 
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
     @Override
     public String getServletInfo() {
         return "Short description";
-    }// </editor-fold>
-
+    }
 }

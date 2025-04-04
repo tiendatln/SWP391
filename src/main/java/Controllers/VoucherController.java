@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
 package Controllers;
 
 import DAOs.VoucherDao;
@@ -38,28 +34,32 @@ public class VoucherController extends HttpServlet {
             if (deleteVoucherCode != null && !deleteVoucherCode.isEmpty()) {
                 Voucher voucherToDelete = voucherDao.getVoucherByCode(deleteVoucherCode);
                 if (voucherToDelete != null) {
-                    boolean result = voucherDao.deleteVoucher(voucherToDelete);
-                    if (result) {
-                        request.getSession().setAttribute("message", "Voucher deleted successfully!");
-                    } else {
-                        request.setAttribute("error", "Error deleting voucher.");
+                    try {
+                        // Kiểm tra xem voucher có đang được sử dụng trong orderTotal không
+                        if (voucherDao.isVoucherInUse(voucherToDelete.getVoucherID())) {
+                            request.setAttribute("error", "Cannot delete voucher because it is being used in an order.");
+                        } else {
+                            boolean result = voucherDao.deleteVoucher(voucherToDelete);
+                            if (result) {
+                                request.getSession().setAttribute("message", "Voucher deleted successfully!");
+                            } else {
+                                request.setAttribute("error", "Error deleting voucher: Unknown error.");
+                            }
+                        }
+                    } catch (Exception e) {
+                        request.setAttribute("error", "Error deleting voucher: " + e.getMessage());
                     }
                 } else {
                     request.setAttribute("error", "Voucher not found for deletion.");
                 }
-                response.sendRedirect(request.getContextPath() + "/VoucherController");
+                // Không redirect ngay, mà load lại danh sách voucher để hiển thị thông báo
+                loadVoucherList(request, searchKeyword, voucherDao);
+                request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
                 return;
             }
 
-            // Handle voucher list display
-            List<Voucher> voucherList;
-            if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
-                voucherList = voucherDao.searchVouchers(searchKeyword.trim());
-            } else {
-                voucherList = voucherDao.getAllVouchers();
-            }
-
-            request.setAttribute("voucherList", voucherList);
+            // Load voucher list for display
+            loadVoucherList(request, searchKeyword, voucherDao);
             request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
         } catch (Exception e) {
             e.printStackTrace();
@@ -89,6 +89,7 @@ public class VoucherController extends HttpServlet {
                 quantityStr == null || quantityStr.isEmpty()) {
                 request.setAttribute("modalError", "Please fill in all fields.");
                 setInvalidFields(request, voucherCode, startDateStr, endDateStr, percentDiscountStr, quantityStr);
+                loadVoucherList(request, null, voucherDao);
                 request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
                 return;
             }
@@ -105,29 +106,23 @@ public class VoucherController extends HttpServlet {
                 request.setAttribute("modalError", "Start date must be before end date.");
                 request.setAttribute("invalidStartDate", true);
                 request.setAttribute("invalidEndDate", true);
+                loadVoucherList(request, null, voucherDao);
                 request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
                 return;
             }
             if (percentDiscount < 0 || percentDiscount > 100) {
                 request.setAttribute("modalError", "Discount percentage must be between 0 and 100.");
                 request.setAttribute("invalidPercentDiscount", true);
+                loadVoucherList(request, null, voucherDao);
                 request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
                 return;
-            }
-            if (idParam == null || idParam.isEmpty()) { // Only check for new vouchers
-                if (startDate.isBefore(currentDate)) {
-                    request.setAttribute("modalError", "Start date cannot be in the past.");
-                    request.setAttribute("invalidStartDate", true);
-                    request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
-                    return;
-                }
             }
 
             Voucher voucher = new Voucher(voucherCode, startDate, endDate, percentDiscount, quantity, 0);
             boolean result;
 
             if (idParam != null && !idParam.isEmpty()) {
-                // Update voucher
+                // Update voucher (no past date restriction)
                 int voucherId = Integer.parseInt(idParam);
                 Voucher existingVoucher = voucherDao.getVoucherByCode(voucherCode);
                 if (existingVoucher != null && existingVoucher.getVoucherID() == voucherId) {
@@ -136,6 +131,7 @@ public class VoucherController extends HttpServlet {
                     if (quantity < existingVoucher.getUsedTime()) {
                         request.setAttribute("modalError", "Quantity must be greater than or equal to the number of times used (" + existingVoucher.getUsedTime() + ").");
                         request.setAttribute("invalidQuantity", true);
+                        loadVoucherList(request, null, voucherDao);
                         request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
                         return;
                     }
@@ -144,18 +140,57 @@ public class VoucherController extends HttpServlet {
                         request.getSession().setAttribute("message", "Voucher updated successfully!");
                     } else {
                         request.setAttribute("modalError", "Error updating voucher.");
+                        loadVoucherList(request, null, voucherDao);
                     }
                 } else {
-                    request.setAttribute("modalError", "Voucher does not exist or code does not match.");
-                    request.setAttribute("invalidVoucherCode", true);
+                    // Allow changing voucherCode
+                    Voucher voucherById = voucherDao.getVoucherById(voucherId);
+                    if (voucherById != null) {
+                        Voucher duplicateVoucher = voucherDao.getVoucherByCode(voucherCode);
+                        if (duplicateVoucher != null && duplicateVoucher.getVoucherID() != voucherId) {
+                            request.setAttribute("modalError", "Voucher code already exists.");
+                            request.setAttribute("invalidVoucherCode", true);
+                            loadVoucherList(request, null, voucherDao);
+                            request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
+                            return;
+                        }
+                        voucher.setVoucherID(voucherId);
+                        voucher.setUsedTime(voucherById.getUsedTime());
+                        if (quantity < voucherById.getUsedTime()) {
+                            request.setAttribute("modalError", "Quantity must be greater than or equal to the number of times used (" + voucherById.getUsedTime() + ").");
+                            request.setAttribute("invalidQuantity", true);
+                            loadVoucherList(request, null, voucherDao);
+                            request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
+                            return;
+                        }
+                        result = voucherDao.updateVoucher(voucher);
+                        if (result) {
+                            request.getSession().setAttribute("message", "Voucher updated successfully!");
+                        } else {
+                            request.setAttribute("modalError", "Error updating voucher.");
+                            loadVoucherList(request, null, voucherDao);
+                        }
+                    } else {
+                        request.setAttribute("modalError", "Voucher does not exist.");
+                        request.setAttribute("invalidVoucherCode", true);
+                        loadVoucherList(request, null, voucherDao);
+                        request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
+                        return;
+                    }
+                }
+            } else {
+                // Add new voucher (keep past date restriction)
+                if (startDate.isBefore(currentDate)) {
+                    request.setAttribute("modalError", "Start date cannot be in the past.");
+                    request.setAttribute("invalidStartDate", true);
+                    loadVoucherList(request, null, voucherDao);
                     request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
                     return;
                 }
-            } else {
-                // Add new voucher
                 if (voucherDao.getVoucherByCode(voucherCode) != null) {
                     request.setAttribute("modalError", "Voucher code already exists.");
                     request.setAttribute("invalidVoucherCode", true);
+                    loadVoucherList(request, null, voucherDao);
                     request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
                     return;
                 }
@@ -164,6 +199,7 @@ public class VoucherController extends HttpServlet {
                     request.getSession().setAttribute("message", "Voucher added successfully!");
                 } else {
                     request.setAttribute("modalError", "Error adding voucher.");
+                    loadVoucherList(request, null, voucherDao);
                 }
             }
 
@@ -172,11 +208,31 @@ public class VoucherController extends HttpServlet {
             e.printStackTrace();
             request.setAttribute("modalError", "Invalid numeric data: " + e.getMessage());
             setInvalidNumericFields(request, request.getParameter("percentDiscount"), request.getParameter("quantity"));
+            VoucherDao voucherDao = new VoucherDao();
+            loadVoucherList(request, null, voucherDao);
             request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
         } catch (Exception e) {
             e.printStackTrace();
             request.setAttribute("error", "System error: " + e.getMessage());
+            VoucherDao voucherDao = new VoucherDao();
+            loadVoucherList(request, null, voucherDao);
             request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
+        }
+    }
+
+    // Helper method to load voucher list
+    private void loadVoucherList(HttpServletRequest request, String searchKeyword, VoucherDao voucherDao) {
+        try {
+            List<Voucher> voucherList;
+            if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
+                voucherList = voucherDao.searchVouchers(searchKeyword.trim());
+            } else {
+                voucherList = voucherDao.getAllVouchers();
+            }
+            request.setAttribute("voucherList", voucherList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("error", "Error loading voucher list: " + e.getMessage());
         }
     }
 
@@ -204,8 +260,9 @@ public class VoucherController extends HttpServlet {
         }
     }
 
+  
     @Override
     public String getServletInfo() {
-        return "Servlet for managing vouchers for staff.";
+        return "Short description";
     }
 }
