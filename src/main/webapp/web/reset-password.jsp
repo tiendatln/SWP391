@@ -48,13 +48,17 @@
             margin: 10px 0 5px;
             color: #555;
         }
-        input[type="password"] {
+        input[type="password"], input[type="text"] {
             width: 100%;
             padding: 8px;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
             box-sizing: border-box;
+        }
+        .show-password {
+            text-align: left;
+            margin-bottom: 15px;
         }
         button {
             background-color: #007bff;
@@ -91,33 +95,53 @@
         <form action="/ForgotPasswordController/reset" method="POST">
             <label for="newPassword">New Password:</label>
             <input type="password" id="newPassword" name="newPassword" required>
+            <div class="show-password">
+                <input type="checkbox" id="showNewPassword" onclick="togglePassword('newPassword', 'showNewPassword')">
+                <label for="showNewPassword" style="display: inline; margin: 0;">Show password</label>
+            </div>
             <label for="confirmPassword">Confirm Password:</label>
             <input type="password" id="confirmPassword" name="confirmPassword" required>
+            <div class="show-password">
+                <input type="checkbox" id="showConfirmPassword" onclick="togglePassword('confirmPassword', 'showConfirmPassword')">
+                <label for="showConfirmPassword" style="display: inline; margin: 0;">Show password</label>
+            </div>
             <button type="submit">Reset Password</button>
         </form>
-        <a href="/web/login.jsp">Back to Login</a> <!-- Khôi phục đường dẫn -->
+        <a href="/web/login.jsp">Back to Login</a>
     </div>
 
-    <!-- Modal thông báo thành công -->
+    <!-- Success Modal -->
     <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="successModalLabel">Thành công</h5>
+                    <h5 class="modal-title" id="successModalLabel">Success</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-success">Mật khẩu của bạn đã được đặt lại thành công!</p>
+                    <p class="text-success">Your password has been reset successfully!</p>
                 </div>
                 <div class="modal-footer">
-                    <a href="/web/login.jsp" class="btn btn-primary">Quay lại Đăng nhập</a> <!-- Khôi phục đường dẫn -->
+                    <a href="/web/login.jsp" class="btn btn-primary">Back to Login</a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- JavaScript để tự động mở modal khi reset mật khẩu thành công -->
+    <!-- JavaScript to automatically open the modal on successful password reset and handle show/hide password -->
     <script>
+        // Function to toggle password visibility
+        function togglePassword(inputId, checkboxId) {
+            var passwordInput = document.getElementById(inputId);
+            var checkbox = document.getElementById(checkboxId);
+            if (checkbox.checked) {
+                passwordInput.type = "text";
+            } else {
+                passwordInput.type = "password";
+            }
+        }
+
+        // Automatically open the modal on successful password reset
         document.addEventListener('DOMContentLoaded', function () {
             <% if (request.getAttribute("message") != null && request.getAttribute("message").equals("Password reset successfully. Please login.")) { %>
                 var successModal = new bootstrap.Modal(document.getElementById('successModal'));

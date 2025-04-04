@@ -8,6 +8,7 @@ import DAOs.AccountDAO;
 import DAOs.CartDAO;
 import Model.Account;
 import Model.Cart;
+import Model.CartItem;
 import Model.Product;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -20,6 +21,7 @@ import jakarta.servlet.http.HttpSession;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
@@ -122,7 +124,7 @@ public class CartController extends HttpServlet {
      * @throws IOException if an I/O error occurs
      */
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+   protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         HttpSession session = request.getSession();
         Integer userId = (Integer) session.getAttribute("userId");
@@ -169,8 +171,42 @@ public class CartController extends HttpServlet {
         }
 
         try {
+            if ("getCart".equals(action)) {
+                if (userId == null) {
+                    jsonResponse.put("status", "error").put("message", "Please login to view cart!");
+                } else {
+                    CartDAO dao = new CartDAO();
+                    cart = dao.loadCartFromDB(userId);
+                    if (cart == null) {
+                        cart = new Cart(userId);
+                    }
+                    session.setAttribute("cart", cart);
+                    // Convert cart to JSON
+                    JSONObject cartJson = new JSONObject();
+                    cartJson.put("userId", cart.getUserId());
+                    JSONArray itemsArray = new JSONArray();
+                    for (CartItem item : cart.getCartItems()) {
+                        JSONObject itemJson = new JSONObject();
+                        itemJson.put("product", new JSONObject()
+                            .put("productID", item.getProduct().getProductID())
+                            .put("productName", item.getProduct().getProductName())
+                            .put("proPrice", item.getProduct().getProPrice())
+                            .put("proQuantity", item.getProduct().getProQuantity()));
+                        itemJson.put("quantity", item.getQuantity());
+                        itemJson.put("totalPrice", item.getTotalPrice());
+                        itemsArray.put(itemJson);
+                    }
+                    cartJson.put("cartItems", itemsArray);
+                    jsonResponse.put("status", "success").put("data", cartJson);
+                }
+                out.print(jsonResponse.toString());
+                return;
+            }
+
             int productId = Integer.parseInt(request.getParameter("productId"));
             CartDAO dao = new CartDAO();
+            Product product = dao.getProductById(productId);
+
             if ("add".equals(action)) {
                 if (userId == null) {
                     jsonResponse.put("status", "error").put("message", "Please login to add products to cart!");
@@ -180,23 +216,35 @@ public class CartController extends HttpServlet {
                         session.setAttribute("cart", cart);
                     }
                     int quantity = request.getParameter("quantity") != null ? Integer.parseInt(request.getParameter("quantity")) : 1;
-                    Product product = dao.getProductById(productId);
-                    if (product != null && product.getProState() == 1 && product.getProQuantity() >= quantity) {
+                    // Java 7 compatible replacement for stream
+                    int currentQuantity = 0;
+                    for (CartItem item : cart.getCartItems()) {
+                        if (item.getProduct().getProductID() == productId) {
+                            currentQuantity += item.getQuantity();
+                        }
+                    }
+                    int totalQuantity = currentQuantity + quantity;
+
+                    if (product != null && product.getProState() == 1 && product.getProQuantity() >= totalQuantity) {
                         cart.addItem(product, quantity);
                         dao.addToCart(userId, productId, quantity);
                         session.setAttribute("cart", cart);
                         jsonResponse.put("status", "success").put("message", "Product has been added to cart.");
                     } else {
-                        jsonResponse.put("status", "error").put("message", "Product does not exist or is not available in sufficient quantity!");
+                        jsonResponse.put("status", "error").put("message", "Product does not exist, is not available, or total quantity (" + totalQuantity + ") exceeds stock (" + (product != null ? product.getProQuantity() : 0) + ")!");
                     }
                 }
             } else if (userId != null && cart != null) {
                 switch (action) {
                     case "update":
                         int quantity = Integer.parseInt(request.getParameter("quantity"));
-                        cart.updateQuantity(productId, quantity);
-                        dao.updateCart(userId, productId, quantity);
-                        jsonResponse.put("status", "success").put("message", "");
+                        if (product != null && product.getProQuantity() >= quantity) {
+                            cart.updateQuantity(productId, quantity);
+                            dao.updateCart(userId, productId, quantity);
+                            jsonResponse.put("status", "success").put("message", "");
+                        } else {
+                            jsonResponse.put("status", "error").put("message", "Quantity exceeds available stock (" + (product != null ? product.getProQuantity() : 0) + ")!");
+                        }
                         break;
                     case "delete":
                         cart.removeItem(productId);

@@ -4,216 +4,190 @@
 
 <!DOCTYPE html>
 <html lang="vi">
-<head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <meta name="description" content="Manager Order Page" />
-    <meta name="author" content="Admin" />
-    <title>Manager Order</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-        }
-        
-        .content-Order {
-            padding: 30px;
-            margin: 20px auto;
-            max-width: 1200px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-        }
+    <head>
+        <meta charset="utf-8" />
+        <title>Order Manager</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background: #f1f1f1;
+            }
 
-        h1 {
-            color: #2c3e50;
-            font-weight: 600;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-        }
+            .order-container {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+                gap: 20px;
+                margin-top: 20px;
+            }
 
-        .order-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            padding: 20px 0;
-        }
-
-        .order-item {
-            background: #ffffff;
-            border: none;
-            border-radius: 12px;
-            padding: 20px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        }
-
-        .order-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .mb-2 {
-            padding: 8px;
-            border-radius: 5px;
-            background: #f8f9fa;
-            transition: all 0.2s ease;
-        }
-
-        .mb-2 strong {
-            color: #34495e;
-            margin-right: 5px;
-        }
-
-        .mb-2:hover {
-            background: #e9ecef;
-        }
-
-        .btn {
-            padding: 8px 20px;
-            border-radius: 25px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .btn-success {
-            background: #27ae60;
-            border: none;
-        }
-
-        .btn-success:hover {
-            background: #219653;
-            transform: scale(1.05);
-        }
-
-        .btn-danger {
-            background: #e74c3c;
-            border: none;
-        }
-
-        .btn-danger:hover {
-            background: #c0392b;
-            transform: scale(1.05);
-        }
-
-        .badge {
-            padding: 6px 12px;
-            font-size: 0.9em;
-            border-radius: 20px;
-            font-weight: 500;
-        }
-
-        .bg-warning {
-            background: #f1c40f;
-            color: #fff;
-        }
-
-        .bg-success {
-            background: #2ecc71;
-            color: #fff;
-        }
-
-        .bg-danger {
-            background: #e74c3c;
-            color: #fff;
-        }
-
-        .bg-secondary {
-            background: #7f8c8d;
-            color: #fff;
-        }
-
-        hr {
-            border: 0;
-            height: 2px;
-            background: linear-gradient(to right, transparent, #3498db, transparent);
-            margin: 30px 0;
-        }
-
-        @media (max-width: 768px) {
             .order-item {
-                margin: 0 10px;
+                background: #fff;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             }
-            .content-Order {
-                margin: 10px;
-                padding: 15px;
+
+            .badge {
+                padding: 6px 12px;
+                border-radius: 20px;
+                font-weight: 500;
             }
-        }
-    </style>
-</head>
 
-<body>
-    <%@include file="../../Header.jsp" %>
+            .nav-tabs .nav-link.active {
+                background-color: #0d6efd;
+                color: white;
+            }
 
-    <div class="content-Order">
-        <div class="p-4">
-            <h1 class="mb-4 mt-4 text-center">Orders</h1>
-            <div class="mt-5">
-                <div class="row">
-                    <div class="col-12 mx-auto">
-                        <hr />
-                        <c:choose>
-                            <c:when test="${empty sessionScope.orderList}">
-                                <p class="text-center" style="color: #7f8c8d; font-size: 1.2em;">No orders found</p>
-                            </c:when>
-                            <c:otherwise>
-                                <div class="order-container">
-                                    <c:forEach var="order" items="${sessionScope.orderList}" varStatus="status">
-                                        <form action="/OrderController/CusUpdateOrder" method="post" class="order-item">
-                                            
-                                            <div class="mb-2"><strong>Order ID:</strong> ${order.orderTotal.orderID}</div>
-                                            <div class="mb-2">
-                                                <strong>Product Name:</strong>
-                                                ${order.productNames}
-                                            </div>
-                                            <div class="mb-2"><strong>Quantity:</strong> ${order.quantity}</div>
-                                            <div class="mb-2"><strong>Total Price:</strong> 
-                                                <fmt:formatNumber value="${order.orderTotal.totalPrice}" type="currency" currencySymbol="đ" />
-                                            </div>
-                                            <div class="mb-2"><strong>Date:</strong> 
-                                                <fmt:formatDate value="${order.orderTotal.date}" pattern="dd/MM/yyyy HH:mm" />
-                                            </div>
-                                            <div class="mb-2">
-                                                <strong>Status:</strong>
-                                                <c:choose>
-                                                    <c:when test="${order.orderTotal.orderState == 0}">
-                                                        <span class="badge bg-warning">Pending</span>
-                                                        <input type="hidden" name="status" value="2" />
-                                                        <input type="hidden" name="orderID" value="${order.orderTotal.orderID}" />
-                                                        <button type="submit" class="btn btn-danger mt-2">Cancel</button>
-                                                    </c:when>
-                                                    <c:when test="${order.orderTotal.orderState == 1}">
-                                                        <span class="badge bg-success">Completed</span>
-                                                    </c:when>
-                                                    <c:when test="${order.orderTotal.orderState == 2}">
-                                                        <span class="badge bg-danger">Cancelled</span>
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <span class="badge bg-secondary">Unknown</span>
-                                                    </c:otherwise>
-                                                </c:choose>
-                                            </div>
-                                            <div>
-                                                <a href="/OrderController/OrderDetail/${order.orderTotal.orderID}" class="btn btn-success">View Details</a>
-                                            </div>
-                                        </form>
-                                    </c:forEach>
+            h1 {
+                text-align: center;
+                margin-top: 40px;
+                font-weight: bold;
+                color: #2c3e50;
+            }
+        </style>
+    </head>
+    <body>
+        <%@include file="../../Header.jsp" %>
+
+        <div class="container mt-4">
+            <h1>Order Manager</h1>
+
+            <!-- Tab navigation -->
+            <ul class="nav nav-tabs mt-4" id="orderTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab">All</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">Pending</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab">Completed</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="cancelled-tab" data-bs-toggle="tab" data-bs-target="#cancelled" type="button" role="tab">Cancelled</button>
+                </li>
+            </ul>
+
+            <!-- Tab content -->
+            <div class="tab-content" id="orderTabsContent">
+                <!-- All -->
+                <div class="tab-pane fade show active" id="all" role="tabpanel">
+                    <div class="order-container">
+                        <c:forEach var="order" items="${sessionScope.orderList}">
+                            <div class="order-item">
+                                <div><strong>Order ID:</strong> ${order.orderTotal.orderID}</div>
+                                <div><strong>Product:</strong> ${order.productNames}</div>
+                                <div><strong>Quantity:</strong> ${order.quantity}</div>
+                                <div><strong>Total:</strong> 
+                                    <fmt:formatNumber value="${order.orderTotal.totalPrice}" type="currency" currencySymbol="đ"/>
                                 </div>
-                            </c:otherwise>
-                        </c:choose>
+                                <div><strong>Date:</strong> 
+                                    <fmt:formatDate value="${order.orderTotal.date}" pattern="dd/MM/yyyy HH:mm"/>
+                                </div>
+                                <div><strong>Status:</strong>
+                                    <c:choose>
+                                        <c:when test="${order.orderTotal.orderState == 0}">
+                                            <span class="badge bg-warning">Pending</span>
+                                        </c:when>
+                                        <c:when test="${order.orderTotal.orderState == 1}">
+                                            <span class="badge bg-success">Completed</span>
+                                        </c:when>
+                                        <c:when test="${order.orderTotal.orderState == 2}">
+                                            <span class="badge bg-danger">Cancelled</span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="badge bg-secondary">Unknown</span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                                <a href="/OrderController/OrderDetail/${order.orderTotal.orderID}" class="btn btn-primary mt-2">View Details</a>
+                            </div>
+                        </c:forEach>
+                    </div>
+                </div>
+
+                <!-- Pending -->
+                <!-- Pending -->
+                <div class="tab-pane fade" id="pending" role="tabpanel">
+                    <div class="order-container">
+                        <c:forEach var="order" items="${sessionScope.orderList}">
+                            <c:if test="${order.orderTotal.orderState == 0}">
+                                <form action="/OrderController/CusUpdateOrder" method="post" class="order-item">
+                                    <div><strong>Order ID:</strong> ${order.orderTotal.orderID}</div>
+                                    <div><strong>Product:</strong> ${order.productNames}</div>
+                                    <div><strong>Quantity:</strong> ${order.quantity}</div>
+                                    <div><strong>Total:</strong> 
+                                        <fmt:formatNumber value="${order.orderTotal.totalPrice}" type="currency" currencySymbol="đ"/>
+                                    </div>
+                                    <div><strong>Date:</strong> 
+                                        <fmt:formatDate value="${order.orderTotal.date}" pattern="dd/MM/yyyy HH:mm"/>
+                                    </div>
+                                    <div><span class="badge bg-warning">Pending</span></div>
+
+                                    <!-- Nút Cancel -->
+                                    <input type="hidden" name="status" value="2" />
+                                    <input type="hidden" name="orderID" value="${order.orderTotal.orderID}" />
+                                    <button type="submit" class="btn btn-danger mt-2 me-2">Cancel</button>
+
+                                    <!-- Nút View Details -->
+                                    <a href="/OrderController/OrderDetail/${order.orderTotal.orderID}" class="btn btn-warning mt-2">View Details</a>
+                                </form>
+                            </c:if>
+                        </c:forEach>
+                    </div>
+                </div>
+
+
+                <!-- Completed -->
+                <div class="tab-pane fade" id="completed" role="tabpanel">
+                    <div class="order-container">
+                        <c:forEach var="order" items="${sessionScope.orderList}">
+                            <c:if test="${order.orderTotal.orderState == 1}">
+                                <div class="order-item">
+                                    <div><strong>Order ID:</strong> ${order.orderTotal.orderID}</div>
+                                    <div><strong>Product:</strong> ${order.productNames}</div>
+                                    <div><strong>Quantity:</strong> ${order.quantity}</div>
+                                    <div><strong>Total:</strong> 
+                                        <fmt:formatNumber value="${order.orderTotal.totalPrice}" type="currency" currencySymbol="đ"/>
+                                    </div>
+                                    <div><strong>Date:</strong> 
+                                        <fmt:formatDate value="${order.orderTotal.date}" pattern="dd/MM/yyyy HH:mm"/>
+                                    </div>
+                                    <div><span class="badge bg-success">Completed</span></div>
+                                    <a href="/OrderController/OrderDetail/${order.orderTotal.orderID}" class="btn btn-success mt-2">View Details</a>
+                                </div>
+                            </c:if>
+                        </c:forEach>
+                    </div>
+                </div>
+
+                <!-- Cancelled -->
+                <div class="tab-pane fade" id="cancelled" role="tabpanel">
+                    <div class="order-container">
+                        <c:forEach var="order" items="${sessionScope.orderList}">
+                            <c:if test="${order.orderTotal.orderState == 2}">
+                                <div class="order-item">
+                                    <div><strong>Order ID:</strong> ${order.orderTotal.orderID}</div>
+                                    <div><strong>Product:</strong> ${order.productNames}</div>
+                                    <div><strong>Quantity:</strong> ${order.quantity}</div>
+                                    <div><strong>Total:</strong> 
+                                        <fmt:formatNumber value="${order.orderTotal.totalPrice}" type="currency" currencySymbol="đ"/>
+                                    </div>
+                                    <div><strong>Date:</strong> 
+                                        <fmt:formatDate value="${order.orderTotal.date}" pattern="dd/MM/yyyy HH:mm"/>
+                                    </div>
+                                    <div><span class="badge bg-danger">Cancelled</span></div>
+                                    <a href="/OrderController/OrderDetail/${order.orderTotal.orderID}" class="btn btn-danger mt-2">View Details</a>
+                                </div>
+                            </c:if>
+                        </c:forEach>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <%@include file="../../Footer.jsp" %>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-</body>
+        <%@include file="../../Footer.jsp" %>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
 </html>

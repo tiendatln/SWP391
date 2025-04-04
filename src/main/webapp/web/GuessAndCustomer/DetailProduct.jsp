@@ -257,7 +257,7 @@
                     </c:choose>
                     <span class="stars">
                         <c:forEach var="i" begin="1" end="5">
-                            <span class="star ${i <= averageRating ? 'selected' : ''}"> ★</span>
+                            <span class="star ${i <= averageRating ? 'selected' : ''}">★</span>
                         </c:forEach>
                     </span>
                 </div>
@@ -270,7 +270,7 @@
             <form action="${pageContext.request.contextPath}/ProductController" method="post">
                 <div class="user-info mb-3">
                     <img src="/link/img/cat.jpg" alt="User Avatar" class="user-avatar">
-                    <span class="user-name fw-bold">${sessionScope.user != null ? sessionScope.user.username : 'Customer'}</span>
+                    <span class="user-name fw-bold">${sessionScope.user != null ? sessionScope.user.username : 'User'}</span>
                 </div>
                 <div class="rating mb-3">
                     <span class="star" data-value="1">★</span>
@@ -310,7 +310,7 @@
                             <div class="comment-box" id="comment-${comment.commentID}">
                                 <div class="user-info">
                                     <img src="/link/img/cat.jpg" alt="User Avatar" class="user-avatar">
-                                    <span class="user-name fw-bold">${sessionScope.user != null && sessionScope.user.id == comment.id ? sessionScope.user.username : 'Customer'}</span>
+                                    <span class="user-name fw-bold">${sessionScope.user != null && sessionScope.user.id == comment.id ? sessionScope.user.username : 'User'}</span>
                                 </div>
                                 <div class="rating">
                                     <c:forEach var="i" begin="1" end="5">
@@ -420,36 +420,108 @@
             // Handle AJAX for adding to cart
             document.getElementById("addToCartBtn")?.addEventListener("click", function () {
                 let productID = document.getElementById("productID").value;
-                let quantity = document.getElementById("quantity").value;
+                let quantity = parseInt(document.getElementById("quantity").value);
+                let maxStock = parseInt(document.getElementById("quantity").getAttribute("max"));
+                let alertBox = document.getElementById("alertBox");
 
+                // Function to handle redirect to login
+                function redirectToLogin(message) {
+                    alertBox.className = "alert alert-danger alert-box";
+                    alertBox.innerText = message;
+                    alertBox.style.display = "block";
+                    setTimeout(() => {
+                        window.location.href = "${pageContext.request.contextPath}/LoginController/Login";
+                    }, 2000);
+                }
+
+                // Step 1: Fetch cart data to check login status and quantity
                 fetch("${pageContext.request.contextPath}/CartController", {
                     method: "POST",
                     headers: {"Content-Type": "application/x-www-form-urlencoded"},
-                    body: "action=add&productId=" + encodeURIComponent(productID) + "&quantity=" + encodeURIComponent(quantity)
+                    body: "action=getCart"
                 })
                 .then(response => response.json())
-                .then(result => {
-                    let alertBox = document.getElementById("alertBox");
-                    alertBox.style.display = "block";
-                    if (result.status === "success") {
-                        alertBox.className = "alert alert-success alert-box";
-                        alertBox.innerText = result.message;
+                .then(cartData => {
+                    if (cartData.status === "error" && cartData.message.includes("login")) {
+                        // User not logged in, redirect immediately
+                        redirectToLogin("Please log in to add products to cart!");
                     } else {
-                        alertBox.className = "alert alert-danger alert-box";
-                        alertBox.innerText = result.message;
-                        if (result.message.includes("log in")) {
-                            setTimeout(() => window.location.href = "${pageContext.request.contextPath}/LoginController/Login", 1000);
+                        // User is logged in, proceed with quantity check
+                        let currentQuantity = 0;
+                        if (cartData.status === "success" && cartData.data.cartItems) {
+                            const item = cartData.data.cartItems.find(i => i.product.productID == productID);
+                            currentQuantity = item ? item.quantity : 0;
+                        }
+
+                        let totalQuantity = currentQuantity + quantity;
+
+                        if (totalQuantity > maxStock) {
+                            alertBox.className = "alert alert-danger alert-box";
+                            alertBox.innerText = "Cannot add product. Because the product quantity is not enough!";
+                            alertBox.style.display = "block";
+                            setTimeout(() => alertBox.style.display = "none", 5000);
+                        } else {
+                            // Proceed with adding to cart
+                            fetch("${pageContext.request.contextPath}/CartController", {
+                                method: "POST",
+                                headers: {"Content-Type": "application/x-www-form-urlencoded"},
+                                body: "action=add&productId=" + encodeURIComponent(productID) + "&quantity=" + encodeURIComponent(quantity)
+                            })
+                            .then(response => response.json())
+                            .then(result => {
+                                alertBox.style.display = "block";
+                                if (result.status === "success") {
+                                    alertBox.className = "alert alert-success alert-box";
+                                    alertBox.innerText = result.message;
+                                } else {
+                                    alertBox.className = "alert alert-danger alert-box";
+                                    alertBox.innerText = result.message;
+                                    if (result.message.includes("login")) {
+                                        redirectToLogin(result.message);
+                                    }
+                                }
+                                setTimeout(() => alertBox.style.display = "none", 2000);
+                            })
+                            .catch(error => {
+                                console.error("Error adding to cart:", error);
+                                alertBox.className = "alert alert-danger alert-box";
+                                alertBox.innerText = "An error occurred while adding to cart!";
+                                alertBox.style.display = "block";
+                                setTimeout(() => alertBox.style.display = "none", 3000);
+                            });
                         }
                     }
-                    setTimeout(() => alertBox.style.display = "none", 2000);
                 })
                 .catch(error => {
-                    console.error("Error:", error);
-                    let alertBox = document.getElementById("alertBox");
-                    alertBox.className = "alert alert-danger alert-box";
-                    alertBox.innerText = "An error occurred while adding to cart!";
-                    alertBox.style.display = "block";
-                    setTimeout(() => alertBox.style.display = "none", 3000);
+                    console.error("Error fetching cart:", error);
+                    // Fallback: Try adding to cart anyway, server will enforce login
+                    fetch("${pageContext.request.contextPath}/CartController", {
+                        method: "POST",
+                        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+                        body: "action=add&productId=" + encodeURIComponent(productID) + "&quantity=" + encodeURIComponent(quantity)
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        alertBox.style.display = "block";
+                        if (result.status === "success") {
+                            alertBox.className = "alert alert-success alert-box";
+                            alertBox.innerText = result.message;
+                        } else {
+                            alertBox.className = "alert alert-danger alert-box";
+                            alertBox.innerText = result.message;
+                            if (result.message.includes("login")) {
+                                redirectToLogin(result.message);
+                            }
+                        }
+                        setTimeout(() => alertBox.style.display = "none", 2000);
+                    })
+                    .catch(error => {
+                        console.error("Error in fallback:", error);
+                        alertBox.className = "alert alert-danger alert-box";
+                        alertBox.innerText = "An error occurred. Please try again!";
+                        alertBox.style.display = "block";
+                        setTimeout(() => alertBox.style.display = "none", 3000);
+                    });
                 });
             });
 

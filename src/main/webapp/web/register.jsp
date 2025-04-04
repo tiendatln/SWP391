@@ -58,7 +58,7 @@
                 <div class="col-md-6">
                     <div class="card mt-5">
                         <div class="card-header text-center">
-                            <h2>Đăng Ký</h2>
+                            <h2>Register</h2>
                         </div>
                         <div class="card-body">
                             <form action="/LoginController/Register" method="post" onsubmit="return validateForm()">
