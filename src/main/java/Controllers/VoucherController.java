@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
 package Controllers;
 
 import DAOs.VoucherDao;
@@ -38,16 +34,27 @@ public class VoucherController extends HttpServlet {
             if (deleteVoucherCode != null && !deleteVoucherCode.isEmpty()) {
                 Voucher voucherToDelete = voucherDao.getVoucherByCode(deleteVoucherCode);
                 if (voucherToDelete != null) {
-                    boolean result = voucherDao.deleteVoucher(voucherToDelete);
-                    if (result) {
-                        request.getSession().setAttribute("message", "Voucher deleted successfully!");
-                    } else {
-                        request.setAttribute("error", "Error deleting voucher.");
+                    try {
+                        // Kiểm tra xem voucher có đang được sử dụng trong orderTotal không
+                        if (voucherDao.isVoucherInUse(voucherToDelete.getVoucherID())) {
+                            request.setAttribute("error", "Cannot delete voucher because it is being used in an order.");
+                        } else {
+                            boolean result = voucherDao.deleteVoucher(voucherToDelete);
+                            if (result) {
+                                request.getSession().setAttribute("message", "Voucher deleted successfully!");
+                            } else {
+                                request.setAttribute("error", "Error deleting voucher: Unknown error.");
+                            }
+                        }
+                    } catch (Exception e) {
+                        request.setAttribute("error", "Error deleting voucher: " + e.getMessage());
                     }
                 } else {
                     request.setAttribute("error", "Voucher not found for deletion.");
                 }
-                response.sendRedirect(request.getContextPath() + "/VoucherController");
+                // Không redirect ngay, mà load lại danh sách voucher để hiển thị thông báo
+                loadVoucherList(request, searchKeyword, voucherDao);
+                request.getRequestDispatcher("/web/Staff/Voucher.jsp").forward(request, response);
                 return;
             }
 
@@ -253,8 +260,9 @@ public class VoucherController extends HttpServlet {
         }
     }
 
+  
     @Override
     public String getServletInfo() {
-        return "Servlet for managing vouchers for admin.";
+        return "Short description";
     }
 }

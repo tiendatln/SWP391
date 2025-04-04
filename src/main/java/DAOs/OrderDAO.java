@@ -62,9 +62,9 @@ public class OrderDAO {
                 + "         ot.totalPrice, ot.date, ot.orderState, ot.voucherID \n"
                 + "HAVING SUM(o.orderQuantity) > 0;"; // Đảm bảo chỉ lấy đơn có sản phẩm
 
-        try ( PreparedStatement ps = conn.prepareStatement(query)) {
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, userID); // Đặt tham số userID
-            try ( ResultSet rs = ps.executeQuery()) {
+            try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     OrderTotal ot = new OrderTotal(
                             rs.getInt("orderID"),
@@ -119,7 +119,7 @@ public class OrderDAO {
                 + "    ot.orderID, ot.phoneNumber, ot.address, ot.note, \n"
                 + "    ot.totalPrice, ot.date, ot.orderState, ot.voucherID;";
 
-        try ( PreparedStatement ps = conn.prepareStatement(query);  ResultSet rs = ps.executeQuery()) {
+        try (PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 OrderTotal ot = new OrderTotal(
                         rs.getInt("orderID"),
@@ -165,9 +165,9 @@ public class OrderDAO {
                 + "LEFT JOIN product p ON o.productID = p.productID "
                 + "WHERE ot.orderID = ?;";
 
-        try ( PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, orderID);
-            try ( ResultSet rs = stmt.executeQuery()) {
+            try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     OrderTotal ot = new OrderTotal(
                             rs.getInt("orderID"),
@@ -213,7 +213,6 @@ public class OrderDAO {
         String sql = "UPDATE OrderTotal SET orderState = ? WHERE orderID = ?";
         int rowsUpdated;
         List<OrderProduct> newOrder = new ArrayList<>();
-        PreparedStatement pstmtUpdateVoucher = null;
 
         try {
             conn.setAutoCommit(false); // Bắt đầu transaction
@@ -233,13 +232,13 @@ public class OrderDAO {
                         if (rs.next()) {
                             int voucherID = rs.getInt("voucherID");
                             if (voucherID > 0) { // Nếu có voucher
-                                // Giảm usedTime đi 1
-                                String updateVoucherSQL = "UPDATE voucher SET usedTime = usedTime - 1 WHERE voucherID = ? AND usedTime > 0";
-                                pstmtUpdateVoucher = conn.prepareStatement(updateVoucherSQL);
-                                pstmtUpdateVoucher.setInt(1, voucherID);
-                                int voucherUpdated = pstmtUpdateVoucher.executeUpdate();
-                                if (voucherUpdated == 0) {
-                                    throw new SQLException("Không thể hoàn lại usedTime của voucher.");
+                                // Đồng bộ usedTime dựa trên số lần xuất hiện trong orderTotal
+                                VoucherDao voucherDao = new VoucherDao();
+                                try {
+                                    voucherDao.updateUsedTime(voucherID, conn);
+                                } catch (SQLException e) {
+                                    System.err.println("Failed to update usedTime for voucherID " + voucherID + ": " + e.getMessage());
+                                    // Tiếp tục transaction, không rollback
                                 }
                             }
                         }
@@ -274,7 +273,6 @@ public class OrderDAO {
             return newOrder;
         } finally {
             try {
-                if (pstmtUpdateVoucher != null) pstmtUpdateVoucher.close();
                 if (conn != null) conn.setAutoCommit(true);
             } catch (SQLException e) {
                 System.err.println("Error closing resources: " + e.getMessage());
@@ -286,7 +284,6 @@ public class OrderDAO {
         PreparedStatement pstmtOrderTotal = null;
         PreparedStatement pstmtOrder = null;
         PreparedStatement pstmtUpdateProduct = null;
-        PreparedStatement pstmtUpdateVoucher = null;
         PreparedStatement pstmtDeleteCart = null;
         ResultSet generatedKeys = null;
 
@@ -313,17 +310,8 @@ public class OrderDAO {
                             throw new SQLException("Voucher đã được sử dụng hết số lần cho phép.");
                         }
                     } else {
-                        throw new SQLException("Không tìm thấy voucher.");
+                        throw new SQLException("Không tìm thấy voucher với ID: " + voucherID);
                     }
-                }
-
-                // Tăng usedTime lên 1
-                String updateVoucherSQL = "UPDATE voucher SET usedTime = usedTime + 1 WHERE voucherID = ?";
-                pstmtUpdateVoucher = conn.prepareStatement(updateVoucherSQL);
-                pstmtUpdateVoucher.setInt(1, voucherID);
-                int voucherUpdated = pstmtUpdateVoucher.executeUpdate();
-                if (voucherUpdated == 0) {
-                    throw new SQLException("Không thể cập nhật usedTime của voucher.");
                 }
             }
 
@@ -339,7 +327,7 @@ public class OrderDAO {
             pstmtOrderTotal.setBigDecimal(4, BigDecimal.valueOf(orderTotal.getTotalPrice()));
             pstmtOrderTotal.setDate(5, orderTotal.getDate());
             pstmtOrderTotal.setInt(6, orderTotal.getOrderState());
-            pstmtOrderTotal.setInt(7, voucherID);
+            pstmtOrderTotal.setObject(7, voucherID, java.sql.Types.INTEGER); // Sử dụng setObject để xử lý null
             pstmtOrderTotal.setInt(8, orderTotal.getAccount().getId());
 
             // Thực thi và kiểm tra kết quả
@@ -416,6 +404,17 @@ public class OrderDAO {
                 }
             }
 
+            // 6. Đồng bộ usedTime của voucher sau khi thêm đơn hàng
+            if (voucherID != null) {
+                VoucherDao voucherDao = new VoucherDao();
+                try {
+                    voucherDao.updateUsedTime(voucherID, conn);
+                } catch (SQLException e) {
+                    System.err.println("Failed to update usedTime for voucherID " + voucherID + ": " + e.getMessage());
+                    // Tiếp tục transaction, không rollback
+                }
+            }
+
             // Commit transaction nếu mọi thứ thành công
             conn.commit();
             System.out.println("Thêm đơn hàng mới thành công, cập nhật usedTime của voucher!");
@@ -454,9 +453,6 @@ public class OrderDAO {
                 }
                 if (pstmtUpdateProduct != null) {
                     pstmtUpdateProduct.close();
-                }
-                if (pstmtUpdateVoucher != null) {
-                    pstmtUpdateVoucher.close();
                 }
                 if (pstmtDeleteCart != null) {
                     pstmtDeleteCart.close();
@@ -507,15 +503,13 @@ public class OrderDAO {
         }
         return -1;  // Trả về -1 nếu không tìm thấy
     }
-    
+
     public Account getAccountByOrderID(int orderID) {
         Account account = null;
-        
+
         ResultSet rs = null;
 
         try {
-            // Get database connection (assuming DBConnection is a utility class)
-
             // SQL query to join orderTotal and account tables
             String sql = " SELECT a.id, a.username, a.email, a.password, a.phone_number, a.address, a.role " +
                          "FROM account a " +
@@ -543,7 +537,7 @@ public class OrderDAO {
 
         } catch (SQLException e) {
             e.printStackTrace();
-        } 
+        }
 
         return account;
     }

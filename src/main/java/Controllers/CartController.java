@@ -40,7 +40,7 @@ public class CartController extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        try ( PrintWriter out = response.getWriter()) {
+        try (PrintWriter out = response.getWriter()) {
             /* TODO output your page here. You may use following sample code. */
             out.println("<!DOCTYPE html>");
             out.println("<html>");
@@ -89,6 +89,7 @@ public class CartController extends HttpServlet {
                                         session.setAttribute("user", user);
                                     }
                                 } catch (SQLException | ClassNotFoundException ex) {
+                                    // Log error if necessary
                                 }
                                 break;
                             }
@@ -127,7 +128,7 @@ public class CartController extends HttpServlet {
         HttpSession session = request.getSession();
         Integer userId = (Integer) session.getAttribute("userId");
 
-        // Nếu userId không có trong session, kiểm tra cookie
+        // If userId is not in session, check cookies
         if (userId == null) {
             Cookie[] cookies = request.getCookies();
             if (cookies != null) {
@@ -146,7 +147,7 @@ public class CartController extends HttpServlet {
                                     session.setAttribute("user", user);
                                 }
                             } catch (SQLException | ClassNotFoundException ex) {
-                                // Ghi log lỗi nếu cần
+                                // Log error if necessary
                             }
                             break;
                         }
@@ -171,46 +172,62 @@ public class CartController extends HttpServlet {
         try {
             int productId = Integer.parseInt(request.getParameter("productId"));
             CartDAO dao = new CartDAO();
+            Product product = dao.getProductById(productId); // Fetch product information
+
             if ("add".equals(action)) {
                 if (userId == null) {
-                    jsonResponse.put("status", "error").put("message", "Please login to add products to cart!");
+                    jsonResponse.put("status", "error").put("message", "Please log in to add products to the cart!");
                 } else {
                     if (cart == null) {
                         cart = new Cart(userId);
                         session.setAttribute("cart", cart);
                     }
                     int quantity = request.getParameter("quantity") != null ? Integer.parseInt(request.getParameter("quantity")) : 1;
-                    Product product = dao.getProductById(productId);
-                    if (product != null && product.getProState() == 1 && product.getProQuantity() >= quantity) {
-                        cart.addItem(product, quantity);
-                        dao.addToCart(userId, productId, quantity);
-                        session.setAttribute("cart", cart);
-                        jsonResponse.put("status", "success").put("message", "Product has been added to cart.");
+
+                    if (product != null && product.getProState() == 1) {
+                        if (product.getProQuantity() >= quantity) {
+                            cart.addItem(product, quantity);
+                            dao.addToCart(userId, productId, quantity);
+                            session.setAttribute("cart", cart);
+                            jsonResponse.put("status", "success").put("message", "Product has been added to the cart.");
+                        } else {
+                            jsonResponse.put("status", "error")
+                                    .put("message", "Requested quantity (" + quantity + ") exceeds available stock (" + product.getProQuantity() + ")!");
+                        }
                     } else {
-                        jsonResponse.put("status", "error").put("message", "Product does not exist or is not available in sufficient quantity!");
+                        jsonResponse.put("status", "error").put("message", "Product does not exist or is unavailable!");
                     }
                 }
             } else if (userId != null && cart != null) {
                 switch (action) {
                     case "update":
                         int quantity = Integer.parseInt(request.getParameter("quantity"));
-                        cart.updateQuantity(productId, quantity);
-                        dao.updateCart(userId, productId, quantity);
-                        jsonResponse.put("status", "success").put("message", "");
+                        if (product != null && product.getProState() == 1) {
+                            if (quantity <= product.getProQuantity()) {
+                                cart.updateQuantity(productId, quantity);
+                                dao.updateCart(userId, productId, quantity);
+                                jsonResponse.put("status", "success").put("message", "Cart updated successfully.");
+                            } else {
+                                jsonResponse.put("status", "error")
+                                        .put("message", "Updated quantity (" + quantity + ") exceeds available stock (" + product.getProQuantity() + ")!");
+                            }
+                        } else {
+                            jsonResponse.put("status", "error").put("message", "Product does not exist or is unavailable!");
+                        }
                         break;
                     case "delete":
                         cart.removeItem(productId);
                         dao.removeFromCart(userId, productId);
-                        jsonResponse.put("status", "success").put("message", "");
+                        jsonResponse.put("status", "success").put("message", "Product has been removed from the cart.");
                         break;
                     default:
-                        jsonResponse.put("status", "error").put("message", "");
+                        jsonResponse.put("status", "error").put("message", "Invalid action!");
                 }
             } else {
-                jsonResponse.put("status", "error").put("message", "Please login to perform this action!");
+                jsonResponse.put("status", "error").put("message", "Please log in to perform this action!");
             }
         } catch (NumberFormatException | SQLException | ClassNotFoundException e) {
-            jsonResponse.put("status", "error").put("message", "Data processing error!");
+            jsonResponse.put("status", "error").put("message", "Data processing error: " + e.getMessage());
         }
         out.print(jsonResponse.toString());
     }

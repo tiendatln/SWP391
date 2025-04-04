@@ -77,7 +77,6 @@
                     <th>End Date</th>
                     <th>Quantity</th>
                     <th>Used</th>
-                    <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -97,7 +96,6 @@
                     <td><%= voucher.getEndDate() %></td>
                     <td><%= voucher.getQuantity() %></td>
                     <td><%= voucher.getUsedTime() %></td>
-                    <td><%= isExpired ? "Expired" : "Active" %></td>
                     <td>
                         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editVoucherModal<%= voucher.getVoucherID() %>">Edit</button>
                         <button class="btn btn-outline-danger btn-sm" onclick="confirmDelete('<%= voucher.getVoucherCode() %>')"><i class="fa fa-trash"></i></button>
@@ -108,7 +106,7 @@
                     } else {
                 %>
                 <tr>
-                    <td colspan="9">No voucher data.</td>
+                    <td colspan="8">No voucher data.</td>
                 </tr>
                 <% } %>
             </tbody>
@@ -194,7 +192,9 @@
                     </div>
                     <div class="modal-body">
                         <% if (isCurrentVoucher && request.getAttribute("modalError") != null) { %>
-                            <div class="alert alert-danger alert-temp" id="editVoucherAlert<%= voucher.getVoucherID() %>"><%= request.getAttribute("modalError") %></div>
+                            <div class="alert
+
+ alert-danger alert-temp" id="editVoucherAlert<%= voucher.getVoucherID() %>"><%= request.getAttribute("modalError") %></div>
                         <% } %>
                         <form action="VoucherController" method="post">
                             <input type="hidden" name="id" value="<%= voucher.getVoucherID() %>">
